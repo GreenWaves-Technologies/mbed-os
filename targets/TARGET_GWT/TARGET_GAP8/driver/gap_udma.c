@@ -175,8 +175,11 @@ void UDMA_Deinit(UDMA_Type *base)
 
 status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hint)
 {
-    if (UDMA_TxBusy(base) || UDMA_TxBusy(base))
-        return uStatus_Fail;
+    if (info->isTx) {
+        assert(!UDMA_TxBusy(base));
+    } else {
+        assert(!UDMA_RxBusy(base));
+    }
 
     blocking[info->isTx] = 1;
 

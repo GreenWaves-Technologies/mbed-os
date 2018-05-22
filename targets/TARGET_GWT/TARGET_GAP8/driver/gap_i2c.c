@@ -175,6 +175,7 @@ int I2C_Write(I2C_Type *base, uint32_t address, const char *data, int length, in
 {
     status_t status;
     int index = 0;
+    int len = length;
 
     s_command_sequence[index++] = I2C_CMD_START;
     s_command_sequence[index++] = I2C_CMD_WR;
@@ -184,8 +185,8 @@ int I2C_Write(I2C_Type *base, uint32_t address, const char *data, int length, in
                                   (const uint8_t*)&s_command_sequence,
                                   index, NULL, 0, 8);
 
-    while(length > 0) {
-        int size  = (length > 128) ? 128 : length;
+    while(len > 0) {
+        int size  = (len > 128) ? 128 : len;
         index = 0;
         s_command_sequence[index++] = I2C_CMD_RPT;
         s_command_sequence[index++] = size;
@@ -202,7 +203,7 @@ int I2C_Write(I2C_Type *base, uint32_t address, const char *data, int length, in
                                       size, NULL, 0, 8);
 
         /* Transfer stop signal */
-        if ((length <= 128) && stop) {
+        if ((len <= 128) && stop) {
             index = 0;
             s_command_sequence[index++] = I2C_CMD_STOP;
             s_command_sequence[index++] = I2C_CMD_WAIT;
@@ -213,7 +214,7 @@ int I2C_Write(I2C_Type *base, uint32_t address, const char *data, int length, in
                                           index, NULL, 0, 8);
         }
 
-        length -= 128;
+        len -= 128;
         data    +=128;
     }
 
@@ -229,6 +230,7 @@ int I2C_Read(I2C_Type *base, uint32_t address, char *data, int length, int stop)
 
     status_t status;
     int index = 0;
+    int len = length;
 
     s_command_sequence[index++] = I2C_CMD_START;
     s_command_sequence[index++] = I2C_CMD_WR;
@@ -238,15 +240,15 @@ int I2C_Read(I2C_Type *base, uint32_t address, char *data, int length, int stop)
                                   (const uint8_t*)&s_command_sequence,
                                   index, NULL, 0, 8);
 
-    while(length > 0) {
-        int size  = (length > 128) ? 128 : length;
+    while(len > 0) {
+        int size  = (len > 128) ? 128 : len;
         index = 0;
         s_command_sequence[index++] = I2C_CMD_RPT;
-        s_command_sequence[index++] = size;
+        s_command_sequence[index++] = size - 1;
         s_command_sequence[index++] = I2C_CMD_RD_ACK;
         s_command_sequence[index++] = I2C_CMD_RD_NACK;
 
-        if ((size < 128 || length == 128) && stop) {
+        if ((size < 128 || len == 128) && stop) {
             s_command_sequence[index++] = I2C_CMD_STOP;
             s_command_sequence[index++] = I2C_CMD_WAIT;
             s_command_sequence[index++] = 0xFF;
@@ -256,7 +258,7 @@ int I2C_Read(I2C_Type *base, uint32_t address, char *data, int length, int stop)
                                       (const uint8_t*)&s_command_sequence,
                                       index, data, size, 8);
 
-        length -= 128;
+        len -= 128;
         data    +=128;
     }
 
