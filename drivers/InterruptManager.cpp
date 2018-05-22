@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+   Modifications copyright (C) 2018 GreenWaves Technologies
+   - Add irq_helper() risc-v support
+*/
 #include "cmsis.h"
 #if defined(NVIC_NUM_VECTORS)
 
@@ -118,7 +122,11 @@ bool InterruptManager::remove_handler(pFunctionPointer_t handler, IRQn_Type irq)
 }
 
 void InterruptManager::irq_helper() {
+    #ifndef __RISCV_ARCH_GAP__
     _chains[__get_IPSR()]->call();
+    #else
+    _chains[__get_MCAUSE() & MCAUSE_EC_Msk]->call();
+    #endif
 }
 
 int InterruptManager::get_irq_index(IRQn_Type irq) {

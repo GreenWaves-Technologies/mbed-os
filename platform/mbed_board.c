@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
+
+ - Change to let mbed_die do nothing for GAP architecture
+ - Change mbed_error_vfprintf to support GAP architecture
+ */
 #include <stdio.h>
 #include "hal/gpio_api.h"
 #include "platform/mbed_wait_api.h"
@@ -27,6 +34,7 @@ extern serial_t stdio_uart;
 #endif
 
 WEAK void mbed_die(void) {
+#if (__RISCV_ARCH_GAP__ == 0U)
 #if !defined (NRF51_H) && !defined(TARGET_EFM32)
     core_util_critical_section_enter();
 #endif
@@ -47,6 +55,7 @@ WEAK void mbed_die(void) {
             wait_ms(400);
         }
     }
+#endif
 }
 
 void mbed_error_printf(const char* format, ...) {
@@ -66,6 +75,7 @@ void mbed_error_vfprintf(const char * format, va_list arg) {
         if (!stdio_uart_inited) {
             serial_init(&stdio_uart, STDIO_UART_TX, STDIO_UART_RX);
         }
+#if (__RISCV_ARCH_GAP__ == 0U)
 #if MBED_CONF_PLATFORM_STDIO_CONVERT_NEWLINES
         char stdio_out_prev = '\0';
         for (int i = 0; i < size; i++) {
@@ -79,6 +89,31 @@ void mbed_error_vfprintf(const char * format, va_list arg) {
         for (int i = 0; i < size; i++) {
             serial_putc(&stdio_uart, buffer[i]);
         }
+#endif
+#else       
+        #ifdef USE_UART
+        {
+#if MBED_CONF_PLATFORM_STDIO_CONVERT_NEWLINES
+        char stdio_out_prev = '\0';
+        for (int i = 0; i < size; i++) {
+            if (buffer[i] == '\n' && stdio_out_prev != '\r') {
+                 serial_putc(&stdio_uart, '\r');
+            }
+            serial_putc(&stdio_uart, buffer[i]);
+            stdio_out_prev = buffer[i];
+        }
+#else
+        for (int i = 0; i < size; i++) {
+            serial_putc(&stdio_uart, buffer[i]);
+        }
+#endif
+        }
+        #else
+        {
+            buffer[size] = 0;
+            puts(buffer);
+        }
+        #endif
 #endif
     }
     core_util_critical_section_exit();

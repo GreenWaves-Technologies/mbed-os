@@ -21,8 +21,14 @@
  */
 #ifndef KERNEL_H
 #define KERNEL_H
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
+
+ - Add #include "cmsis_os2.h"
+ */
 
 #include <stdint.h>
+#include "cmsis_os2.h"
 
 namespace rtos {
 /** \addtogroup rtos */

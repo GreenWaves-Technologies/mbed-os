@@ -14,6 +14,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+###
+# Modifications copyright (C) 2018 GreenWaves Technologies
+#
+# - Add IMXGAP8 support in CORE_LABELS
+###
 from __future__ import print_function
 
 import os
@@ -47,7 +52,8 @@ CORE_LABELS = {
     "Cortex-M23": ["M23", "CORTEX_M", "LIKE_CORTEX_M23", "CORTEX"],
     "Cortex-M23-NS": ["M23", "CORTEX_M", "LIKE_CORTEX_M23", "CORTEX"],
     "Cortex-M33": ["M33", "CORTEX_M", "LIKE_CORTEX_M33", "CORTEX"],
-    "Cortex-M33-NS": ["M33", "CORTEX_M", "LIKE_CORTEX_M33", "CORTEX"]
+    "Cortex-M33-NS": ["M33", "CORTEX_M", "LIKE_CORTEX_M33", "CORTEX"],
+    "IMXGAP8": ["GAP", "RISCV_32", "RTOS_GAP", "RISCV"]
 }
 
 ################################################################################

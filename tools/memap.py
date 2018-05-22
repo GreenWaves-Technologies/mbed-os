@@ -617,7 +617,7 @@ class MemapParser(object):
 
         return output
 
-    toolchains = ["ARM", "ARM_STD", "ARM_MICRO", "GCC_ARM", "GCC_CR", "IAR"]
+    toolchains = ["ARM", "ARM_STD", "ARM_MICRO", "GCC_ARM", "GCC_CR", "GCC_RISCV", "IAR"]
 
     def compute_report(self):
         """ Generates summary of memory usage for main areas
@@ -657,7 +657,7 @@ class MemapParser(object):
         """
         if toolchain in ("ARM", "ARM_STD", "ARM_MICRO", "ARMC6"):
             parser = _ArmccParser()
-        elif toolchain == "GCC_ARM" or toolchain == "GCC_CR":
+        elif toolchain in ("GCC_ARM", "GCC_CR", "GCC_RISCV"):
             parser = _GccParser()
         elif toolchain == "IAR":
             parser = _IarParser()

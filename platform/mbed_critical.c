@@ -14,7 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
 
+ - Change to not use MBED_EXCLUSIVE_ACCESS for GAP architecture
+ - Change core_util_are_interrupts_enabled and core_util_is_isr_active to support GAP architecture
+ */
 /* Declare __STDC_LIMIT_MACROS so stdint.h defines UINT32_MAX when using C++ */
 #define __STDC_LIMIT_MACROS
 #include "hal/critical_section_api.h"
@@ -25,6 +30,7 @@
 #include "platform/mbed_toolchain.h"
 
 // if __EXCLUSIVE_ACCESS rtx macro not defined, we need to get this via own-set architecture macros
+#if (__RISCV_ARCH_GAP__ == 0U)
 #ifndef MBED_EXCLUSIVE_ACCESS
 #ifndef __EXCLUSIVE_ACCESS
 #if ((__ARM_ARCH_7M__      == 1U) || \
@@ -42,6 +48,7 @@
 #define MBED_EXCLUSIVE_ACCESS __EXCLUSIVE_ACCESS
 #endif
 #endif
+#endif
 
 static volatile uint32_t critical_section_reentrancy_counter = 0;
 
@@ -49,6 +56,8 @@ bool core_util_are_interrupts_enabled(void)
 {
 #if defined(__CORTEX_A9)
     return ((__get_CPSR() & 0x80) == 0);
+#elif (__RISCV_ARCH_GAP__ == 1U)
+    return ((__get_MSTATUS() & 0x8));
 #else
     return ((__get_PRIMASK() & 0x1) == 0);
 #endif
@@ -65,6 +74,8 @@ bool core_util_is_isr_active(void)
         default:
             return true;
     }
+#elif (__RISCV_ARCH_GAP__ == 1U)
+    return (__get_MCAUSE() != 0U);
 #else
     return (__get_IPSR() != 0U);
 #endif

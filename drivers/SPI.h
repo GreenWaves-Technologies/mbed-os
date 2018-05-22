@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+   Modifications copyright (C) 2018 GreenWaves Technologies
+   - Add two functions' define "read" and "transfer_command_sequence" for SPI
+*/
 #ifndef MBED_SPI_H
 #define MBED_SPI_H
 
@@ -118,6 +122,31 @@ public:
      *    Response from the SPI slave
      */
     virtual int write(int value);
+
+    #ifdef __RISCV_ARCH_GAP__
+    /** Write to the SPI Slave and return the response
+     *
+     *  Here we use explicit transfer, so write just write something to SPI slave
+     *  without return. But read means write a command to read a response.
+     *
+     *  @param value Data to be sent to the SPI slave
+     *
+     *  @returns
+     *    Response from the SPI slave
+     */
+    virtual int read(int value);
+
+    /** Transfer to the SPI Slave with sequence
+     *
+     *  Here we use explicit transfer, so user need to config the sequence of SPI UDMA.
+     *
+     *  @param s_command Sequencical Configuration Data to be sent to control SPI Master
+     *
+     *  @returns
+     *      Number of bytes
+     */
+    virtual int transfer_command_sequence(spi_command_sequence_t *s_command);
+    #endif
 
     /** Write to the SPI Slave and obtain the response
      *

@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+   Modifications copyright (C) 2018 GreenWaves Technologies
+   - Add ticker_time comparision with ticker->queue->tick_last_read to decide whether 
+     add 1000us or not
+ */
 #include <stdio.h>
 #include <stddef.h>
 #include "hal/ticker_api.h"
@@ -116,6 +121,14 @@ static void update_present_time(const ticker_data_t *const ticker)
         // No work to do
         return;
     }
+    #if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
+    // If ticker_timer < ticker->queue->tick_last_read, Never should happened,
+    // But because of critical_section_*, systick is delayed.
+    else if (ticker_time < ticker->queue->tick_last_read) {
+        // Should add ticker_frequence 1000
+        ticker_time += 1000;
+    }
+    #endif
 
     uint64_t elapsed_ticks = (ticker_time - queue->tick_last_read) & queue->bitmask;
     queue->tick_last_read = ticker_time;

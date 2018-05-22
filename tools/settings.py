@@ -14,6 +14,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+###
+# Modifications copyright (C) 2018 GreenWaves Technologies
+#
+# - Add GCC toolchain PATH support for RISC-V GCC and target for GAP  
+###
 from __future__ import print_function
 from os import getenv
 from os.path import join, abspath, dirname, exists
@@ -41,6 +46,9 @@ GCC_CR_PATH = ""
 
 # IAR
 IAR_PATH = ""
+
+# GCC_RISCV
+GCC_RISCV_PATH = ""
 
 # Goanna static analyser. Please overload it in mbed_settings.py
 GOANNA_PATH = ""
@@ -80,7 +88,7 @@ except ImportError:
 ##############################################################################
 # User Settings (env vars)
 ##############################################################################
-_ENV_PATHS = ['ARM_PATH', 'GCC_ARM_PATH', 'GCC_CR_PATH', 'IAR_PATH',
+_ENV_PATHS = ['ARM_PATH', 'GCC_ARM_PATH', 'GCC_CR_PATH', 'IAR_PATH', 'GCC_RISCV_PATH',
               'ARMC6_PATH']
 
 for _n in _ENV_PATHS:

@@ -13,6 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
+
+ - Change #including drivers/UARTSerial.h #include "tinyprintf.h"
+ - Change write function to add support for RISC-V GCC compiler.
+ - Change default_console to put static variables inside functions instead of global variables.
+ - Change exit function to support for RISC-V GCC compiler.
+ */
 #include <time.h>
 #include "platform/platform.h"
 #include "platform/FilePath.h"
@@ -28,7 +36,9 @@
 #include "platform/mbed_critical.h"
 #include "platform/mbed_poll.h"
 #include "platform/PlatformMutex.h"
+#  if MBED_CONF_PLATFORM_STDIO_BUFFERED_SERIAL
 #include "drivers/UARTSerial.h"
+#  endif
 #include "us_ticker_api.h"
 #include "lp_ticker_api.h"
 #include <stdlib.h>
@@ -40,6 +50,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include "platform/mbed_retarget.h"
+#if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
+#include "tinyprintf.h"
+#endif
 
 static SingletonPtr<PlatformMutex> _mutex;
 
@@ -165,6 +178,27 @@ DirectSerial::DirectSerial(PinName tx, PinName rx, int baud) {
 #endif
 }
 
+#if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
+ssize_t DirectSerial::write(const void *buffer, size_t size) {
+    const unsigned char *buf = static_cast<const unsigned char *>(buffer);
+    #ifdef USE_UART
+    {
+        for (size_t i = 0; i < size; i++) {
+            serial_putc(&stdio_uart, buf[i]);
+        }
+    }
+    #else
+    {
+        unsigned char *buf_fix  = (unsigned char *)((unsigned int)buf);
+        buf_fix[size] = 0;
+        puts((const char *)buf_fix);
+
+    }
+    #endif
+
+    return size;
+}
+#else
 ssize_t DirectSerial::write(const void *buffer, size_t size) {
     const unsigned char *buf = static_cast<const unsigned char *>(buffer);
     for (size_t i = 0; i < size; i++) {
@@ -172,6 +206,7 @@ ssize_t DirectSerial::write(const void *buffer, size_t size) {
     }
     return size;
 }
+#endif
 
 ssize_t DirectSerial::read(void *buffer, size_t size) {
     unsigned char *buf = static_cast<unsigned char *>(buffer);
@@ -228,8 +263,6 @@ MBED_WEAK FileHandle* mbed::mbed_override_console(int fd)
     return NULL;
 }
 
-static FileHandle* default_console()
-{
 #if DEVICE_SERIAL
 #  if MBED_CONF_PLATFORM_STDIO_BUFFERED_SERIAL
     static UARTSerial console(STDIO_UART_TX, STDIO_UART_RX, MBED_CONF_PLATFORM_STDIO_BAUD_RATE);
@@ -246,6 +279,9 @@ static FileHandle* default_console()
 #else // DEVICE_SERIAL
     static Sink console;
 #endif
+
+static FileHandle* default_console()
+{
     return &console;
 }
 
@@ -1098,6 +1134,9 @@ extern "C" WEAK void __cxa_pure_virtual(void) {
 
 #endif
 
+#if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
+extern "C" void _exit(int return_code);
+#else
 // Provide implementation of _sbrk (low-level dynamic memory allocation
 // routine) for GCC_ARM which compares new heap pointer with MSP instead of
 // SP.  This make it compatible with RTX RTOS thread stacks.
@@ -1181,6 +1220,7 @@ extern "C" void exit(int return_code) {
 
 #if !defined(TOOLCHAIN_GCC_ARM) && !defined(TOOLCHAIN_GCC_CR)
 } //namespace std
+#endif
 #endif
 
 #if defined(TOOLCHAIN_ARM) || defined(TOOLCHAIN_GCC)

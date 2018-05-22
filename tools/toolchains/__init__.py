@@ -14,6 +14,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+###
+# Modifications copyright (C) 2018 GreenWaves Technologies
+#
+# - Add IMXGAP8 support in CORTEX_SYMBOLS
+# - Add RISC-V toochain support
+###
 from __future__ import print_function, division, absolute_import
 
 import re
@@ -352,6 +358,7 @@ LEGACY_TOOLCHAIN_NAMES = {
     'GCC_ARM': 'GCC_ARM', 'GCC_CR': 'GCC_CR',
     'IAR': 'IAR',
     'ARMC6': 'ARMC6',
+    'GCC_RISCV': 'GCC_RISCV'
 }
 
 
@@ -383,6 +390,7 @@ class mbedToolchain:
         "Cortex-M33": ["__CORTEX_M33", "ARM_MATH_ARMV8MML", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],
         "Cortex-M33F-NS": ["__CORTEX_M33", "ARM_MATH_ARMV8MML", "__DOMAIN_NS=1", "__FPU_PRESENT", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],
         "Cortex-M33F": ["__CORTEX_M33", "ARM_MATH_ARMV8MML", "__FPU_PRESENT", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],
+        "IMXGAP8": ["__GAP", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],
     }
 
     MBED_CONFIG_FILE_NAME="mbed_config.h"
@@ -1547,18 +1555,19 @@ class mbedToolchain:
         to_ret.update(self.config.report)
         return to_ret
 
-from tools.settings import ARM_PATH, ARMC6_PATH, GCC_ARM_PATH, IAR_PATH
+from tools.settings import ARM_PATH, ARMC6_PATH, GCC_ARM_PATH, IAR_PATH, GCC_RISCV_PATH
 
 TOOLCHAIN_PATHS = {
     'ARM': ARM_PATH,
     'uARM': ARM_PATH,
     'ARMC6': ARMC6_PATH,
     'GCC_ARM': GCC_ARM_PATH,
-    'IAR': IAR_PATH
+    'IAR': IAR_PATH,
+    'GCC_RISCV':GCC_RISCV_PATH
 }
 
 from tools.toolchains.arm import ARM_STD, ARM_MICRO, ARMC6
-from tools.toolchains.gcc import GCC_ARM
+from tools.toolchains.gcc import GCC_ARM, GCC_RISCV
 from tools.toolchains.iar import IAR
 
 TOOLCHAIN_CLASSES = {
@@ -1566,7 +1575,8 @@ TOOLCHAIN_CLASSES = {
     u'uARM': ARM_MICRO,
     u'ARMC6': ARMC6,
     u'GCC_ARM': GCC_ARM,
-    u'IAR': IAR
+    u'IAR': IAR,
+    u'GCC_RISCV':GCC_RISCV
 }
 
 TOOLCHAINS = set(TOOLCHAIN_CLASSES.keys())

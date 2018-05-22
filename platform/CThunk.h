@@ -34,12 +34,21 @@
  * - supports an optional context parameter for the called function
  * - ideally suited for class object receiving interrupts (NVIC_SetVector)
  */
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
 
+ - Add CTHUNK_ADDRESS and CTHUNK_VARIABLES jugdement according to architecture 
+ */
 #ifndef __CTHUNK_H__
 #define __CTHUNK_H__
 
+#if (defined(__GAP8__) || defined(__VEGA__) )
+#define CTHUNK_ADDRESS 0
+#define CTHUNK_VARIABLES volatile uint32_t code[6]
+#else
 #define CTHUNK_ADDRESS 1
 #define CTHUNK_VARIABLES volatile uint32_t code[2]
+#endif
 
 #if (defined(__CORTEX_M3) || defined(__CORTEX_M4) || defined(__CORTEX_M7) || defined(__CORTEX_A9) \
     || defined(__CORTEX_M33))
@@ -69,6 +78,25 @@
 #define CTHUNK_ASSIGMENT do {                              \
                              m_thunk.code[0] = 0xC80FA001; \
                              m_thunk.code[1] = 0x00004718; \
+                         } while (0)
+
+#elif (defined(__GAP8__) || defined(__VEGA__))
+/*
+* CTHUNK disassembly for GAP8 RISCV 32IMC:
+* * auipc a4, #0
+* * lw    a0, 24(a4)
+* * lw    a1, 28(a4)
+* * lw    a2, 32(a4)
+* * lw    a3, 36(a4)
+* * jr    a3
+*/
+#define CTHUNK_ASSIGMENT do {                              \
+                             m_thunk.code[0] = 0x00000217; \
+                             m_thunk.code[1] = 0x01822503; \
+                             m_thunk.code[2] = 0x01C22583; \
+                             m_thunk.code[3] = 0x02022603; \
+                             m_thunk.code[4] = 0x02422683; \
+                             m_thunk.code[5] = 0x00068067; \
                          } while (0)
 
 #else

@@ -15,7 +15,12 @@
  * limitations under the License.
  *
  */
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
 
+ - Change some type defines, ssize_t and off_t already defined in RISC-V 32-bit GCC toolchain
+ - Change telldir and seekdir functions' arguments type and return type
+ */
 #ifndef RETARGET_H
 #define RETARGET_H
 
@@ -30,8 +35,10 @@
 /* We can get the following standard types from sys/types for gcc, but we
  * need to define the types ourselves for the other compilers that normally
  * target embedded systems */
+#ifndef __RISCV_ARCH_GAP__
 typedef signed   int  ssize_t;  ///< Signed size type, usually encodes negative errors
 typedef signed   long off_t;    ///< Offset in a data stream
+#endif
 typedef unsigned int  nfds_t;   ///< Number of file descriptors
 typedef unsigned long long fsblkcnt_t;  ///< Count of file system blocks
 #if defined(__ARMCC_VERSION) || !defined(__GNUC__)
@@ -523,8 +530,13 @@ extern "C" {
     struct dirent *readdir(DIR *);
     int closedir(DIR*);
     void rewinddir(DIR*);
+    #ifndef __RISCV_ARCH_GAP__
     long telldir(DIR*);
     void seekdir(DIR*, long);
+    #else
+    off_t telldir(DIR*);
+    void seekdir(DIR*, off_t);
+    #endif
     int mkdir(const char *name, mode_t n);
 #if __cplusplus
 }; // extern "C"

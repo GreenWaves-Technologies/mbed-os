@@ -19,6 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
+
+ - Add #include "rtos/Kernel.h"
+ */
 #ifndef THREAD_H
 #define THREAD_H
 
@@ -31,6 +36,7 @@
 #include "platform/NonCopyable.h"
 #include "rtos/Semaphore.h"
 #include "rtos/Mutex.h"
+#include "rtos/Kernel.h"
 
 namespace rtos {
 /** \addtogroup rtos */

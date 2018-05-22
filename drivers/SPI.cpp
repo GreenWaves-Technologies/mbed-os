@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+   Modifications copyright (C) 2018 GreenWaves Technologies
+   - Add two functions "read" and "transfer_command_sequence" for SPI
+*/
 #include "drivers/SPI.h"
 #include "platform/mbed_critical.h"
 
@@ -104,6 +108,24 @@ int SPI::write(int value) {
     unlock();
     return ret;
 }
+
+#ifdef __RISCV_ARCH_GAP__
+int SPI::read(int value) {
+    lock();
+    _acquire();
+    int ret = spi_master_read(&_spi, value);
+    unlock();
+    return ret;
+}
+
+int SPI::transfer_command_sequence(spi_command_sequence_t *s_command) {
+    lock();
+    _acquire();
+    int ret = spi_master_transfer_command_sequence(&_spi, s_command);
+    unlock();
+    return ret;
+}
+#endif
 
 int SPI::write(const char *tx_buffer, int tx_length, char *rx_buffer, int rx_length) {
     lock();

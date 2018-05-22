@@ -14,6 +14,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+###
+# Modifications copyright (C) 2018 GreenWaves Technologies
+#
+# - Add GCC toolchain support for RISC-V GCC and target for GAP
+###
 import re
 from os.path import join, basename, splitext, dirname, exists
 from distutils.spawn import find_executable
@@ -32,8 +37,8 @@ class GCC(mbedToolchain):
                  build_dir=None):
         mbedToolchain.__init__(self, target, notify, macros,
                                build_profile=build_profile, build_dir=build_dir)
+        self.target = target
 
-        tool_path=TOOLCHAIN_PATHS['GCC_ARM']
         # Add flags for current size setting
         default_lib = "std"
         if hasattr(target, "default_lib"):
@@ -45,54 +50,65 @@ class GCC(mbedToolchain):
             self.flags["common"].append("-DMBED_RTOS_SINGLE_THREAD")
             self.flags["ld"].append("--specs=nano.specs")
 
-        if target.core == "Cortex-M0+":
-            self.cpu = ["-mcpu=cortex-m0plus"]
-        elif target.core.startswith("Cortex-M4"):
-            self.cpu = ["-mcpu=cortex-m4"]
-        elif target.core.startswith("Cortex-M7"):
-            self.cpu = ["-mcpu=cortex-m7"]
-        elif target.core.startswith("Cortex-M23"):
-            self.cpu = ["-mcpu=cortex-m23"]
-        elif target.core.startswith("Cortex-M33F"):
-            self.cpu = ["-mcpu=cortex-m33"]
-        elif target.core.startswith("Cortex-M33"):
-            self.cpu = ["-march=armv8-m.main"]
+        if target.core == "IMXGAP8":
+            tool_path=TOOLCHAIN_PATHS['GCC_RISCV']
+            self.cpu = ["-march=rv32imcxgap8", "-mPE=8", "-mFC=1"]
         else:
-            self.cpu = ["-mcpu={}".format(target.core.lower())]
+            tool_path=TOOLCHAIN_PATHS['GCC_ARM']
 
-        if target.core.startswith("Cortex-M"):
-            self.cpu.append("-mthumb")
+            if target.core == "Cortex-M0+":
+                self.cpu = ["-mcpu=cortex-m0plus"]
+            elif target.core.startswith("Cortex-M4"):
+                self.cpu = ["-mcpu=cortex-m4"]
+            elif target.core.startswith("Cortex-M7"):
+                self.cpu = ["-mcpu=cortex-m7"]
+            elif target.core.startswith("Cortex-M23"):
+                self.cpu = ["-mcpu=cortex-m23"]
+            elif target.core.startswith("Cortex-M33F"):
+                self.cpu = ["-mcpu=cortex-m33"]
+            elif target.core.startswith("Cortex-M33"):
+                self.cpu = ["-march=armv8-m.main"]
+            else:
+                self.cpu = ["-mcpu={}".format(target.core.lower())]
 
-        # FPU handling, M7 possibly to have double FPU
-        if target.core == "Cortex-M4F":
-            self.cpu.append("-mfpu=fpv4-sp-d16")
-            self.cpu.append("-mfloat-abi=softfp")
-        elif target.core == "Cortex-M7F":
-            self.cpu.append("-mfpu=fpv5-sp-d16")
-            self.cpu.append("-mfloat-abi=softfp")
-        elif target.core == "Cortex-M7FD":
-            self.cpu.append("-mfpu=fpv5-d16")
-            self.cpu.append("-mfloat-abi=softfp")
 
-        if target.core == "Cortex-A9":
-            self.cpu.append("-mthumb-interwork")
-            self.cpu.append("-marm")
-            self.cpu.append("-march=armv7-a")
-            self.cpu.append("-mfpu=vfpv3")
-            self.cpu.append("-mfloat-abi=hard")
-            self.cpu.append("-mno-unaligned-access")
+            if target.core.startswith("Cortex-M"):
+                self.cpu.append("-mthumb")
 
-        if ((target.core.startswith("Cortex-M23") or
-             target.core.startswith("Cortex-M33")) and
-            not target.core.endswith("-NS")):
-            self.cpu.append("-mcmse")
-        elif target.core == "Cortex-M23-NS" or target.core == "Cortex-M33-NS":
-             self.flags["ld"].append("-D__DOMAIN_NS=1")
+            # FPU handling, M7 possibly to have double FPU
+            if target.core == "Cortex-M4F":
+                self.cpu.append("-mfpu=fpv4-sp-d16")
+                self.cpu.append("-mfloat-abi=softfp")
+            elif target.core == "Cortex-M7F":
+                self.cpu.append("-mfpu=fpv5-sp-d16")
+                self.cpu.append("-mfloat-abi=softfp")
+            elif target.core == "Cortex-M7FD":
+                self.cpu.append("-mfpu=fpv5-d16")
+                self.cpu.append("-mfloat-abi=softfp")
+
+            if target.core == "Cortex-A9":
+                self.cpu.append("-mthumb-interwork")
+                self.cpu.append("-marm")
+                self.cpu.append("-march=armv7-a")
+                self.cpu.append("-mfpu=vfpv3")
+                self.cpu.append("-mfloat-abi=hard")
+                self.cpu.append("-mno-unaligned-access")
+
+            if ((target.core.startswith("Cortex-M23") or
+                 target.core.startswith("Cortex-M33")) and
+                not target.core.endswith("-NS")):
+                self.cpu.append("-mcmse")
+            elif target.core == "Cortex-M23-NS" or target.core == "Cortex-M33-NS":
+                self.flags["ld"].append("-D__DOMAIN_NS=1")
 
         self.flags["common"] += self.cpu
 
-        main_cc = join(tool_path, "arm-none-eabi-gcc")
-        main_cppc = join(tool_path, "arm-none-eabi-g++")
+        if target.core == "IMXGAP8":
+            main_cc = join(tool_path, "riscv32-unknown-elf-gcc")
+            main_cppc = join(tool_path, "riscv32-unknown-elf-g++")
+        else:
+            main_cc = join(tool_path, "arm-none-eabi-gcc")
+            main_cppc = join(tool_path, "arm-none-eabi-g++")
         self.asm = [main_cc] + self.flags['asm'] + self.flags["common"]
         self.cc  = [main_cc]
         self.cppc =[main_cppc]
@@ -100,12 +116,21 @@ class GCC(mbedToolchain):
         self.cppc += self.flags['cxx'] + self.flags['common']
 
         self.flags['ld'] += self.cpu
-        self.ld = [join(tool_path, "arm-none-eabi-gcc")] + self.flags['ld']
-        self.sys_libs = ["stdc++", "supc++", "m", "c", "gcc", "nosys"]
-        self.preproc = [join(tool_path, "arm-none-eabi-cpp"), "-E", "-P"]
 
-        self.ar = join(tool_path, "arm-none-eabi-ar")
-        self.elf2bin = join(tool_path, "arm-none-eabi-objcopy")
+        if target.core == "IMXGAP8":
+            self.ld = [join(tool_path, "riscv32-unknown-elf-gcc")] + self.flags['ld']
+            self.sys_libs = ["m", "c", "gcc", "nosys"]
+            self.preproc = [join(tool_path, "riscv32-unknown-elf-cpp"), "-E", "-P"]
+
+            self.ar = join(tool_path, "riscv32-unknown-elf-ar")
+            self.elf2bin = join(tool_path, "riscv32-unknown-elf-objcopy")
+        else:
+            self.ld = [join(tool_path, "arm-none-eabi-gcc")] + self.flags['ld']
+            self.sys_libs = ["stdc++", "supc++", "m", "c", "gcc", "nosys"]
+            self.preproc = [join(tool_path, "arm-none-eabi-cpp"), "-E", "-P"]
+
+            self.ar = join(tool_path, "arm-none-eabi-ar")
+            self.elf2bin = join(tool_path, "arm-none-eabi-objcopy")
 
     def is_not_supported_error(self, output):
         return "error: #error [NOT_SUPPORTED]" in output
@@ -204,12 +229,15 @@ class GCC(mbedToolchain):
 
         # Build linker command
         map_file = splitext(output)[0] + ".map"
-        cmd = self.ld + ["-o", output, "-Wl,-Map=%s" % map_file] + objects + ["-Wl,--start-group"] + libs + ["-Wl,--end-group"]
-        # Create Secure library
-        if self.target.core == "Cortex-M23" or self.target.core == "Cortex-M33":
-            secure_file = join(dirname(output), "cmse_lib.o")
-            cmd.extend(["-Wl,--cmse-implib"])
-            cmd.extend(["-Wl,--out-implib=%s" % secure_file])
+        if self.target.core == "IMXGAP8":
+            cmd = self.ld + ["-o", output, "-Wl,-Map=%s" % map_file] + objects + ["-Wl,--start-group, -nostartfiles"] + libs + ["-Wl,--end-group"]
+        else:
+            cmd = self.ld + ["-o", output, "-Wl,-Map=%s" % map_file] + objects + ["-Wl,--start-group"] + libs + ["-Wl,--end-group"]
+            # Create Secure library
+            if self.target.core == "Cortex-M23" or self.target.core == "Cortex-M33":
+                secure_file = join(dirname(output), "cmse_lib.o")
+                cmd.extend(["-Wl,--cmse-implib"])
+                cmd.extend(["-Wl,--out-implib=%s" % secure_file])
 
         if mem_map:
             cmd.extend(['-T', mem_map])
@@ -248,7 +276,11 @@ class GCC(mbedToolchain):
         # Build binary command
         _, fmt = splitext(bin)
         bin_arg = {'.bin': 'binary', '.hex': 'ihex'}[fmt]
-        cmd = [self.elf2bin, "-O", bin_arg, elf, bin]
+
+        if self.elf2bin == "riscv32-unknown-elf-objcopy":
+            cmd = [self.elf2bin,"-j", ".text", "-j", ".rodata", "-j", ".data", "-O", bin_arg, elf, bin]
+        else:
+            cmd = [self.elf2bin, "-O", bin_arg, elf, bin]
 
         # Call cmdline hook
         cmd = self.hook.get_cmdline_binary(cmd)
@@ -286,3 +318,24 @@ class GCC(mbedToolchain):
 
 class GCC_ARM(GCC):
     pass
+
+class GCC_RISCV(GCC):
+    @staticmethod
+    def check_executable():
+        """Returns True if the executable (riscv32-unknown-elf-gcc) location
+        specified by the user exists OR the executable can be found on the PATH.
+        Returns False otherwise."""
+        if not TOOLCHAIN_PATHS['GCC_RISCV'] or not exists(TOOLCHAIN_PATHS['GCC_RISCV']):
+            if find_executable('riscv32-unknown-elf-gcc'):
+                TOOLCHAIN_PATHS['GCC_RISCV'] = ''
+                return True
+            else:
+                return False
+        else:
+            exec_name = join(TOOLCHAIN_PATHS['GCC_RISCV'], 'riscv32-unknown-elf-gcc')
+            return exists(exec_name) or exists(exec_name + '.exe')
+
+    def __init__(self, target,  notify=None, macros=None, build_profile=None,
+                 build_dir=None):
+        GCC.__init__(self, target, notify, macros,
+                               build_profile=build_profile, build_dir=build_dir)

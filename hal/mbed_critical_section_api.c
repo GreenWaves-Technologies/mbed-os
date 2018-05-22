@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+   Modifications copyright (C) 2018 GreenWaves Technologies
+   - Change are_interrupts_enabled function to support risc-v 32-bit
+ */
 #include "cmsis.h"
 #include "hal/critical_section_api.h"
 #include "platform/mbed_assert.h"
@@ -27,6 +31,11 @@ static bool are_interrupts_enabled(void)
 {
 #if defined(__CORTEX_A9)
     return ((__get_CPSR() & 0x80) == 0);
+#elif ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
+    if(__get_CPRIV() & CPRIV_PRIV_Msk)
+        return (__get_MSTATUS() & MSTATUS_MIE_Msk);
+    else
+        return (__get_USTATUS() & MSTATUS_UIE_Msk);
 #else
     return ((__get_PRIMASK() & 0x1) == 0);
 #endif

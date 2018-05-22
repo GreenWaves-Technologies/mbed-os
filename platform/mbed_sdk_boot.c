@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
+
+ - Change function mbed_copy_nvic, do nothing if in RISC-V 32-bit
+ */
 
 #include "mbed_toolchain.h"
 #include <stdlib.h>
@@ -53,6 +58,7 @@ void mbed_copy_nvic(void)
     VTOR register and for A9 for which CMSIS doesn't define NVIC_SetVector; in both cases target code is
     responsible for correctly handling the vectors.
     */
+#if (__RISCV_ARCH_GAP__ == 0U)
 #if !defined(__CORTEX_M0) && !defined(__CORTEX_A9)
 #ifdef NVIC_RAM_VECTOR_ADDRESS
     uint32_t *old_vectors = (uint32_t *)SCB->VTOR;
@@ -63,6 +69,7 @@ void mbed_copy_nvic(void)
     SCB->VTOR = (uint32_t)NVIC_RAM_VECTOR_ADDRESS;
 #endif /* NVIC_RAM_VECTOR_ADDRESS */
 #endif /* !defined(__CORTEX_M0) && !defined(__CORTEX_A9) */
+#endif
 }
 
 /* Toolchain specific main code */

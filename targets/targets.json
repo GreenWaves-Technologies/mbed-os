@@ -4032,5 +4032,16 @@
         "detect_code": ["7013"],
         "release_versions": ["5"],
         "bootloader_supported": true
+    },
+    "GAP8": {
+        "inherits": ["Target"],
+        "core": "IMXGAP8",
+        "extra_labels": ["GWT", "GAP8"],
+        "macros": ["__GAP8__"],
+        "features": ["CLUSTER"],
+        "default_toolchain": "GCC_RISCV",
+        "supported_toolchains": ["GCC_RISCV"],
+        "device_has": ["I2C", "I2C_ASYNCH", "INTERRUPTIN", "PORTIN", "PORTINOUT", "PORTOUT", "PWMOUT", "SERIAL", "SERIAL_ASYNCH", "STDIO_MESSAGES", "SLEEP", "SPI", "SPI_ASYNCH", "HYPERBUS", "HYPERBUS_ASYNCH", "SPISLAVE"],
+        "device_name": [ "GAP8"]
     }
 }
