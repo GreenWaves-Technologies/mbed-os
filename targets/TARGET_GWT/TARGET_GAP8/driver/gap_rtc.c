@@ -38,7 +38,7 @@
 #define SECONDS_IN_A_HOUR (3600U)
 #define SECONDS_IN_A_MINUTE (60U)
 #define DAYS_IN_A_YEAR (365U)
-#define YEAR_RANGE_START (2000U)
+#define YEAR_RANGE_START (2001U)
 #define YEAR_RANGE_END (2099U)
 
 /*Year or Hour*/
@@ -83,6 +83,11 @@
  ******************************************************************************/
 uint8_t rtc_apb_pending;
 uint8_t rtc_is_init = 0;
+
+/*! @brief RTC IRQ handler typedef. */
+typedef void (*rtc_irq_handler_t)();
+
+static rtc_irq_handler_t rtc_irq_handler;
 
 /*******************************************************************************
  * Code
@@ -290,6 +295,8 @@ void RTC_Calibration(RTC_APB_Type *base)
     uint32_t val = RTC_APB_REGRead(base, RTC_CTRL_ADDR);
     val |= RTC_CR_CALIBRATION_EN(1);
     RTC_APB_REGWrite(base, RTC_CTRL_ADDR, val);
+
+    RTC_ClearStatusFlags(RTC_APB, uRTC_CalibrationFlag);
 }
 
 static void RTC_SetClockDiv(RTC_APB_Type *base, uint16_t div)
@@ -321,6 +328,8 @@ void RTC_StartAlarm(RTC_APB_Type *base, rt_alarm_rpt_mode_t repeatmode)
     val |=RTC_ALARM_CTRL_CONFIG(repeatmode);
 
     RTC_APB_REGWrite(base, RTC_ALARM_CTRL_ADDR, val);
+
+    RTC_ClearStatusFlags(RTC_APB, uRTC_AlarmFlag);
 }
 
 void RTC_StopAlarm(RTC_APB_Type *base)
@@ -427,6 +436,8 @@ void RTC_StartCountDown(RTC_APB_Type *base, uint8_t repeat_en)
     val |= RTC_COUNTDOWN_MODE(repeat_en);
 
     RTC_APB_REGWrite(base, RTC_COUNTDOWN_CTRL_ADDR, val);
+
+    RTC_ClearStatusFlags(RTC_APB, uRTC_TimerFlag);
 }
 
 void RTC_StopCountDown(RTC_APB_Type *base)
@@ -523,7 +534,13 @@ void RTC_APB_IRQHandler()
     rtc_apb_pending = 0;
 }
 
+
+void RTC_IRQHandlerBind(uint32_t irq)
+{
+    rtc_irq_handler = (rtc_irq_handler_t)irq;
+}
+
 void RTC_IRQHandler()
 {
-    RTC_ClearStatusFlags(RTC_APB, 0xFFFFFFFF);
+    rtc_irq_handler();
 }

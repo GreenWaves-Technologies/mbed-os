@@ -100,7 +100,7 @@ typedef struct _rtc_datetime_bcd
 /*! @brief Structure is used to hold the date and time */
 typedef struct _rtc_datetime
 {
-    uint16_t year;  /*!< Range from 2000 to 2099.*/
+    uint16_t year;  /*!< Range from 2001 to 2099.*/
     uint8_t month;  /*!< Range from 1 to 12.*/
     uint8_t day;    /*!< Range from 1 to 31 (depending on month).*/
     uint8_t hour;   /*!< Range from 0 to 23.*/
@@ -290,6 +290,13 @@ uint32_t RTC_GetEnabledInterrupts(RTC_APB_Type *base);
  *
  */
 void RTC_APB_IRQHandler();
+
+/*!
+ * @brief RTC IRQ Handler Binding
+ *
+ * @param irq RTC IRQ handler function pointer to binding
+ */
+void RTC_IRQHandlerBind(uint32_t irq);
 
 /*!
  * @brief RTC IRQ Handler

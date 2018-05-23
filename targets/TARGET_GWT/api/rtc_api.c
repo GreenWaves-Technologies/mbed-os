@@ -76,9 +76,9 @@ void rtc_write(time_t t)
     datetime.minute = temp->tm_min;
     datetime.second = temp->tm_sec;
 
-    /* RTC only support 2000 - 2099, set 2000 if less than 2000 */
-    if(datetime.year < 2000) {
-        datetime.year = 2000;
+    /* RTC only support 2001 - 2099, set 2001 if less than 2001 */
+    if(datetime.year < 2001) {
+        datetime.year = 2001;
     }
 
     RTC_SetCalendar(RTC_APB, &datetime);
