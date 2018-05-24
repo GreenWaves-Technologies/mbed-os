@@ -465,6 +465,10 @@ checkTask:
                 asm volatile ("jal SPI1_DriverIRQHandler");
             if(index == UDMA_EVENT_HYPERBUS_TX || index == UDMA_EVENT_HYPERBUS_RX)
                 asm volatile ("jal HYPERBUS0_DriverIRQHandler");
+            if(index == UDMA_EVENT_SAI_CH0)
+                asm volatile ("jal SAI_IRQHandler_CH0");
+            if(index == UDMA_EVENT_SAI_CH1)
+                asm volatile ("jal SAI_IRQHandler_CH1");
         }
     }
 }

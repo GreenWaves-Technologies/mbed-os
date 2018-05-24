@@ -258,8 +258,8 @@ void SAI_ModeConfig(I2S_Type *base,
  * @brief Performs an blocking receive transfer on SAI.
  *
  * @note This API returns immediately after the transfer initiates.
- * Call the SAI_RxGetTransferStatusIRQ to poll the transfer status and check whether
- * the transfer is finished. If the return status is not ustatus_SAI_Busy, the transfer
+ * Use event to check whether the transfer is finished.
+ * If the return status is not ustatus_SAI_Busy, the transfer
  * is finished.
  *
  * @param base SAI base pointer
@@ -303,12 +303,25 @@ void SAI_TransferRxCreateHandle(I2S_Type *base,
 status_t SAI_TransferReceiveNonBlocking(I2S_Type *base, sai_handle_t *handle, sai_transfer_t *xfer);
 
 /*!
- * @brief Tx interrupt handler.
+ * @brief Rx interrupt handler.
  *
  * @param base SAI base pointer.
  * @param handle Pointer to the sai_handle_t structure.
  */
 void SAI_TransferRxHandleIRQ(I2S_Type *base, sai_handle_t *handle);
+
+/*!
+ * @brief Rx interrupt handler for channel0.
+ *
+ */
+void SAI_IRQHandler_CH0();
+
+/*!
+ * @brief Rx interrupt handler for channel1.
+ *
+ */
+void SAI_IRQHandler_CH1();
+
 
 
 /*! @} */
