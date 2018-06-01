@@ -1,8 +1,8 @@
 /**************************************************************************//**
  * @file     cmsis_gcc.h
  * @brief    CMSIS compiler GCC header file
- * @version  V5.0.2
- * @date     13. February 2017
+ * @version  V5.0.3
+ * @date     16. January 2018
  ******************************************************************************/
 /*
  * Copyright (c) 2009-2017 ARM Limited. All rights reserved.
@@ -55,8 +55,11 @@
 #ifndef   __STATIC_INLINE
   #define __STATIC_INLINE                        static inline
 #endif
+#ifndef   __STATIC_FORCEINLINE                 
+  #define __STATIC_FORCEINLINE                   __attribute__((always_inline)) static inline
+#endif                                           
 #ifndef   __NO_RETURN
-  #define __NO_RETURN                            __attribute__((noreturn))
+  #define __NO_RETURN                            __attribute__((__noreturn__))
 #endif
 #ifndef   __USED
   #define __USED                                 __attribute__((used))
@@ -126,12 +129,13 @@
     \defgroup CMSIS_Core_RegAccFunctions CMSIS Core Register Access Functions
   @{
  */
+
 /**
   \brief   Get PRIVLVL Register
   \details Returns the content of the PRIVLVL Register.
   \return               PRIVLVL Register value
  */
-__attribute__((always_inline)) __STATIC_INLINE uint32_t __get_CPRIV(void)
+__STATIC_FORCEINLINE uint32_t __get_CPRIV(void)
 {
   uint32_t result;
 
@@ -143,7 +147,7 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __get_CPRIV(void)
   \brief   Restore the MIE bit
   \details Restore the MIE bit of MSTATUS
  */
-__attribute__((always_inline)) __STATIC_INLINE void __restore_irq(int irq)
+__STATIC_FORCEINLINE void __restore_irq(int irq)
 {
     // We are in machine mode, already mask all interrupt, so just set MIE = irq
     if(__get_CPRIV())
@@ -157,7 +161,7 @@ __attribute__((always_inline)) __STATIC_INLINE void __restore_irq(int irq)
   \details Enables IRQ interrupts by setting the MPIE-bit in the MSTATUS.
            Can only be executed in Privileged modes.
  */
-__attribute__((always_inline)) __STATIC_INLINE void __enable_irq(void)
+__STATIC_FORCEINLINE void __enable_irq(void)
 {
     // We are in machine mode, already mask all interrupt, so just set MIE = 1
     int irq;
@@ -172,7 +176,7 @@ __attribute__((always_inline)) __STATIC_INLINE void __enable_irq(void)
   \details Disables IRQ interrupts by clearing the MPIE-bit in the CPSR.
            Can only be executed in Privileged modes.
  */
-__attribute__((always_inline)) __STATIC_INLINE int __disable_irq(void)
+__STATIC_FORCEINLINE int __disable_irq(void)
 {
     int state;
     if(__get_CPRIV())
@@ -187,7 +191,7 @@ __attribute__((always_inline)) __STATIC_INLINE int __disable_irq(void)
   \details Writes the given value to the ustatus Register.
   \param [in]    control  ustatus Register value to set
  */
-__attribute__((always_inline)) __STATIC_INLINE void __set_USTATUS(uint32_t control)
+__STATIC_FORCEINLINE void __set_USTATUS(uint32_t control)
 {
 
     __ASM volatile ("csrw 0x0, %0" :: "r" (control) );
@@ -198,7 +202,7 @@ __attribute__((always_inline)) __STATIC_INLINE void __set_USTATUS(uint32_t contr
   \details Writes the given value to the mstatus Register.
   \param [in]    control  mstatus Register value to set
  */
-__attribute__((always_inline)) __STATIC_INLINE void __set_MSTATUS(uint32_t control)
+__STATIC_FORCEINLINE void __set_MSTATUS(uint32_t control)
 {
 
     __ASM volatile ("csrw mstatus, %0" :: "r" (control) );
@@ -209,7 +213,7 @@ __attribute__((always_inline)) __STATIC_INLINE void __set_MSTATUS(uint32_t contr
   \details Returns the content of the MCAUSE Register.
   \return               MCAUSE Register value
  */
-__attribute__((always_inline)) __STATIC_INLINE uint32_t __get_MCAUSE(void)
+__STATIC_FORCEINLINE uint32_t __get_MCAUSE(void)
 {
   uint32_t result;
 
@@ -222,7 +226,7 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __get_MCAUSE(void)
   \details Returns the content of the UCAUSE Register.
   \return               UCAUSE Register value
  */
-__attribute__((always_inline)) __STATIC_INLINE uint32_t __get_UCAUSE(void)
+__STATIC_FORCEINLINE uint32_t __get_UCAUSE(void)
 {
   uint32_t result;
 
@@ -235,7 +239,7 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __get_UCAUSE(void)
   \details Returns the content of the MSTATUS Register.
   \return               MSTATUS Register value
  */
-__attribute__((always_inline)) __STATIC_INLINE uint32_t __get_MSTATUS(void)
+__STATIC_FORCEINLINE uint32_t __get_MSTATUS(void)
 {
   uint32_t result;
 
@@ -249,7 +253,7 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __get_MSTATUS(void)
   \details Returns the content of the USTATUS Register.
   \return               USTATUS Register value
  */
-__attribute__((always_inline)) __STATIC_INLINE uint32_t __get_USTATUS(void)
+__STATIC_FORCEINLINE uint32_t __get_USTATUS(void)
 {
   uint32_t result;
 
@@ -262,7 +266,7 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __get_USTATUS(void)
   \details Returns the current value of the Process Stack Pointer (PSP).
   \return               PSP Register value
  */
-__attribute__((always_inline)) __STATIC_INLINE uint32_t __get_PSP(void)
+__STATIC_FORCEINLINE uint32_t __get_PSP(void)
 {
   register uint32_t result;
 
@@ -275,7 +279,7 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __get_PSP(void)
   \details Assigns the given value to the Process Stack Pointer (PSP).
   \param [in]    topOfProcStack  Process Stack Pointer value to set
  */
-__attribute__((always_inline)) __STATIC_INLINE void __set_PSP(uint32_t topOfProcStack)
+__STATIC_FORCEINLINE void __set_PSP(uint32_t topOfProcStack)
 {
   __ASM volatile ("sw %0, (userStack)(x0)"  :: "r" (topOfProcStack) );
 }
@@ -285,7 +289,7 @@ __attribute__((always_inline)) __STATIC_INLINE void __set_PSP(uint32_t topOfProc
   \details Returns the current value of the Main Stack Pointer (MSP).
   \return               MSP Register value
  */
-__attribute__((always_inline)) __STATIC_INLINE uint32_t __get_MSP(void)
+__STATIC_FORCEINLINE uint32_t __get_MSP(void)
 {
   register uint32_t result;
 
@@ -298,7 +302,7 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __get_MSP(void)
   \details Assigns the given value to the Main Stack Pointer (MSP).
   \param [in]    topOfMainStack  Main Stack Pointer value to set
  */
-__attribute__((always_inline)) __STATIC_INLINE void __set_MSP(uint32_t topOfMainStack)
+__STATIC_FORCEINLINE void __set_MSP(uint32_t topOfMainStack)
 {
   __ASM volatile ("sw %0, (kernelStack)(x0)"  :: "r" (topOfMainStack) );
 }
@@ -308,7 +312,7 @@ __attribute__((always_inline)) __STATIC_INLINE void __set_MSP(uint32_t topOfMain
   \details Read 0xC10 privilege register
   \return               Is User mode
  */
-__attribute__((always_inline)) __STATIC_INLINE uint32_t __is_U_Mode()
+__STATIC_FORCEINLINE uint32_t __is_U_Mode()
 {
     return (__builtin_pulp_spr_read(0xC10) & 0x3) == 0;
 }
@@ -318,7 +322,7 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __is_U_Mode()
   \details Read 0xC10 privilege register
   \return               Is Machine mode
  */
-__attribute__((always_inline)) __STATIC_INLINE uint32_t __is_M_Mode()
+__STATIC_FORCEINLINE uint32_t __is_M_Mode()
 {
     return (__builtin_pulp_spr_read(0xC10) & 0x3) == 1;
 }
@@ -351,21 +355,13 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __is_M_Mode()
   \brief   No Operation
   \details No Operation does nothing. This instruction can be used for code alignment purposes.
  */
-//__attribute__((always_inline)) __STATIC_INLINE void __NOP(void)
-//{
-//  __ASM volatile ("nop");
-//}
-#define __NOP()                             __ASM volatile ("nop")       /* This implementation generates debug information */
+#define __NOP()                             __ASM volatile ("nop")
 
 /**
   \brief   Wait For Interrupt
   \details Wait For Interrupt is a hint instruction that suspends execution until one of a number of events occurs.
  */
-//__attribute__((always_inline)) __STATIC_INLINE void __WFI(void)
-//{
-//  __ASM volatile ("wfi");
-//}
-#define __WFI()                             __ASM volatile ("wfi")       /* This implementation generates debug information */
+#define __WFI()                             __ASM volatile ("wfi")
 
 
 /**
@@ -373,22 +369,14 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __is_M_Mode()
   \details Wait For Event is a hint instruction that permits the processor to enter
            a low-power state until one of a number of events occurs.
  */
-//__attribute__((always_inline)) __STATIC_INLINE void __WFE(void)
-//{
-//  __ASM volatile ("wfe");
-//}
-#define __WFE()                             __ASM volatile ("wfe")       /* This implementation generates debug information */
+#define __WFE()                             __ASM volatile ("wfe")
 
 
 /**
   \brief   Send Event
   \details Send Event is a hint instruction. It causes an event to be signaled to the CPU.
  */
-//__attribute__((always_inline)) __STATIC_INLINE void __SEV(void)
-//{
-//  __ASM volatile ("sev");
-//}
-#define __SEV()                             __ASM volatile ("sev")       /* This implementation generates debug information */
+#define __SEV()                             __ASM volatile ("sev")
 
 
 /**
@@ -397,7 +385,7 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __is_M_Mode()
            so that all instructions following the ISB are fetched from cache or memory,
            after the instruction has been completed.
  */
-__attribute__((always_inline)) __STATIC_INLINE void __ISB(void)
+__STATIC_FORCEINLINE void __ISB(void)
 {
   //  __ASM volatile ("isb 0xF":::"memory");
 }
@@ -408,7 +396,7 @@ __attribute__((always_inline)) __STATIC_INLINE void __ISB(void)
   \details Acts as a special kind of Data Memory Barrier.
            It completes when all explicit memory accesses before this instruction complete.
  */
-__attribute__((always_inline)) __STATIC_INLINE void __DSB(void)
+__STATIC_FORCEINLINE void __DSB(void)
 {
 //  __ASM volatile ("dsb 0xF":::"memory");
 }
@@ -419,7 +407,7 @@ __attribute__((always_inline)) __STATIC_INLINE void __DSB(void)
   \details Ensures the apparent order of the explicit memory operations before
            and after the instruction, without ensuring their completion.
  */
-__attribute__((always_inline)) __STATIC_INLINE void __DMB(void)
+__STATIC_FORCEINLINE void __DMB(void)
 {
   //  __ASM volatile ("dmb 0xF":::"memory");
 }

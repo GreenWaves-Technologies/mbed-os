@@ -1,8 +1,8 @@
 /**************************************************************************//**
  * @file     os_systick.c
  * @brief    CMSIS OS Tick SysTick implementation
- * @version  V1.0.0
- * @date     05. June 2017
+ * @version  V1.0.1
+ * @date     24. November 2017
  ******************************************************************************/
 /*
  * Copyright (c) 2017-2017 ARM Limited. All rights reserved.
@@ -28,7 +28,9 @@
  */
 #include "os_tick.h"
 
-#include <cmsis.h>
+//lint -emacro((923,9078),SCB,SysTick) "cast from unsigned long to pointer"
+#include "RTE_Components.h"
+#include CMSIS_device_header
 
 #ifdef  SysTick
 
@@ -39,30 +41,32 @@
 static uint8_t PendST;
 
 // Setup OS Tick.
-__WEAK int32_t  OS_Tick_Setup (uint32_t freq, IRQHandler_t handler) {
+__WEAK int32_t OS_Tick_Setup (uint32_t freq, IRQHandler_t handler) {
   uint32_t load;
   (void)handler;
 
   if (freq == 0U) {
+    //lint -e{904} "Return statement before end of function"
     return (-1);
   }
 
   load = (SystemCoreClock / freq) - 1U;
   if (load > 0x00FFFFFFU) {
+    //lint -e{904} "Return statement before end of function"
     return (-1);
   }
 
   // Set SysTick Interrupt Priority
-#if   ((defined(__ARM_ARCH_8M_MAIN__) && (__ARM_ARCH_8M_MAIN__ == 1U)) || \
+#if   ((defined(__ARM_ARCH_8M_MAIN__) && (__ARM_ARCH_8M_MAIN__ != 0)) || \
        (defined(__CORTEX_M)           && (__CORTEX_M           == 7U)))
-  SCB->SHPR[11] =  SYSTICK_IRQ_PRIORITY;
-#elif  (defined(__ARM_ARCH_8M_BASE__) && (__ARM_ARCH_8M_BASE__ == 1U))
-  SCB->SHPR[1] |= (SYSTICK_IRQ_PRIORITY << 24);
-#elif ((defined(__ARM_ARCH_7M__)      && (__ARM_ARCH_7M__      == 1U)) || \
-       (defined(__ARM_ARCH_7EM__)     && (__ARM_ARCH_7EM__     == 1U)))
-  SCB->SHP[11]  =  SYSTICK_IRQ_PRIORITY;
-#elif  (defined(__ARM_ARCH_6M__)      && (__ARM_ARCH_6M__      == 1U))
-  SCB->SHP[1]  |= (SYSTICK_IRQ_PRIORITY << 24);
+  SCB->SHPR[11] = SYSTICK_IRQ_PRIORITY;
+#elif  (defined(__ARM_ARCH_8M_BASE__) && (__ARM_ARCH_8M_BASE__ != 0))
+  SCB->SHPR[1] |= ((uint32_t)SYSTICK_IRQ_PRIORITY << 24);
+#elif ((defined(__ARM_ARCH_7M__)      && (__ARM_ARCH_7M__      != 0)) || \
+       (defined(__ARM_ARCH_7EM__)     && (__ARM_ARCH_7EM__     != 0)))
+  SCB->SHP[11]  = SYSTICK_IRQ_PRIORITY;
+#elif  (defined(__ARM_ARCH_6M__)      && (__ARM_ARCH_6M__      != 0))
+  SCB->SHP[1]  |= ((uint32_t)SYSTICK_IRQ_PRIORITY << 24);
 #elif  (defined(__RISCV_ARCH_GAP__)  && (__RISCV_ARCH_GAP__  == 1U))
   // Nothing
 #else
@@ -100,7 +104,7 @@ __STATIC_INLINE uint32_t SysTick_Timer_Conf(char enable, char reset, char irq_en
 #endif
 
 /// Enable OS Tick.
-__WEAK int32_t  OS_Tick_Enable (void) {
+__WEAK void OS_Tick_Enable (void) {
 
 #if(__RISCV_ARCH_GAP__ == 1U)
   SysTick->CFG_REG_LO   =  SysTick_Timer_Conf(1, 1, 1, 0, 1, 0, 0, 0, 0);
@@ -112,11 +116,10 @@ __WEAK int32_t  OS_Tick_Enable (void) {
 
   SysTick->CTRL |=  SysTick_CTRL_ENABLE_Msk;
 #endif
-  return (0);
 }
 
 /// Disable OS Tick.
-__WEAK int32_t  OS_Tick_Disable (void) {
+__WEAK void OS_Tick_Disable (void) {
 
 #if(__RISCV_ARCH_GAP__ == 1U)
   SysTick->CFG_REG_LO   =  0;
@@ -128,22 +131,20 @@ __WEAK int32_t  OS_Tick_Disable (void) {
     PendST = 1U;
   }
 #endif
-  return (0);
 }
 
 // Acknowledge OS Tick IRQ.
-__WEAK int32_t  OS_Tick_AcknowledgeIRQ (void) {
+__WEAK void OS_Tick_AcknowledgeIRQ (void) {
 #if(__RISCV_ARCH_GAP__ == 1U)
   (void)SysTick->CFG_REG_LO;
 #else
   (void)SysTick->CTRL;
 #endif
-  return (0);
 }
 
 // Get OS Tick IRQ number.
 __WEAK int32_t  OS_Tick_GetIRQn (void) {
-  return (SysTick_IRQn);
+  return ((int32_t)SysTick_IRQn);
 }
 
 // Get OS Tick clock.
