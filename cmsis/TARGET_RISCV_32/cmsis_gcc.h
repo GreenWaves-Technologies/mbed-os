@@ -147,9 +147,9 @@ __attribute__((always_inline)) __STATIC_INLINE void __restore_irq(int irq)
 {
     // We are in machine mode, already mask all interrupt, so just set MIE = irq
     if(__get_CPRIV())
-        __ASM volatile ("csrrs %0, 0x300, %1" : "=r" (irq) : "I" (0x1<<3) );
+        __builtin_pulp_spr_write(0x300, irq);
     else
-        __ASM volatile ("csrrs %0, 0x000, %1" : "=r" (irq) : "I" (0x1) );
+        __builtin_pulp_spr_write(0x000, irq);
 }
 
 /**
