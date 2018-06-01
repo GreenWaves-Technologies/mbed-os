@@ -1,17 +1,34 @@
 #include "mbed_assert.h"
 #include "mbed_stats.h"
+#include "mbed_power_mgmt.h"
 #include <string.h>
 #include <stdlib.h>
 
 #include "device.h"
 #ifdef MBED_CONF_RTOS_PRESENT
 #include "cmsis_os2.h"
-#elif defined(MBED_STACK_STATS_ENABLED) || defined(MBED_THREAD_STATS_ENABLED)
+#include "rtos_idle.h"
+#elif defined(MBED_STACK_STATS_ENABLED) || defined(MBED_THREAD_STATS_ENABLED) || defined(MBED_CPU_STATS_ENABLED)
 #warning Statistics are currently not supported without the rtos.
 #endif
 
-// note: mbed_stats_heap_get defined in mbed_alloc_wrappers.cpp
+#if defined(MBED_CPU_STATS_ENABLED) && (!defined(DEVICE_LPTICKER) || !defined(DEVICE_SLEEP))
+#warning CPU statistics are not supported without low power timer support.
+#endif
 
+void mbed_stats_cpu_get(mbed_stats_cpu_t *stats)
+{
+    MBED_ASSERT(stats != NULL);
+    memset(stats, 0, sizeof(mbed_stats_cpu_t));
+#if defined(MBED_CPU_STATS_ENABLED) && defined(DEVICE_LPTICKER) && defined(DEVICE_SLEEP)
+    stats->uptime = mbed_uptime();
+    stats->idle_time = mbed_time_idle();
+    stats->sleep_time = mbed_time_sleep();
+    stats->deep_sleep_time = mbed_time_deepsleep();
+#endif
+}
+
+// note: mbed_stats_heap_get defined in mbed_alloc_wrappers.cpp
 void mbed_stats_stack_get(mbed_stats_stack_t *stats)
 {
     MBED_ASSERT(stats != NULL);
@@ -106,9 +123,6 @@ void mbed_stats_sys_get(mbed_stats_sys_t *stats)
     memset(stats, 0, sizeof(mbed_stats_sys_t));
 
 #if defined(MBED_SYS_STATS_ENABLED)
-#if defined(MBED_VERSION)
-    stats->os_version = MBED_VERSION;
-#endif
 #if defined(__CORTEX_M)
     stats->cpu_id = SCB->CPUID;
 #endif

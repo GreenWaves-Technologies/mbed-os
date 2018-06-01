@@ -21,7 +21,7 @@
  */
 #include "rtos/TARGET_CORTEX/SysTimer.h"
 
-#if DEVICE_LOWPOWERTIMER
+#if DEVICE_LPTICKER
 
 #include "hal/lp_ticker_api.h"
 #include "mbed_critical.h"
@@ -74,6 +74,7 @@ void SysTimer::suspend(uint32_t ticks)
 {
     core_util_critical_section_enter();
 
+    remove();
     schedule_tick(ticks);
     _suspend_time_passed = false;
     _suspended = true;

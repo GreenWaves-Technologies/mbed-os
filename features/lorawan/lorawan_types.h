@@ -36,37 +36,15 @@
 
 /**
  * Option Flags for send(), receive() APIs
+ *
+ * Special Notes for UPLINK:
+ *  i)  All of the flags are mutually exclusive.
+ *  ii) MSG_MULTICAST_FLAG cannot be used.
  */
 #define MSG_UNCONFIRMED_FLAG                  0x01
 #define MSG_CONFIRMED_FLAG                    0x02
 #define MSG_MULTICAST_FLAG                    0x04
 #define MSG_PROPRIETARY_FLAG                  0x08
-
-/**
- * Bit mask for message flags
- */
-
-#define MSG_FLAG_MASK                         0x0F
-
-/**
- * Mask for unconfirmed multicast message
- */
-#define MSG_UNCONFIRMED_MULTICAST              0x05
-
-/**
- * Mask for confirmed multicast message
- */
-#define MSG_CONFIRMED_MULTICAST                0x06
-
-/**
- * Mask for unconfirmed message proprietary message
- */
-#define MSG_UNCONFIRMED_PROPRIETARY            0x09
-
-/**
- * Mask for confirmed proprietary message
- */
-#define MSG_CONFIRMED_PROPRIETARY              0x0A
 
 /**
  * LoRaWAN device classes definition.
@@ -123,6 +101,7 @@ typedef enum lorawan_status {
     LORAWAN_STATUS_DUTYCYCLE_RESTRICTED = -1020,
     LORAWAN_STATUS_NO_CHANNEL_FOUND = -1021,
     LORAWAN_STATUS_NO_FREE_CHANNEL_FOUND = -1022,
+    LORAWAN_STATUS_METADATA_NOT_AVAILABLE = -1023
 } lorawan_status_t;
 
 /** The lorawan_connect_otaa structure.
@@ -213,7 +192,7 @@ typedef struct lorawan_connect {
  * TX_DONE              - When a packet is sent
  * TX_TIMEOUT,          - When stack was unable to send packet in TX window
  * TX_ERROR,            - A general TX error
- * TX_CRYPTO_ERROR,     - If MIC fails, or any other crypto relted error
+ * CRYPTO_ERROR,        - A crypto error indicating wrong keys
  * TX_SCHEDULING_ERROR, - When stack is unable to schedule packet
  * RX_DONE,             - When there is something to receive
  * RX_TIMEOUT,          - Not yet mapped
@@ -230,7 +209,8 @@ typedef enum lora_events {
     TX_DONE,
     TX_TIMEOUT,
     TX_ERROR,
-    TX_CRYPTO_ERROR,
+    CRYPTO_ERROR,
+    TX_CRYPTO_ERROR = CRYPTO_ERROR, //keeping this for backward compatibility
     TX_SCHEDULING_ERROR,
     RX_DONE,
     RX_TIMEOUT,
@@ -365,5 +345,57 @@ typedef struct lora_channelplan {
     uint8_t nb_channels;    // number of channels
     loramac_channel_t *channels;
 } lorawan_channelplan_t;
+
+/**
+ * Meta-data collection for a transmission
+ */
+typedef struct {
+    /**
+     * The transmission time on air of the frame.
+     */
+    uint32_t tx_toa;
+    /**
+     * The uplink channel used for transmission.
+     */
+    uint32_t channel;
+    /**
+     * The transmission power.
+     */
+    int8_t tx_power;
+    /**
+     * The uplink datarate.
+     */
+    uint8_t data_rate;
+    /**
+     * Provides the number of retransmissions.
+     */
+    uint8_t nb_retries;
+    /**
+     * A boolean to mark if the meta data is stale
+     */
+    bool stale;
+} lorawan_tx_metadata;
+
+/**
+ * Meta-data collection for the received packet
+ */
+typedef struct {
+    /**
+     * The RSSI for the received packet.
+     */
+    int16_t rssi;
+    /**
+     * Data rate of reception
+     */
+    uint8_t rx_datarate;
+    /**
+     * The SNR for the received packet.
+     */
+    uint8_t snr;
+    /**
+     * A boolean to mark if the meta data is stale
+     */
+    bool stale;
+} lorawan_rx_metadata;
 
 #endif /* MBED_LORAWAN_TYPES_H_ */

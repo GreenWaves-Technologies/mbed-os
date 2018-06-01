@@ -340,20 +340,6 @@ void nd_tasklet_trace_bootstrap_info()
 #endif /* #define TRACE_ND_TASKLET */
 
 /* Public functions */
-int8_t nd_tasklet_get_ip_address(char *address, int8_t len)
-{
-    uint8_t binary_ipv6[16];
-
-    if ((len >= 40) && (0 == arm_net_address_get(
-                            tasklet_data_ptr->network_interface_id, ADDR_IPV6_GP, binary_ipv6))) {
-        ip6tos(binary_ipv6, address);
-        //tr_debug("IP address: %s", address);
-        return 0;
-    } else {
-        return -1;
-    }
-}
-
 int8_t nd_tasklet_get_router_ip_address(char *address, int8_t len)
 {
     network_layer_address_s nd_address;
@@ -398,7 +384,6 @@ int8_t nd_tasklet_connect(mesh_interface_cb callback, int8_t nwk_interface_id)
             // -2 memory allocation failure
             return tasklet_data_ptr->tasklet;
         }
-        ns_event_loop_thread_start();
     } else {
         tasklet_data_ptr->tasklet = tasklet_id;
         mesh_system_send_connect_event(tasklet_data_ptr->tasklet);
