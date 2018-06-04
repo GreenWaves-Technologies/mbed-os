@@ -126,6 +126,13 @@ int SPI::read() {
     return ret;
 }
 
+void SPI::udma_qspi(int status) {
+    lock();
+    _acquire();
+    spi_master_qspi(&_spi, ((status == 0) ? uSPI_Single : uSPI_Quad));
+    unlock();
+}
+
 int SPI::transfer_command_sequence(spi_command_sequence_t *s_command) {
     lock();
     _acquire();

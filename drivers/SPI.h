@@ -145,6 +145,15 @@ public:
      */
     virtual int read();
 
+    /** Control spi master QSPI
+     *
+     *  Here we use udma to transfer data, so we can set to use qspi or not.
+     *
+     *  @param status Use or not use QSPI
+     *
+     */
+    virtual void udma_qspi(int status);
+
     /** Transfer to the SPI Slave with sequence
      *
      *  Here we use explicit transfer, so user need to config the sequence of SPI UDMA.
