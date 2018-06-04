@@ -196,7 +196,12 @@ osThreadAttr_t _main_thread_attr;
 #ifndef MBED_CONF_APP_MAIN_STACK_SIZE
 #define MBED_CONF_APP_MAIN_STACK_SIZE 4096
 #endif
+#if(__RISCV_ARCH_GAP__ == 1U)
+extern  char fc_main_stack[MBED_CONF_APP_MAIN_STACK_SIZE];
+#define _main_stack fc_main_stack
+#else
 MBED_ALIGN(8) char _main_stack[MBED_CONF_APP_MAIN_STACK_SIZE];
+#endif //(__RISCV_ARCH_GAP__ == 1U)
 mbed_rtos_storage_thread_t _main_obj;
 
 osMutexId_t               singleton_mutex_id;

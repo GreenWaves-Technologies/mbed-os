@@ -51,7 +51,7 @@ MEMORY
 }
 
 __L1_STACK_SIZE      = 0x400;
-__FC_MAIN_STACK_SIZE = 0;
+__FC_MAIN_STACK_SIZE = 0x400;
 __FC_OS_STACK_SIZE   = 0x1000;
 __FC_STACK_SIZE      = __FC_OS_STACK_SIZE + __FC_MAIN_STACK_SIZE;
 
@@ -334,19 +334,8 @@ SECTIONS
         __heapl2ram_start = .;
     } > L2
 
-    __l2Stack_size = 2048;
-
-    __heapl2ram_size = LENGTH(L2) - __heapl2ram_start + ORIGIN(L2) - __l2Stack_size;
+    __heapl2ram_size = LENGTH(L2) - __heapl2ram_start + ORIGIN(L2);
     __heapl2ram_limit = __heapl2ram_size + __heapl2ram_start;
-
-    .l2Stack :
-    {
-      __l2Stack_limit = ORIGIN(L2) + LENGTH(L2) - __l2Stack_size;
-      __l2Stack =  __l2Stack_limit + __l2Stack_size;
-      PROVIDE(l2Stack = __l2Stack);
-    } > L2
-
-    ASSERT(__l2Stack_limit >= __heapl2ram_start, "Region L2 overflowed with stack and heap")
 
     .stab  0 (NOLOAD) :
     {
