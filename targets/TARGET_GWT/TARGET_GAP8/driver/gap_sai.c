@@ -158,14 +158,14 @@ void SAI_ModeConfig(I2S_Type *base, char ch_id, uint8_t lsb_first, uint8_t pdm_f
                     uint8_t pdm_en, uint8_t use_ddr, uint8_t clk_mode)
 {
     if(ch_id) {
-        base->CHMODE = I2S_CHMODE_CH1_SNAP_CAM(0) |
+        base->CHMODE |= I2S_CHMODE_CH1_SNAP_CAM(0) |
                        I2S_CHMODE_CH1_LSB_FIRST(lsb_first) |
                        I2S_CHMODE_CH1_PDM_USEFILTER(pdm_filt_en) |
                        I2S_CHMODE_CH1_PDM_EN(pdm_en) |
                        I2S_CHMODE_CH1_USEDDR(use_ddr) |
                        I2S_CHMODE_CH1_MODE(clk_mode);
     } else {
-        base->CHMODE = I2S_CHMODE_CH0_SNAP_CAM(0) |
+        base->CHMODE |= I2S_CHMODE_CH0_SNAP_CAM(0) |
                        I2S_CHMODE_CH0_LSB_FIRST(lsb_first) |
                        I2S_CHMODE_CH0_PDM_USEFILTER(pdm_filt_en) |
                        I2S_CHMODE_CH0_PDM_EN(pdm_en) |
