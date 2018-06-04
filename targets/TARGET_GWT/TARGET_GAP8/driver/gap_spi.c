@@ -128,7 +128,10 @@ int SPI_MasterTransferCommandSequence(SPIM_Type *base, spi_command_sequence_t* s
     int index = 0;
 
     s_command_sequence[index++] = SPIM_CMD_SOT(seq->csn);
-    s_command_sequence[index++] = SPIM_CMD_SEND_CMD(seq->cmd, 8, seq->cmd_mode);
+
+    if (seq->cmd_bits) {
+        s_command_sequence[index++] = SPIM_CMD_SEND_CMD(seq->cmd, 8, seq->cmd_mode);
+    }
 
     if (seq->addr_bits) {
         s_command_sequence[index++] = SPIM_CMD_SEND_ADDR(seq->addr_bits, seq->addr_mode);

@@ -124,17 +124,26 @@ public:
     virtual int write(int value);
 
     #ifdef __RISCV_ARCH_GAP__
+    /** Control spi master chip select status
+     *
+     *  Here we use udma to transfer data, so chip select is controled by udma
+     *
+     *  @param status Chip select high or low
+     *
+     *  @returns
+     *    uDMA Status
+     */
+    virtual int udma_cs(int status);
+
     /** Write to the SPI Slave and return the response
      *
      *  Here we use explicit transfer, so write just write something to SPI slave
-     *  without return. But read means write a command to read a response.
-     *
-     *  @param value Data to be sent to the SPI slave
+     *  without return. But read means read a response after write a command.
      *
      *  @returns
      *    Response from the SPI slave
      */
-    virtual int read(int value);
+    virtual int read();
 
     /** Transfer to the SPI Slave with sequence
      *

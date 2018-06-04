@@ -110,10 +110,18 @@ int SPI::write(int value) {
 }
 
 #ifdef __RISCV_ARCH_GAP__
-int SPI::read(int value) {
+int SPI::udma_cs(int status) {
     lock();
     _acquire();
-    int ret = spi_master_read(&_spi, value);
+    int ret = spi_master_cs(&_spi, status);
+    unlock();
+    return ret;
+}
+
+int SPI::read() {
+    lock();
+    _acquire();
+    int ret = spi_master_read(&_spi, 0x00);
     unlock();
     return ret;
 }

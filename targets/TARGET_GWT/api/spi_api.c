@@ -79,6 +79,9 @@ void spi_init(spi_t *obj, PinName mosi, PinName miso, PinName sclk, PinName ssel
     pinmap_pinout(sclk, PinMap_SPI_SCLK);
     pinmap_pinout(ssel, PinMap_SPI_SSEL);
 
+    /* Get default Master config */
+    SPI_MasterGetDefaultConfig(&master_config);
+
     /* determine the SPI to use */
     if(ssel == SPI0_CSN1 || ssel == SPI1_CSN1_B2 || ssel == SPI1_CSN1_B15)
         master_config.whichCsn = uSPI_csn1;
@@ -105,8 +108,6 @@ void spi_format(spi_t *obj, int bits, int mode, int slave)
     spi_obj->bits = bits;
 
     /* Master config */
-    SPI_MasterGetDefaultConfig(&master_config);
-
     master_config.bitsPerFrame = (uint32_t)bits;
     master_config.cpol = (mode & 0x2) ? uSPI_ClockPolarityActiveLow : uSPI_ClockPolarityActiveHigh;
     master_config.cpha = (mode & 0x1) ? uSPI_ClockPhaseSecondEdge : uSPI_ClockPhaseFirstEdge;
@@ -153,9 +154,27 @@ int spi_master_write(spi_t *obj, int value)
 
     int index = 0;
 
-    s_command_sequence[index++] = SPIM_CMD_SOT(master_config.whichCsn);
     s_command_sequence[index++] = SPIM_CMD_SEND_CMD(value, 8, master_config.qpi);
-    s_command_sequence[index++] = SPIM_CMD_EOT(0);
+
+    /* Blocking transfer */
+    SPI_MasterTransferBlocking(spi_address[spi_obj->instance],
+                               (uint32_t* )s_command_sequence,
+                               (index * sizeof(uint32_t)),
+                               NULL, 0, 32);
+    return 0;
+}
+
+int spi_master_cs(spi_t *obj, int status)
+{
+    struct spi_s *spi_obj = SPI_S(obj);
+
+    int index = 0;
+
+    if (status)
+        s_command_sequence[index++] = SPIM_CMD_EOT(0);
+    else
+        s_command_sequence[index++] = SPIM_CMD_SOT(master_config.whichCsn);
+
 
     /* Blocking transfer */
     SPI_MasterTransferBlocking(spi_address[spi_obj->instance],
@@ -171,11 +190,7 @@ int spi_master_read(spi_t *obj, int cmd)
 
     int index = 0;
 
-    s_command_sequence[index++] = SPIM_CMD_SOT(master_config.whichCsn);
-    s_command_sequence[index++] = SPIM_CMD_SEND_CMD(cmd, 8, master_config.qpi);
-    s_command_sequence[index++] = SPIM_CMD_DUMMY(0);
     s_command_sequence[index++] = SPIM_CMD_RX_DATA(32, master_config.qpi, 0);
-    s_command_sequence[index++] = SPIM_CMD_EOT(0);
 
     /* Blocking transfer */
     SPI_MasterTransferBlocking(spi_address[spi_obj->instance],
@@ -216,7 +231,11 @@ int spi_master_block_write(spi_t *obj, const char *tx_buffer, int tx_length,
 
     for (int i = 0; i < total; i++) {
         char out = (i < tx_length) ? tx_buffer[i] : write_fill;
-        char in = spi_master_read(obj, out);
+        spi_master_cs(obj, 0);
+        spi_master_write(obj, out);
+        char in = spi_master_read(obj, 0);
+        spi_master_cs(obj, 1);
+
         if (i < rx_length) {
             rx_buffer[i] = in;
         }

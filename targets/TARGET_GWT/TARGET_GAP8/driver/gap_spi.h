@@ -235,6 +235,7 @@ typedef struct _spi_req_mem_tx {
 typedef struct _spi_command_sequence {
     uint8_t  csn;           /*!< The chip select to device */
     uint16_t cmd;           /*!< The command send to device */
+    uint8_t  cmd_bits;      /*!< The bits of cmd send to device */
     uint8_t  cmd_mode;      /*!< Specifies the Instruction Mode 1 or 4 */
     uint8_t  addr_bits;     /*!< The bits of address send to device */
     uint32_t addr;          /*!< If addr_bits is not 0, the address sent device*/

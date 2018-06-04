@@ -41,6 +41,14 @@ extern "C" {
 
 void spis_init(spi_t *obj, PinName mosi, PinName miso, PinName sclk, PinName ssel, PinName sdio2, PinName sdio3);
 
+/** Control spi master chip select high or low
+ *
+ * @param[in] obj   The SPI peripheral to use for sending
+ * @param[in] status   Indicate spi chip select low or high
+ * @return Returns the transfer status
+ */
+int spi_master_cs(spi_t *obj, int status);
+
 /** Read a byte in master mode
  *
  * @param[in] obj   The SPI peripheral to use for sending
