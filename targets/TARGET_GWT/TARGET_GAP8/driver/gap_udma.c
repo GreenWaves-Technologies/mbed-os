@@ -113,7 +113,7 @@ udma_req_t* UDMA_FindAvailableRequest()
         for (uint32_t i = 0; i < request_queue_num; i++)
         {
             /* Request available */
-            if (udma_requests[i].pending == 0)
+            if (udma_requests[i].pending == UDMA_REQ_FREE)
                 return &udma_requests[i];
         }
     }
@@ -129,7 +129,8 @@ void UDMA_Init(UDMA_Type *base)
           channel->first = (void *)0;
           channel->last  = (void *)0;
           channel->previous  = (void *)0;
-          channel->depth = 0;
+          channel->rx_depth = 0;
+          channel->tx_depth = 0;
       }
       /* Biding channels to individual peripheral */
       UDMA_SetChannelBase();
@@ -269,7 +270,7 @@ static status_t UDMA_EnqueueRequest(UDMA_Type *base, udma_req_t *req)
     /* Start channel */
     req->info.configFlags |= UDMA_CFG_EN(1);
 
-    req->pending = 1;
+    req->pending = UDMA_REQ_IN_SW_QUEUE;
 
     /* Create a request queue - coorperation with FC event handler */
     if (channel->first == (void *)0) {
@@ -286,14 +287,28 @@ static status_t UDMA_EnqueueRequest(UDMA_Type *base, udma_req_t *req)
         channel->previous = req;
 
     /* Enqueue maximum depth is 2 for each channel */
-    if (channel->depth < 2) {
-        channel->depth++;
+    if(req->info.isTx && channel->tx_depth < 2) {
+        channel->tx_depth++;
 
         /* HyperbusBus special control, if the request can not enqueue
          * it will be in the queue but will not be sent be FIFO
          */
         if (req->info.ctrl != UDMA_CTRL_HYPERBUS_CAN_NOT_ENQUEUE)
+        {
             UDMA_StartTransfer(base, &req->info);
+            req->pending = UDMA_REQ_IN_HW_QUEUE;
+        }
+    } else if(!req->info.isTx && channel->rx_depth < 2) {
+        channel->rx_depth++;
+
+        /* HyperbusBus special control, if the request can not enqueue
+         * it will be in the queue but will not be sent be FIFO
+         */
+        if (req->info.ctrl != UDMA_CTRL_HYPERBUS_CAN_NOT_ENQUEUE)
+        {
+            UDMA_StartTransfer(base, &req->info);
+            req->pending = UDMA_REQ_IN_HW_QUEUE;
+        }
     }
 
     __restore_irq(irq);
@@ -373,6 +388,9 @@ static inline void UDMA_RepeatTransfer(udma_req_t *req) {
     UDMA_StartTransfer(base, &req->info);
 }
 
+extern void SAI_IRQHandler_CH0(void *handle);
+extern void SAI_IRQHandler_CH1(void *handle);
+
 __attribute__((section(".text")))
 void UDMA_EventHandler(uint32_t index)
 {
@@ -383,12 +401,19 @@ void UDMA_EventHandler(uint32_t index)
         return;
     }
 
-    /* Quick response for blocking transfer*/
+    /*
+     * Quick response for blocking synchronous transfer
+     *
+     */
     if(blocking[index & 0x01]) {
         blocking[index & 0x01] = 0;
         return;
     }
 
+    /*
+     * Asynchronous transfer control
+     * The main idea is to check each request's pending flag.
+     */
     udma_channel_t *channel = &udma_channels[index >> 1];
     udma_req_t *first = channel->first;
 
@@ -401,28 +426,29 @@ void UDMA_EventHandler(uint32_t index)
          * For the second write request, we clear the two.
          */
         if (first->info.ctrl != UDMA_CTRL_DUAL_RX) {
-            first->pending = 0;
+            first->pending = UDMA_REQ_FREE;
 
             if (first->info.ctrl == UDMA_CTRL_DUAL_TX)
-                channel->previous->pending = 0;
+                channel->previous->pending = UDMA_REQ_FREE;
         }
+
+        /* Channel enqueue depth release one */
+        if(first->info.isTx)
+            channel->tx_depth--;
+        else
+            channel->rx_depth--;
 
         udma_req_t *next = channel->first->next;
 
         /* Check queue next request
          */
         if (next == (void *)0) {
-            /* Channel enqueue depth release one */
-            channel->depth--;
-
-            /* There is no valid request. Initializ the queue */
-            if ((channel->first->info.channelId & 0xFE) == UDMA_EVENT_HYPERBUS_RX)
+            /* For hyperbus chanel. If there is no valid request. Initializ the queue */
+            if ((index & 0xFE) == UDMA_EVENT_HYPERBUS_RX)
                 channel->previous = (void *)0;
 
             channel->first = (void *)0;
             channel->last  = (void *)0;
-
-            goto checkTask;
         } else {
             /* Clean request next pointer */
             channel->first->next = (void *)0;
@@ -430,30 +456,24 @@ void UDMA_EventHandler(uint32_t index)
             /* First request points to the next request  */
             channel->first = next;
 
-            /* hyperbusbus special control, for the request enqueued but not be sent to the FIFO
-             * it will be sent be FIFO
-             */
-            if (next->info.ctrl == UDMA_CTRL_HYPERBUS_CAN_NOT_ENQUEUE) {
-                /* Transfer resume */
-                UDMA_StartTransfer(next->channel->base, &next->info);
-            }
+            while(next) {
+                if(next->pending == UDMA_REQ_IN_SW_QUEUE) {
+                    /* Start request in software queue*/
+                    if(next->info.isTx)
+                        channel->tx_depth++;
+                    else
+                        channel->rx_depth++;
 
-            /* Find next available enqueue request*/
-            next = next->next;
-
-            if(next == (void *)0) {
-                /* Channel enqueue depth release one */
-                channel->depth--;
-                goto checkTask;
-            } else {
-                if (next->info.ctrl != UDMA_CTRL_HYPERBUS_CAN_NOT_ENQUEUE)
-                    /* Transfer resume */
                     UDMA_StartTransfer(next->channel->base, &next->info);
+                    next->pending = UDMA_REQ_IN_HW_QUEUE;
+                    break;
+                }
+                next = next->next;
             }
         }
     }
 
-checkTask:
+    /* Check Task or call back function */
     if (first->info.ctrl != UDMA_CTRL_DUAL_RX) {
         if (first->info.task)
         {
@@ -466,18 +486,18 @@ checkTask:
             if(index == UDMA_EVENT_HYPERBUS_TX || index == UDMA_EVENT_HYPERBUS_RX)
                 asm volatile ("jal HYPERBUS0_DriverIRQHandler");
             if(index == UDMA_EVENT_SAI_CH0)
-                asm volatile ("jal SAI_IRQHandler_CH0");
+                SAI_IRQHandler_CH0((void *)first->info.task);
             if(index == UDMA_EVENT_SAI_CH1)
-                asm volatile ("jal SAI_IRQHandler_CH1");
+                SAI_IRQHandler_CH1((void *)first->info.task);
         }
     }
 }
 
 void UDMA_WaitRequestEnd(udma_req_t *req)
 {
-  while(*(volatile int *)&req->pending) {
-    EU_EVT_MaskWaitAndClr(1<<FC_SW_NOTIF_EVENT);
-  }
+    while((*(volatile int *)&req->pending) != UDMA_REQ_FREE) {
+        EU_EVT_MaskWaitAndClr(1<<FC_SW_NOTIF_EVENT);
+    }
 }
 
 void UDMA_AutoPollingWait(UDMA_Type *base)

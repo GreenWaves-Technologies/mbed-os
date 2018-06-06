@@ -64,12 +64,6 @@ uint32_t SAI_GetInstance(I2S_Type *base);
 /*! @brief Pointers to sai bases for each instance. */
 static I2S_Type *const s_saiBases[] = I2S_BASE_PTRS;
 
-/*! @brief Pointers to sai handles for each instance. */
-static void *s_saiHandle[2];
-
-/*! @brief Pointer to master IRQ handler for each instance. */
-static sai_isr_t s_saiMasterIsr;
-
 /* Array of GPIO peripheral base address. */
 static PORT_Type *const port_addrs[] = PORT_BASE_PTRS;
 
@@ -174,7 +168,7 @@ void SAI_ModeConfig(I2S_Type *base, char ch_id, uint8_t lsb_first, uint8_t pdm_f
     }
 }
 
-static uint8_t SAI_TransferStart(I2S_Type *base, sai_transfer_t *transfer, const int hint)
+static uint8_t SAI_TransferStart(I2S_Type *base, sai_transfer_t *transfer, sai_handle_t *handle, const int hint)
 {
     sai_req_t *RX = UDMA_FindAvailableRequest();
 
@@ -195,7 +189,7 @@ static uint8_t SAI_TransferStart(I2S_Type *base, sai_transfer_t *transfer, const
     if (hint == UDMA_WAIT)
         RX->info.task = 0;
     else
-        RX->info.task = 1;
+        RX->info.task = (uint32_t)handle;
     RX->info.repeat.size = 0;
 
     UDMA_SendRequest((UDMA_Type *)base, RX, hint);
@@ -203,25 +197,19 @@ static uint8_t SAI_TransferStart(I2S_Type *base, sai_transfer_t *transfer, const
     return uSAI_Done;
 }
 
-void SAI_TransferRxCreateHandle(I2S_Type *base, uint8_t ch_id, sai_handle_t *handle, sai_transfer_callback_t callback,
+void SAI_TransferRxCreateHandle(I2S_Type *base, sai_handle_t *handle, sai_transfer_callback_t callback,
                                 void *userData)
 {
     memset(handle, 0, sizeof(*handle));
 
-    s_saiHandle[ch_id] = handle;
-
     handle->state = uSAI_Idle;
     handle->callback = callback;
     handle->userData = userData;
-    handle->channel = ch_id;
 }
 
 status_t SAI_TransferReceiveBlocking(I2S_Type *base, sai_transfer_t *xfer)
 {
     udma_req_info_t info;
-
-    s_saiHandle[0] = NULL;
-    s_saiHandle[1] = NULL;
 
     info.dataAddr    = (uint32_t) xfer->data;
     info.dataSize    = (uint32_t) xfer->dataSize;
@@ -242,9 +230,7 @@ status_t SAI_TransferReceiveNonBlocking(I2S_Type *base, sai_handle_t *handle, sa
 {
     handle->state = uSAI_Busy;
 
-    s_saiMasterIsr = SAI_TransferRxHandleIRQ;
-
-    SAI_TransferStart(base, xfer, UDMA_NO_WAIT);
+    SAI_TransferStart(base, xfer, handle, UDMA_NO_WAIT);
 
     return handle->state;
 }
@@ -269,17 +255,10 @@ void SAI_TransferRxHandleIRQ(I2S_Type *base, sai_handle_t *handle)
     }
 }
 
-static void SAI_CommonIRQHandler(I2S_Type *base, void *param)
-{
-    s_saiMasterIsr(base, (sai_handle_t *)param);
+void SAI_IRQHandler_CH0(void *handle) {
+    SAI_TransferRxHandleIRQ(I2S, (sai_handle_t *)handle);
 }
 
-void SAI_IRQHandler_CH0() {
-    if(s_saiHandle[0])
-        SAI_CommonIRQHandler(I2S, s_saiHandle[0]);
-}
-
-void SAI_IRQHandler_CH1() {
-    if(s_saiHandle[1])
-        SAI_CommonIRQHandler(I2S, s_saiHandle[1]);
+void SAI_IRQHandler_CH1(void *handle) {
+    SAI_TransferRxHandleIRQ(I2S, (sai_handle_t *)handle);
 }

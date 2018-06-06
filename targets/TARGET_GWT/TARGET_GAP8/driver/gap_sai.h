@@ -168,7 +168,6 @@ struct _sai_handle_t
     uint8_t state;
     sai_transfer_callback_t callback;
     void *userData;
-    sai_chan_t channel;
 };
 
 
@@ -275,13 +274,11 @@ status_t SAI_TransferReceiveBlocking(I2S_Type *base, sai_transfer_t *xfer);
  * this function once to get the handle initialized.
  *
  * @param base SAI base pointer.
- * @param ch_id SAI channel ID.
  * @param handle SAI handle pointer.
  * @param callback Pointer to the user callback function.
  * @param userData User parameter passed to the callback function.
  */
 void SAI_TransferRxCreateHandle(I2S_Type *base,
-                                uint8_t ch_id,
                                 sai_handle_t *handle,
                                 sai_transfer_callback_t callback,
                                 void *userData);
@@ -312,15 +309,17 @@ void SAI_TransferRxHandleIRQ(I2S_Type *base, sai_handle_t *handle);
 
 /*!
  * @brief Rx interrupt handler for channel0.
+ * @param handle Pointer to user handler
  *
  */
-void SAI_IRQHandler_CH0();
+void SAI_IRQHandler_CH0(void *handle);
 
 /*!
  * @brief Rx interrupt handler for channel1.
+ * @param handle Pointer to user handler
  *
  */
-void SAI_IRQHandler_CH1();
+void SAI_IRQHandler_CH1(void *handle);
 
 
 

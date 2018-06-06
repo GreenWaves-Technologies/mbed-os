@@ -55,11 +55,18 @@ typedef enum _UDMAHint{
     UDMA_WAIT_RX,       /*!< Channel TX Transfer with wait RX */
 } UDMAHint;
 
+/*! @brief uDMA transfer request status */
+typedef enum _UDMARequest{
+    UDMA_REQ_FREE = 0,          /*!< Request is free */
+    UDMA_REQ_IN_SW_QUEUE = 1,   /*!< Request is in software queue */
+    UDMA_REQ_IN_HW_QUEUE = 2,   /*!< Request is in hardware queue */
+} UDMARequest;
+
 /*! @brief uDMA transfer control */
 typedef enum _UDMACtrl{
-    UDMA_CTRL_NORMAL = 0,   /*!< Channel Transfer without wait */
-    UDMA_CTRL_HYPERBUS  = 1,          /*!< Channel TX Transfer with wait */
-    UDMA_CTRL_TCDM   = 2,  /*!< Channel RX Transfer without wait */
+    UDMA_CTRL_NORMAL    = 0,   /*!< Channel Transfer without wait */
+    UDMA_CTRL_HYPERBUS  = 1,   /*!< Channel TX Transfer with wait */
+    UDMA_CTRL_TCDM      = 2,   /*!< Channel RX Transfer without wait */
     UDMA_CTRL_DUAL_RX   = (1 << 4),  /*!< Channel RX Transfer without wait */
     UDMA_CTRL_DUAL_TX   = (2 << 4),  /*!< Channel RX Transfer without wait */
     UDMA_CTRL_HYPERBUS_CAN_ENQUEUE  = (3 << 4 | UDMA_CTRL_HYPERBUS),  /*!< Channel HYPERBUS enqueue check */
@@ -72,7 +79,8 @@ typedef struct _udma_channel
   struct _udma_req *first;  /*!< Channel Transfer first request */
   struct _udma_req *last;   /*!< Channel Transfer last request */
   struct _udma_req *previous;   /*!< Channel Transfer last request */
-  uint32_t depth;           /*!< Channel enqueue depth */
+  uint8_t rx_depth;           /*!< RX Channel enqueue depth */
+  uint8_t tx_depth;           /*!< TX Channel enqueue depth */
   UDMA_Type *base;          /*!< Channel base pointer */
 } udma_channel_t;
 
@@ -84,7 +92,7 @@ typedef struct _udma_req_info
     volatile uint32_t dataSize; /*!< Transfer data size. */
     uint8_t  isTx;              /*!< Transfer is TX. */
     uint16_t channelId;         /*!< Transfer channel ID. */
-    uint8_t  task;              /*!< Transfer handler. */
+    uint32_t task;              /*!< Transfer handler. */
     uint8_t  configFlags;       /*!< Transfer channel configuration flags.*/
     uint8_t ctrl;               /*!< Transfer special control. */
 
