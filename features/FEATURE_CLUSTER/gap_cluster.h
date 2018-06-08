@@ -55,9 +55,7 @@ typedef struct _cluster_task_s {
     struct _cluster_task_s *end;
 } cluster_task_t ;
 
-extern GAP_L1_TINY_DATA   cluster_task_t *master_job;
-
-
+extern GAP_L1_TINY_DATA   cluster_task_t master_task;
 
 
 /*******************************************************************************
@@ -129,22 +127,6 @@ void CLUSTER_CoresFork(void (*entry)(void *), void* arg);
  * Core is clock gated while waiting.
  */
 void CLUSTER_SynchBarrier();
-
-/*!
- * @brief Cluster master core 0 push task to FC.
- *
- * @param      cid     FC cluster ID - 0x20
- * @param      task    The task send back to FC
- * @note .
- */
-void CLUSTER_CL2FC_SendTask(uint32_t cid, cluster_task_t *task);
-
-/*!
- * @brief Cluster send task back to FC, FC IRQ handler
- *
- * @note When all cores do task together, then we need to wait all cores finish to do another task.
- */
-void CLUSTER_CL2FC_Handler();
 
 #if defined(__cplusplus)
 }

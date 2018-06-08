@@ -35,14 +35,8 @@
  ******************************************************************************/
 #define UART_TX_BUFFER_SIZE     16
 
-#ifdef FEATURE_CLUSTER
-GAP_L1_GLOBAL_DATA volatile int uart_lock = 0;
-GAP_L1_GLOBAL_DATA volatile int uart_lock_tx = 0;
-GAP_L1_GLOBAL_DATA volatile int uart_lock_rx = 0;
-#endif
-
-volatile uint8_t uart_tx_buffer[UART_TX_BUFFER_SIZE];
-volatile uint8_t uart_rx_buffer[1];
+uint8_t uart_tx_buffer[UART_TX_BUFFER_SIZE];
+uint8_t uart_rx_buffer[1];
 /* Indicate whether uart is initialed */
 uint8_t uart_is_init = 0;
 
@@ -174,48 +168,44 @@ uint32_t UART_GetStatusFlags(UART_Type *base)
 
 void UART_WriteByte(UART_Type *base, uint8_t data)
 {
-#ifdef FEATURE_CLUSTER
-    if (cluster_is_on)
-        UART_Lock_TX();
-#endif
     /* setup next transfer */
     uart_tx_buffer[0] = data;
 
-    udma_req_info_t info = TX_INFO;
-
-    info.dataAddr = (uint32_t)uart_tx_buffer;
-    info.dataSize = 1;
-    info.configFlags |= UDMA_CFG_EN(1);
-
-    UDMA_BlockTransfer((UDMA_Type *)base, &info, UDMA_WAIT);
-
-#ifdef FEATURE_CLUSTER
-    if (cluster_is_on)
-        UART_UnLock_TX();
-#endif
+    UART_TransferSendBlocking(base, uart_tx_buffer, 1);
 }
 
 uint8_t UART_ReadByte(UART_Type *base)
 {
-    #ifdef FEATURE_CLUSTER
-    if (cluster_is_on)
-        UART_Lock_RX();
-    #endif
+    UART_TransferReceiveBlocking(base, uart_rx_buffer, 1);
+    return uart_rx_buffer[0];
+}
 
-    udma_req_info_t info = RX_INFO;
+status_t UART_TransferSendBlocking(UART_Type *base, const uint8_t *tx, size_t tx_length)
+{
+    status_t status;
+    udma_req_info_t info = TX_INFO;
 
-    info.dataAddr = (uint32_t)uart_rx_buffer;
-    info.dataSize = 1;
+    info.dataAddr = (uint32_t)tx;
+    info.dataSize = tx_length;
     info.configFlags |= UDMA_CFG_EN(1);
 
-    UDMA_BlockTransfer((UDMA_Type *)base, &info, UDMA_WAIT);
+    status = UDMA_BlockTransfer((UDMA_Type *)base, &info, UDMA_WAIT);
 
-    #ifdef FEATURE_CLUSTER
-    if (cluster_is_on)
-        UART_UnLock_RX();
-    #endif
+    return status;
+}
 
-    return uart_rx_buffer[0];
+status_t UART_TransferReceiveBlocking(UART_Type *base, const uint8_t *rx, size_t rx_length)
+{
+    status_t status;
+    udma_req_info_t info = RX_INFO;
+
+    info.dataAddr = (uint32_t)rx;
+    info.dataSize = rx_length;
+    info.configFlags |= UDMA_CFG_EN(1);
+
+    status = UDMA_BlockTransfer((UDMA_Type *)base, &info, UDMA_WAIT);
+
+    return status;
 }
 
 status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, const uint8_t *tx, size_t tx_length)
@@ -228,11 +218,6 @@ status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, co
     uint32_t buf_len;
     uint32_t rest_len = tx_length;
     uint32_t i;
-
-    #ifdef FEATURE_CLUSTER
-    if (cluster_is_on)
-        UART_Lock_TX();
-    #endif
 
     /* Return error if current TX busy. */
     if (uUART_TxBusy == handle->txState)
@@ -281,13 +266,9 @@ status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, co
         status = uStatus_Success;
     }
 
-    #ifdef FEATURE_CLUSTER
-    if (cluster_is_on)
-        UART_UnLock_TX();
-    #endif
-
     return status;
 }
+
 
 status_t UART_TransferReceiveNonBlocking(UART_Type *base, uart_handle_t *handle, const uint8_t *rx, size_t rx_length, size_t *receivedBytes)
 {
@@ -296,11 +277,6 @@ status_t UART_TransferReceiveNonBlocking(UART_Type *base, uart_handle_t *handle,
     assert(rx_length);
 
     status_t status;
-
-    #ifdef FEATURE_CLUSTER
-    if (cluster_is_on)
-        UART_Lock_RX();
-    #endif
 
     if (uUART_RxBusy == handle->rxState)
     {
@@ -325,11 +301,6 @@ status_t UART_TransferReceiveNonBlocking(UART_Type *base, uart_handle_t *handle,
 
         status = uStatus_Success;
     }
-
-    #ifdef FEATURE_CLUSTER
-    if (cluster_is_on)
-        UART_UnLock_RX();
-    #endif
 
     return status;
 }

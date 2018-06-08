@@ -41,8 +41,12 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
+typedef struct _fc_call_s {
+    uint8_t  id;
+    uint32_t arg[4];
+} fc_call_t ;
 
-
+extern                    fc_call_t fc_task;
 
 
 /*******************************************************************************
@@ -53,20 +57,35 @@ extern "C" {
 #endif /* __cplusplus */
 
 /*!
- * @brief Called from the Cluster - ask the FC to read from flash
+ * @brief Cluster FC delegator initialize
  *
- * @param  cid      The cluster ID - 0 for only one cluster
- * @param  nbCores  The number of cores we want to use
  * @note .
  */
-void CLUSTER_2FC_READ_FLASH(int cid, );
+void CLUSTER_FC_Delegate_Init();
+
+/*!
+ * @brief FC receives task number from Cluster, and does the task according to task number
+ *
+ * @note .
+ */
+void CLUSTER_FC_Delegate();
 
 
-void CLUSTER_2FC_READ_CAMERA();
+/*!
+ * @brief Cluster cores  push task to FC.
+ *
+ * @param      cid     FC cluster ID - 0x20
+ * @param      task    The task send back to FC
+ * @note .
+ */
+void CLUSTER_CL2FC_SendTask(uint32_t cid, fc_call_t *task);
 
-
-void CLUSTER_2FC_READ_AUDIO();
-
+/*!
+ * @brief Cluster send task back to FC, FC IRQ handler
+ *
+ * @note When all cores do task together, then we need to wait all cores finish to do another task.
+ */
+void CLUSTER_CL2FC_Handler();
 
 #if defined(__cplusplus)
 }

@@ -201,40 +201,6 @@ __STATIC_INLINE void _bitfield_free(uint32_t *bitfield, int id)
   *bitfield |= 1 << id;
 }
 
-#ifdef FEATURE_CLUSTER
-/*!
- * @addtogroup util_cluster_stdio_lock
- * @{
- */
-
-#define GAP_L1_TAS_OFFSET (1 << 20)
-
-
-__STATIC_INLINE uint32_t GAP_Tas_Addr(uint32_t addr)
-{
-    return (addr + GAP_L1_TAS_OFFSET);
-}
-
-__STATIC_INLINE int GAP_SWMutex_TryLock(uint32_t mutex)
-{
-  __asm__ __volatile__ ("" : : : "memory");
-  int result = *(volatile uint32_t *)GAP_Tas_Addr(mutex);
-  __asm__ __volatile__ ("" : : : "memory");
-  return result;
-}
-
-__STATIC_INLINE void GAP_SWMutex_UnLock(uint32_t mutex)
-{
-  __asm__ __volatile__ ("" : : : "memory");
-  *(volatile uint32_t *)mutex = 0;
-  __asm__ __volatile__ ("" : : : "memory");
-
-  EU_CLUSTER_EVT_TrigSet(0, 0xffffffff);
-}
-
-#endif
-/*! @} */
-
 
 #if defined(__cplusplus)
 }

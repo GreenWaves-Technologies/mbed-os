@@ -31,6 +31,7 @@
 #include "gap_cluster.h"
 #include "gap_l1_malloc.h"
 #include "gap_dmamchan.h"
+#include "gap_cluster_fc_delegate.h"
 
 #ifdef FEATURE_CLUSTER
 
@@ -39,12 +40,6 @@
  ******************************************************************************/
 /*! @brief Cluster each core stack size */
 #define CORE_STACK_SIZE  1024
-
-/*******************************************************************************
- * Prototypes
- ******************************************************************************/
-/* handler wrapper  */
-Handler_Wrapper_Light(CLUSTER_CL2FC_Handler);
 
 /*******************************************************************************
  * Variables
@@ -70,7 +65,6 @@ extern char  __heapsram_start;
 extern char  __heapsram_size;
 
 GAP_L1_TINY_DATA   cluster_task_t master_task;
-                    cluster_task_t fc_task;
 
 /*******************************************************************************
  * Code
@@ -94,7 +88,7 @@ static void CLUSTER_SetCoreStack() {
 
         /* Cluster calls FC */
         #if defined(__GAP8__)
-        EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_EVENT, 1);
+        EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_EVENT, 0);
         #elif defined(__VEGA__)
         FC_ITC->STATUS_SET = (1 << CLUSTER_NOTIFY_FC_EVENT);
         #endif
@@ -116,7 +110,7 @@ static void CLUSTER_UnSetCoreStack() {
         /* Cluster calls FC */
 
         #if defined(__GAP8__)
-        EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_EVENT, 1);
+        EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_EVENT, 0);
         #elif defined(__VEGA__)
         FC_ITC->STATUS_SET = (1 << CLUSTER_NOTIFY_FC_EVENT);
         #endif
@@ -132,7 +126,7 @@ static inline void CLUSTER_FC2CL_StackInit(int cid, int nbCores, uint32_t stacks
     *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&cluster_stacks_start) = stacksPtr;
 
     /* FC calls cluster */
-    EU_CLUSTER_EVT_TrigSet(FC_NOTIFY_CLUSTER_EVENT, 0xFFFFFFFF);
+    EU_CLUSTER_EVT_TrigSet(FC_NOTIFY_CLUSTER_EVENT, 0);
 }
 
 void CLUSTER_Start(int cid, int nbCores) {
@@ -163,12 +157,7 @@ void CLUSTER_Start(int cid, int nbCores) {
         /* Initialize malloc heap */
         L1_MallocInit();
 
-        /* Initialize shared tasks */
-        memset(&fc_task, 0, sizeof(fc_task));
-
-        /* Activate interrupt handler for FC when cluster want to push a task to FC */
-        NVIC_SetVector(CLUSTER_NOTIFY_FC_IRQn, (uint32_t)__handler_wrapper_light_CLUSTER_CL2FC_Handler);
-        NVIC_EnableIRQ(CLUSTER_NOTIFY_FC_IRQn);
+        CLUSTER_FC_Delegate_Init();
 
         cluster_is_on = 1;
     }
@@ -190,6 +179,8 @@ void CLUSTER_Wait(int cid)
         #elif defined(__VEGA__)
         ITC_WaitEvent_NOIRQ(1 << CLUSTER_NOTIFY_FC_EVENT);
         #endif
+
+        CLUSTER_FC_Delegate();
     }
 }
 
@@ -202,7 +193,7 @@ static inline void CLUSTER_FC2CL_StackDeInit()
     *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&cluster_core_stack_size) = 0;
 
     /* FC calls cluster */
-    EU_CLUSTER_EVT_TrigSet(FC_NOTIFY_CLUSTER_EVENT, 1);
+    EU_CLUSTER_EVT_TrigSet(FC_NOTIFY_CLUSTER_EVENT, 0);
 
     /* Wait response from cluster cores */
     while(*(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&cluster_core_stack_size) == 0)
@@ -337,7 +328,7 @@ void CLUSTER_TaskFinish(){
 
     /* Notify FC the current task is finished */
     #if defined(__GAP8__)
-    EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_EVENT, 1);
+    EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_EVENT, 0);
     #elif defined(__VEGA__)
     FC_ITC->STATUS_SET = (1 << CLUSTER_NOTIFY_FC_EVENT);
     #endif
@@ -378,41 +369,13 @@ void CLUSTER_SendTask(uint32_t cid, void *entry, void* arg, cluster_task_t *end)
     *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&master_task.arg)   = (uint32_t) arg;
     *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&master_task.end)   = (uint32_t) end;
 
-    EU_CLUSTER_EVT_TrigSet(FC_NOTIFY_CLUSTER_EVENT, 1);
+    EU_CLUSTER_EVT_TrigSet(FC_NOTIFY_CLUSTER_EVENT, 0);
 }
 
 
 void CLUSTER_SynchBarrier() {
     //EU_BarrierSetup(cluster_core_mask);
     EU_BarrierTriggerWaitClear();
-}
-
-void CLUSTER_CL2FC_SendTask(uint32_t cid, cluster_task_t *task)
-{
-    // First wait until the slot to post events is free
-    while(fc_task.entry != NULL)
-    {
-        EU_EVT_MaskWaitAndClr(1 << FC_NOTIFY_CLUSTER_EVENT);
-    }
-
-    fc_task.entry = task->entry;
-    fc_task.arg   = task->arg;
-    fc_task.end   = task->end;
-
-    /* Cluster Notify FC to send a task back to FC by HW IRQ */
-    #if defined(__GAP8__)
-    EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_IRQn, 1);
-    #elif defined(__VEGA__)
-    FC_ITC->STATUS_SET = (1 << CLUSTER_NOTIFY_FC_IRQn);
-    #endif
-}
-
-void CLUSTER_CL2FC_Handler() {
-    if (fc_task.entry != NULL) {
-        fc_task.entry(fc_task.arg);
-        fc_task.entry = NULL;
-    }
-    EU_CLUSTER_EVT_TrigSet(FC_NOTIFY_CLUSTER_EVENT, 1);
 }
 
 #endif /* FEATURE_CLUSTER */

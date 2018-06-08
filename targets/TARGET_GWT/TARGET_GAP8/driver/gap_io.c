@@ -12,18 +12,17 @@
 #include "rtx_core_c.h"
 #include "tinyprintf.h"
 
-#ifdef USE_UART
-extern uint8_t uart_is_init;
+#ifdef FEATURE_CLUSTER
+#include "gap_cluster_fc_delegate.h"
 #endif
+
+extern uint8_t uart_is_init;
 
 extern void tfp_format(void *putp, putcf putf, const char *fmt, va_list va);
 extern void exit(int code);
 
 debug_struct_t HAL_DEBUG_STRUCT_NAME = GAP_DEBUG_STRUCT_INIT;
 
-#ifdef FEATURE_CLUSTER
-GAP_L1_GLOBAL_DATA volatile uint32_t  printf_lock = 0;
-#endif
 
 static int _io_lock() {
     /* user code must know if the cluster is on or off, we'll take care of that later on */
@@ -37,10 +36,7 @@ static int _io_lock() {
 
         if (needLock) {
             irq = __disable_irq();
-            while (GAP_SWMutex_TryLock((uint32_t)&printf_lock)) {
-                __restore_irq(irq);
-                irq = __disable_irq();
-            }
+            EU_MutexLock(0);
         }
     }
 #endif
@@ -58,7 +54,7 @@ static void _io_unlock(int irq) {
             needLock = 0;
 
         if (needLock) {
-            GAP_SWMutex_UnLock((uint32_t)&printf_lock);
+            EU_MutexUnlock(0);
             __restore_irq(irq);
         }
     }
@@ -82,27 +78,43 @@ char osPutChar(char c) {
   return __svcPutChar(c);
 }
 
+void uart_putc(char c) {
+    if (!uart_is_init) {
+        uart_config_t config;
+
+        UART_GetDefaultConfig(&config);
+        config.baudRate_Bps = 9600;
+        config.enableTx = true;
+        config.enableRx = true;
+
+        UART_Init(UART, &config, SystemCoreClock);
+    }
+
+    UART_WriteByte(UART, c);
+}
+
 static void tfp_putc(void *data, char c) {
     if (__is_U_Mode()) {
         osPutChar(c);
     } else {
         #ifdef USE_UART
+        #ifdef FEATURE_CLUSTER
+        if(!__is_FC()) {
+            fc_call_t task;
+            task.id     = UDMA_EVENT_UART_TX;
+            task.arg[0] = c;
+            CLUSTER_CL2FC_SendTask(0, &task);
+        } else
+        #endif
         {
-            if (!uart_is_init) {
-                uart_config_t config;
-
-                UART_GetDefaultConfig(&config);
-                config.baudRate_Bps = 9600;
-                config.enableTx = true;
-                config.enableRx = true;
-
-                UART_Init(UART, &config, SystemCoreClock);
-            }
-            UART_WriteByte(UART, (uint8_t)c);
+            uart_putc(c);
         }
         #endif
 
+        /* When boot form FLASH, always use internal printf, you can only see printf in UART */
         if (DEBUG_GetDebugStruct()->useInternalPrintf) {
+            #ifndef USE_UART
+            /* This is for core internal printf in Simulation */
             if(__cluster_ID() == FC_CLUSTER_ID) {
                 FC_STDOUT->PUTC[__core_ID() << 1] = c;
             }
@@ -111,7 +123,9 @@ static void tfp_putc(void *data, char c) {
                 CLUSTER_STDOUT->PUTC[__core_ID() << 1] = c;
             }
             #endif
+            #endif
         } else {
+            /* Only use for JTAG */
             DEBUG_Putchar(DEBUG_GetDebugStruct(), c);
         }
     }

@@ -153,9 +153,6 @@ typedef void (*uart_isr_t)(UART_Type *base, uart_handle_t *handle);
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-extern volatile int uart_lock;
-extern volatile int uart_lock_tx;
-extern volatile int uart_lock_rx;
 
 /*******************************************************************************
  * API
@@ -164,32 +161,6 @@ extern volatile int uart_lock_rx;
 #if defined(__cplusplus)
 extern "C" {
 #endif /* _cplusplus */
-
-#ifdef FEATURE_CLUSTER
-static inline void UART_Lock() {
-    while(*(volatile uint8_t *)GAP_Tas_Addr((uint32_t)&uart_lock) != 0);
-}
-
-static inline void UART_UnLock() {
-    uart_lock = 0;
-}
-
-static inline void UART_Lock_TX() {
-    while(*(volatile uint8_t *)GAP_Tas_Addr((uint32_t)&uart_lock_tx) != 0);
-}
-
-static inline void UART_UnLock_TX() {
-    uart_lock_tx = 0;
-}
-
-static inline void UART_Lock_RX() {
-    while(*(volatile uint8_t *)GAP_Tas_Addr((uint32_t)&uart_lock_rx) != 0);
-}
-
-static inline void UART_UnLock_RX() {
-    uart_lock_rx = 0;
-}
-#endif
 
 /*!
  * @name Initialization and deinitialization
@@ -462,6 +433,38 @@ uint8_t UART_ReadByte(UART_Type *base);
 
 
 /*!
+ * @brief Transmits a buffer of data using event wait.
+ *
+ * This function sends data using an event wait method. This is a blocking function, which
+ *  wait for all data to be written to the TX register.
+ *
+ *
+ * @param base UART peripheral base address.
+ * @param tx   The buffer address.
+ * @param tx_length   The buffer length.
+ * @retval uStatus_Success Successfully start the data transmission.
+ * @retval uStatus_UART_TxBusy Previous transmission still not finished; data not all written to TX register yet.
+ * @retval uStatus_InvalidArgument Invalid argument.
+ */
+status_t UART_TransferSendBlocking(UART_Type *base, const uint8_t *tx, size_t tx_length);
+
+
+/*!
+ * @brief Receives a buffer of data using event wait.
+ *
+ * This function receives data using an event wait method. This is a blocking function, which
+ *  wait for all data to be received.
+ *
+ * @param base UART peripheral base address.
+ * @param rx     The buffer address.
+ * @param rx_length   The buffer length.
+ * @retval uStatus_Success Successfully queue the transfer into transmit queue.
+ * @retval uStatus_UART_RxBusy Previous receive request is not finished.
+ * @retval uStatus_InvalidArgument Invalid argument.
+ */
+status_t UART_TransferReceiveBlocking(UART_Type *base, const uint8_t *rx, size_t rx_length);
+
+/*!
  * @brief Transmits a buffer of data using the interrupt method.
  *
  * This function sends data using an interrupt method. This is a non-blocking function, which
@@ -470,8 +473,7 @@ uint8_t UART_ReadByte(UART_Type *base);
  * function and passes the @ref uStatus_UART_TxIdle as status parameter.
  *
  * @note The uStatus_UART_TxIdle is passed to the upper layer when all data is written
- * to the TX register. However, it does not ensure that all data is sent out. Before disabling the TX,
- * check the uUART_TransmissionCompleteFlag to ensure that the TX is finished.
+ * to the TX register.
  *
  * @param base UART peripheral base address.
  * @param handle UART handle pointer.
@@ -489,18 +491,6 @@ status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, co
  *
  * This function receives data using an interrupt method. This is a non-blocking function, which
  *  returns without waiting for all data to be received.
- * If the RX ring buffer is used and not empty, the data in the ring buffer is copied and
- * the parameter @p receivedBytes shows how many bytes are copied from the ring buffer.
- * After copying, if the data in the ring buffer is not enough to read, the receive
- * request is saved by the UART driver. When the new data arrives, the receive request
- * is serviced first. When all data is received, the UART driver notifies the upper layer
- * through a callback function and passes the status parameter @ref uStatus_UART_RxIdle.
- * For example, the upper layer needs 10 bytes but there are only 5 bytes in the ring buffer.
- * The 5 bytes are copied to the xfer->data and this function returns with the
- * parameter @p receivedBytes set to 5. For the left 5 bytes, newly arrived data is
- * saved from the xfer->data[5]. When 5 bytes are received, the UART driver notifies the upper layer.
- * If the RX ring buffer is not enabled, this function enables the RX and RX interrupt
- * to receive data to the xfer->data. When all data is received, the upper layer is notified.
  *
  * @param base UART peripheral base address.
  * @param handle UART handle pointer.

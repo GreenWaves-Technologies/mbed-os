@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, GreenWaves Technologies, Inc.
+ * Copyright (c) 2017, GreenWaves Technologies, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -28,50 +28,74 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GAP_IO_H_
-#define _GAP_IO_H_
+#include "gap_cluster_fc_delegate.h"
+#include "gap_common.h"
 
-#include <assert.h>
-#include "cmsis.h"
-#include "gap_util.h"
-
-/*!
- * @addtogroup io
- * @{
- */
+#ifdef FEATURE_CLUSTER
 
 /*******************************************************************************
- * Definitions
+ * Prototypes
  ******************************************************************************/
-
-/*! @brief uDMA transfer task stucture */
-
+/* handler wrapper  */
+Handler_Wrapper_Light(CLUSTER_CL2FC_Handler);
 
 /*******************************************************************************
- * APIs
+ * Variables
  ******************************************************************************/
-#if defined(__cplusplus)
-extern "C" {
-#endif /* __cplusplus */
+fc_call_t fc_task;
 
-/*!
- * @brief printf
- *
- * @note .
- */
-int GAP_IMPORT printf(const char *format, ...);
-int GAP_IMPORT puts(const char *s);
-int sprintf(char *str, const char *format, ...);
-void uart_putc(char  c);
-void abort();
+/*******************************************************************************
+ * Code
+ ******************************************************************************/
+void CLUSTER_FC_Delegate_Init(){
+    /* Initialize shared tasks */
+    memset(&fc_task, 0, sizeof(fc_task));
 
-
-/* @} */
-
-#if defined(__cplusplus)
+    /* Activate interrupt handler for FC when cluster want to push a task to FC */
+    NVIC_SetVector(CLUSTER_NOTIFY_FC_IRQn, (uint32_t)__handler_wrapper_light_CLUSTER_CL2FC_Handler);
+    NVIC_EnableIRQ(CLUSTER_NOTIFY_FC_IRQn);
 }
-#endif /* __cplusplus */
 
-/* @} */
+void CLUSTER_FC_Delegate(){
 
-#endif /*_GAP_IO_H_*/
+    switch((uint32_t)fc_task.id){
+    case UDMA_EVENT_UART_TX :
+        uart_putc((char)((uint32_t)fc_task.arg[0] & 0xFF));
+        break;
+
+    default :
+        break;
+    }
+
+    fc_task.id = 0;
+    EU_CLUSTER_EVT_TrigSet(FC_NOTIFY_CLUSTER_EVENT, 0);
+}
+
+void CLUSTER_CL2FC_SendTask(uint32_t cid, fc_call_t *task)
+{
+    // First wait until the slot to post events is free
+    while(fc_task.id != 0)
+    {
+        EU_EVT_MaskWaitAndClr(1 << FC_NOTIFY_CLUSTER_EVENT);
+    }
+
+    fc_task.id       = task->id;
+    fc_task.arg[0]   = task->arg[0];
+    fc_task.arg[1]   = task->arg[1];
+    fc_task.arg[2]   = task->arg[2];
+    fc_task.arg[3]   = task->arg[3];
+
+    /* Cluster Notify FC to send a task back to FC by HW IRQ */
+    #if defined(__GAP8__)
+    EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_IRQn, 0);
+    #elif defined(__VEGA__)
+    FC_ITC->STATUS_SET = (1 << CLUSTER_NOTIFY_FC_IRQn);
+    #endif
+}
+
+
+void CLUSTER_CL2FC_Handler() {
+    EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_EVENT, 0);
+}
+
+#endif
