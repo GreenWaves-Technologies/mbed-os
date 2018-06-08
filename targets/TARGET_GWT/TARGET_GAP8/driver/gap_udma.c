@@ -366,7 +366,7 @@ static inline void UDMA_RepeatTransfer(udma_req_t *req) {
 
     if((req->info.channelId & 0xFE) == UDMA_EVENT_HYPERBUS_RX) {
         HYPERBUS_Type *hyperbus_ptr = (HYPERBUS_Type *) req->channel->base;
-        hyperbus_ptr->EXT_ADDR = req->info.u.hyperbus.ext_addr + (req->info.repeat.size << 1);
+        hyperbus_ptr->EXT_ADDR = req->info.u.hyperbus.ext_addr + req->info.repeat.size;
     }
 
     UDMA_Type *base = (UDMA_Type *) req->channel->base;

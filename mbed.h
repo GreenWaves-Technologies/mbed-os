@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
+
+ - Add hyperbus support
+ */
 #ifndef MBED_H
 #define MBED_H
 
@@ -62,6 +67,7 @@
 #include "drivers/PwmOut.h"
 #include "drivers/Serial.h"
 #include "drivers/SPI.h"
+#include "drivers/HYPERBUS.h"
 #include "drivers/SPISlave.h"
 #include "drivers/I2C.h"
 #include "drivers/I2CSlave.h"
