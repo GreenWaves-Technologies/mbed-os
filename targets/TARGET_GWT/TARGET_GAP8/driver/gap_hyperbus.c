@@ -144,12 +144,9 @@ static int HYPERBUS_MasterTransferTX(HYPERBUS_Type *base, int addr, const uint16
     /* Hyperbus */
     TX->info.u.hyperbus.reg_mem_access = reg_access;
     if(device == uHYPERBUS_Ram) {
-        if (reg_access)
-            TX->info.u.hyperbus.ext_addr = (uHYPERBUS_Ram_Address | addr);
-        else
-            TX->info.u.hyperbus.ext_addr = (uHYPERBUS_Ram_Address | addr << 1);
+        TX->info.u.hyperbus.ext_addr = (uHYPERBUS_Ram_Address | addr);
     } else {
-        TX->info.u.hyperbus.ext_addr = (uHYPERBUS_Flash_Address | addr << 1);
+        TX->info.u.hyperbus.ext_addr = (uHYPERBUS_Flash_Address | addr);
     }
 
     /* Send request */
@@ -184,12 +181,9 @@ static int HYPERBUS_MasterTransferRX(HYPERBUS_Type *base, int addr, uint16_t *rx
     /* Hyperbus */
     RX->info.u.hyperbus.reg_mem_access = reg_access;
     if(device == uHYPERBUS_Ram) {
-        if (reg_access)
-            RX->info.u.hyperbus.ext_addr = (uHYPERBUS_Ram_Address | addr);
-        else
-            RX->info.u.hyperbus.ext_addr = (uHYPERBUS_Ram_Address | addr << 1);
+        RX->info.u.hyperbus.ext_addr = (uHYPERBUS_Ram_Address | addr);
     } else {
-        RX->info.u.hyperbus.ext_addr = (uHYPERBUS_Flash_Address | addr << 1);
+        RX->info.u.hyperbus.ext_addr = (uHYPERBUS_Flash_Address | addr);
     }
 
     /* Send request */
