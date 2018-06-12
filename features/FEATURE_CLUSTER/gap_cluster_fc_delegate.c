@@ -56,13 +56,74 @@ void CLUSTER_FC_Delegate_Init(){
     NVIC_EnableIRQ(CLUSTER_NOTIFY_FC_IRQn);
 }
 
+static void hyperbus_block_transfer(const int addr, const void *tx, size_t tx_length, void *rx, size_t rx_length) {
+    hyperbus_transfer_t masterXfer;
+
+    if (!hyperbus_is_init) {
+
+        /* Set hyperbus pin conection - lowest software level */
+        PORT_SetPinMux(PORTA, HYPERBUS_CLK  - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+        PORT_SetPinMux(PORTA, HYPERBUS_CLKN - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+        PORT_SetPinMux(PORTA, HYPERBUS_RWDS - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+        PORT_SetPinMux(PORTA, HYPERBUS_CSN0 - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+        PORT_SetPinMux(PORTA, HYPERBUS_CSN1 - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+        PORT_SetPinMux(PORTA, HYPERBUS_DQ0  - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+        PORT_SetPinMux(PORTA, HYPERBUS_DQ1  - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+        PORT_SetPinMux(PORTA, HYPERBUS_DQ2  - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+        PORT_SetPinMux(PORTA, HYPERBUS_DQ3  - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+        PORT_SetPinMux(PORTA, HYPERBUS_DQ4  - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+        PORT_SetPinMux(PORTA, HYPERBUS_DQ5  - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+        PORT_SetPinMux(PORTA, HYPERBUS_DQ6  - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+        PORT_SetPinMux(PORTA, HYPERBUS_DQ7  - GAP_PIN_OFFSET, uPORT_MuxAlt3);
+
+        hyperbus_master_config_t  masterConfig;
+
+        HYPERBUS_MasterGetDefaultConfig(&masterConfig);
+
+        HYPERBUS_MasterInit(HYPERBUS0, &masterConfig, HYPERBUS_CLK_FRE_DEFAUT);
+
+        /* Config memory maximum transfer data length for TX and RX*/
+        HYPERBUS_SetMaxLength(HYPERBUS0, 1, 0x1ff, 0, uHYPERBUS_Ram);
+        HYPERBUS_SetMaxLength(HYPERBUS0, 1, 0x1ff, 1, uHYPERBUS_Ram);
+
+        /* Config memory access timing for TX and RX*/
+        HYPERBUS_SetTiming(HYPERBUS0, 4, 4, 4, 0, 0, uHYPERBUS_Ram);
+        HYPERBUS_SetTiming(HYPERBUS0, 4, 4, 4, 0, 1, uHYPERBUS_Ram);
+
+    }
+
+    /*Start master transfer*/
+    masterXfer.txData = (uint16_t *)tx;
+    masterXfer.txDataSize = tx_length;
+    masterXfer.rxData = (uint16_t *)rx;
+    masterXfer.rxDataSize = rx_length;
+    masterXfer.configFlags = 32;
+    masterXfer.addr = addr;
+    masterXfer.device = uHYPERBUS_Ram;
+    masterXfer.reg_access = uHYPERBUS_Mem_Access;
+
+    HYPERBUS_MasterTransferBlocking(HYPERBUS0, &masterXfer);
+}
+
 void CLUSTER_FC_Delegate(){
 
-    switch((uint32_t)fc_task.id){
+    switch((uint32_t)fc_task.id) {
+
     case UDMA_EVENT_UART_TX :
+    {
         uart_putc((char)((uint32_t)fc_task.arg[0] & 0xFF));
         break;
-
+    }
+    case UDMA_EVENT_HYPERBUS_RX :
+    {
+        hyperbus_block_transfer(fc_task.arg[0], 0, 0, (void *)fc_task.arg[1], fc_task.arg[2]);
+        break;
+    }
+    case UDMA_EVENT_HYPERBUS_TX :
+    {
+        hyperbus_block_transfer(fc_task.arg[0], (const void *)fc_task.arg[1], fc_task.arg[2], 0, 0);
+        break;
+    }
     default :
         break;
     }

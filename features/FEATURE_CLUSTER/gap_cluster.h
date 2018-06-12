@@ -35,6 +35,7 @@
 #include <gap_pmu.h>
 #include <gap_handler_wrapper.h>
 #include "gap_l1_malloc.h"
+#include "gap_cluster_fc_delegate.h"
 
 #ifdef FEATURE_CLUSTER
 /*!

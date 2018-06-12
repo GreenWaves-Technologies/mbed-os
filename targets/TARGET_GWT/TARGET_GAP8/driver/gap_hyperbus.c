@@ -57,6 +57,8 @@ static void *g_hyperbusHandle[ARRAY_SIZE(s_hyperbusBases)];
 /*! @brief Pointer to master IRQ handler for each instance. */
 static hyperbus_master_isr_t s_hyperbusMasterIsr;
 
+/* Indicate whether hyperbus is initialed */
+uint8_t hyperbus_is_init = 0;
 
 /*******************************************************************************
  * Code
@@ -100,6 +102,8 @@ void HYPERBUS_MasterInit(HYPERBUS_Type *base, hyperbus_master_config_t *masterCo
     /* When using flash, this bit should set to 0, always memory access */
     if(masterConfig->dt1 == uHYPERBUS_Flash)
         HYPERBUS_SetCRT1(uHYPERBUS_Mem_Access);
+
+    hyperbus_is_init = 1;
 }
 
 void HYPERBUS_MasterGetDefaultConfig(hyperbus_master_config_t *masterConfig)
@@ -116,6 +120,7 @@ void HYPERBUS_MasterGetDefaultConfig(hyperbus_master_config_t *masterConfig)
 void HYPERBUS_MasterDeInit(HYPERBUS_Type *base)
 {
     UDMA_Deinit((UDMA_Type *)base);
+    hyperbus_is_init = 0;
 }
 
 static int HYPERBUS_MasterTransferTX(HYPERBUS_Type *base, int addr, const uint16_t *tx, size_t tx_length, char reg_access, char device, uint32_t hint)

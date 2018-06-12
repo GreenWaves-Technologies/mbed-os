@@ -16,8 +16,6 @@
 #include "gap_cluster_fc_delegate.h"
 #endif
 
-extern uint8_t uart_is_init;
-
 extern void tfp_format(void *putp, putcf putf, const char *fmt, va_list va);
 extern void exit(int code);
 

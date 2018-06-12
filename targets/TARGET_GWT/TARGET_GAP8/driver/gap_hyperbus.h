@@ -159,6 +159,8 @@ struct _hyperbus_master_handle
 /*! @brief Pointers to hyperbus bases for each instance. */
 static HYPERBUS_Type *const s_hyperbusBases[] = HYPERBUS_BASE_PTRS;
 
+extern uint8_t hyperbus_is_init;
+
 /*******************************************************************************
  * APIs
  ******************************************************************************/

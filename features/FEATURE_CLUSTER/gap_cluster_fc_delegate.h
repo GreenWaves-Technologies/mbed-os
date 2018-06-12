@@ -31,7 +31,7 @@
 #ifndef _GAP_CLUSTER_FC_DELEGATE_H_
 #define _GAP_CLUSTER_FC_DELEGATE_H_
 
-#include "gap_cluster.h"
+#include <stdint.h>
 
 #ifdef FEATURE_CLUSTER
 /*!
