@@ -64,7 +64,7 @@ Reset_Handler:
 
   /* Stack initialization */
   // FC should take its own stack
-  la   sp, fc_os_stack
+  li   sp, 0x3FFFF
 
   /* Initial mstatus and current stack = master stack */
   csrw 0x300, 0
@@ -89,6 +89,13 @@ CRT0_Resume:
   sw    x0, (a0)
   addi  a0, a0, 4
   bltu  a0, a1, .LC1
+
+  la    a0, __fc_bss_start__
+  la    a1, __fc_bss_end__
+.LC2:
+  sw    x0, (a0)
+  addi  a0, a0, 4
+  bltu  a0, a1, .LC2
 #endif
 
 #ifndef __NO_SYSTEM_INIT

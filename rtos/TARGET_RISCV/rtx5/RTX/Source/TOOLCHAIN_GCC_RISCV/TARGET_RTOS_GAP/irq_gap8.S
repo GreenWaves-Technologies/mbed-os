@@ -5,6 +5,10 @@
 .section .text
 
   .global Ecall_Handler
+#ifndef MBED_CONF_RTOS_PRESENT
+Ecall_Handler:
+        mret
+#else
 Ecall_Handler:
         addi sp, sp, -18*4
         sw   ra,  15*4(sp)                   // Save ra here
@@ -109,7 +113,7 @@ SVC_Exit:
         addi  sp, sp, 18*4
         sw    sp, %tiny(userStack)(x0)   // Return from User mode
         mret
-
+#endif
 
        .global Exception_handler
 Exception_handler:                       // exception handler should called for each exception and interruption
@@ -151,6 +155,7 @@ Exception_handler:                       // exception handler should called for 
         ret
 
 
+#ifdef MBED_CONF_RTOS_PRESENT
        .global PendSV_Handler
 PendSV_Handler:
         addi sp, sp, -18*4
@@ -177,3 +182,4 @@ SysTick_Handler:
         jal  osRtxTick_Handler           // Call osRtxTick_Handler
 
         j    SVC_Context
+#endif

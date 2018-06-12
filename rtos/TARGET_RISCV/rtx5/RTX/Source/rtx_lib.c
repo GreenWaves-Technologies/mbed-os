@@ -111,6 +111,15 @@ void osRtxThreadStackCheck (void) {}
 #endif
 
 
+#if(__RISCV_ARCH_GAP__ == 1U)
+// Idle Thread Control Block
+static osRtxThread_t os_idle_thread_cb \
+__attribute__((section(".fcbss.os.thread.cb")));
+
+// Idle Thread Stack
+static uint64_t os_idle_thread_stack[OS_IDLE_THREAD_STACK_SIZE/8] \
+__attribute__((section(".fcbss.os.thread.stack")));
+#else
 // Idle Thread Control Block
 static osRtxThread_t os_idle_thread_cb \
 __attribute__((section(".bss.os.thread.cb")));
@@ -118,6 +127,7 @@ __attribute__((section(".bss.os.thread.cb")));
 // Idle Thread Stack
 static uint64_t os_idle_thread_stack[OS_IDLE_THREAD_STACK_SIZE/8] \
 __attribute__((section(".bss.os.thread.stack")));
+#endif
 
 // Idle Thread Attributes
 static const osThreadAttr_t os_idle_thread_attr = {
@@ -164,6 +174,15 @@ __attribute__((section(".data.os.timer.mpi"))) =
 #error "Invalid Timer Thread Stack size!"
 #endif
 
+#if(__RISCV_ARCH_GAP__ == 1U)
+// Timer Thread Control Block
+static osRtxThread_t os_timer_thread_cb \
+__attribute__((section(".fcbss.os.thread.cb")));
+
+// Timer Thread Stack
+static uint64_t os_timer_thread_stack[OS_TIMER_THREAD_STACK_SIZE/8] \
+__attribute__((section(".fcbss.os.thread.stack")));
+#else
 // Timer Thread Control Block
 static osRtxThread_t os_timer_thread_cb \
 __attribute__((section(".bss.os.thread.cb")));
@@ -171,6 +190,7 @@ __attribute__((section(".bss.os.thread.cb")));
 // Timer Thread Stack
 static uint64_t os_timer_thread_stack[OS_TIMER_THREAD_STACK_SIZE/8] \
 __attribute__((section(".bss.os.thread.stack")));
+#endif
 
 // Timer Thread Attributes
 static const osThreadAttr_t os_timer_thread_attr = {
