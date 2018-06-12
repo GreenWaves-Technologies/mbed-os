@@ -27,6 +27,9 @@
 #include "platform/mbed_interface.h"
 #include "platform/mbed_critical.h"
 #include "hal/serial_api.h"
+#if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
+#include "tinyprintf.h"
+#endif
 
 #if DEVICE_SERIAL
 extern int stdio_uart_inited;
