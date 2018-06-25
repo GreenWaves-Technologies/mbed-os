@@ -96,6 +96,9 @@ void SystemInit (void) {
   /* Activate interrupt handler for soc event */
   NVIC_EnableIRQ(FC_SOC_EVENT_IRQn);
 
+  /* Initialize malloc functions */
+  FC_MallocInit();
+
   __enable_irq();
 }
 

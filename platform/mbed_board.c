@@ -28,6 +28,7 @@
 #include "platform/mbed_critical.h"
 #include "hal/serial_api.h"
 #if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
+#include <stdlib.h>
 #include "tinyprintf.h"
 #endif
 
@@ -58,6 +59,8 @@ WEAK void mbed_die(void) {
             wait_ms(400);
         }
     }
+#else
+    exit(-1);
 #endif
 }
 

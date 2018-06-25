@@ -31,6 +31,10 @@ typedef struct {
     /* Timer Definition */
     TimerL_Type   *timerL;
     TimerH_Type   *timerH;
+#ifdef FEATURE_CLUSTER
+    TimerL_Type   *CLUSTER_TimerL;
+    TimerH_Type   *CLUSTER_TimerH;
+#endif
     /* Timer IRQn */
     uint32_t timerIRQn[NUM_TIMERS];
     /* Timer Compare Value */
@@ -78,6 +82,14 @@ void Timer_Initialize(uint32_t timer, uint32_t time_us)
             case 1: Timer64.timerH = TIMERH;
                     Timer64.timerIRQn[timer] = FC_TIMER1_IRQn;
                     break;
+#ifdef FEATURE_CLUSTER
+            case 2: Timer64.CLUSTER_TimerL = CLUSTER_TIMERL;
+                    Timer64.timerIRQn[timer] = FC_TIMER0_IRQn;
+                    break;
+            case 3: Timer64.CLUSTER_TimerH = CLUSTER_TIMERH;
+                    Timer64.timerIRQn[timer] = FC_TIMER1_IRQn;
+                    break;
+#endif
             default: break;
         }
 
@@ -128,6 +140,24 @@ void Timer_Enable(uint32_t timer)
                 /* Reset value */
                 (Timer64.timerH)->VALUE = 0;
             }
+#ifdef FEATURE_CLUSTER
+            if (timer == TIMER0_CLUSTER) {
+                /* Compare Value */
+                (Timer64.CLUSTER_TimerL)->COMPARE = Timer64.timerCompare[TIMER0_CLUSTER];
+                /* Reset Enable Counter */
+                (Timer64.CLUSTER_TimerL)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
+                /* Reset value */
+                (Timer64.CLUSTER_TimerL)->VALUE = 0;
+            }
+            if (timer == TIMER1_CLUSTER) {
+                /* Compare Value */
+                (Timer64.CLUSTER_TimerH)->COMPARE = Timer64.timerCompare[TIMER1_CLUSTER];
+                /* Reset Enable Counter */
+                (Timer64.CLUSTER_TimerH)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
+                /* Reset value */
+                (Timer64.CLUSTER_TimerH)->VALUE = 0;
+            }
+#endif
             /* Change timer state */
             Timer64.state[timer] |= TIMER_ENABLED;
         }
@@ -149,6 +179,12 @@ void Timer_Disable(uint32_t timer)
                 break;
             case 1: (Timer64.timerH)->CTRL = 0x0;
                 break;
+#ifdef FEATURE_CLUSTER
+            case 2: (Timer64.CLUSTER_TimerL)->CTRL = 0x0;
+                break;
+            case 3: (Timer64.CLUSTER_TimerH)->CTRL = 0x0;
+                break;
+#endif
             default: break;
             }
             /* Change timer state */
@@ -190,6 +226,12 @@ uint32_t Timer_ReadCycle(uint32_t timer)
             break;
         case 1: return_value = (Timer64.timerH)->VALUE;
             break;
+#ifdef FEATURE_CLUSTER
+        case 2: return_value = (Timer64.CLUSTER_TimerL)->VALUE;
+            break;
+        case 3: return_value = (Timer64.CLUSTER_TimerH)->VALUE;
+            break;
+#endif
         default: break;
         }
     }
@@ -245,6 +287,23 @@ void Timer_SetInterrupt(uint32_t timer, uint32_t time_us)
             (Timer64.timerH)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
         }
             break;
+#ifdef FEATURE_CLUSTER
+        case 2: {
+            /* Enable Interrupt */
+            (Timer64.CLUSTER_TimerL)->COMPARE = Timer64.timerCompare[timer];
+            (Timer64.CLUSTER_TimerL)->VALUE = 0;
+            /* Enable Counter */
+            (Timer64.CLUSTER_TimerL)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
+        }
+            break;
+        case 3: {
+            (Timer64.CLUSTER_TimerH)->COMPARE = Timer64.timerCompare[timer];
+            (Timer64.CLUSTER_TimerH)->VALUE = 0;
+            /* Enable Counter */
+            (Timer64.CLUSTER_TimerH)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
+        }
+            break;
+#endif
         default: break;
         }
 
@@ -267,6 +326,12 @@ void Timer_DisableInterrupt(uint32_t timer)
             break;
         case 1: (Timer64.timerH)->CTRL &= ~(1 << SysTick_CFG_REG_LOW_IRQE_Pos);
             break;
+#ifdef FEATURE_CLUSTER
+        case 2: (Timer64.CLUSTER_TimerL)->CTRL &= ~(1 << SysTick_CFG_REG_LOW_IRQE_Pos);
+            break;
+        case 3: (Timer64.CLUSTER_TimerH)->CTRL &= ~(1 << SysTick_CFG_REG_LOW_IRQE_Pos);
+            break;
+#endif
         default: break;
         }
     }

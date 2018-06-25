@@ -50,4 +50,6 @@
 #include "gap_clock.h"
 #include "gap_cpi.h"
 #include "gap_rtc.h"
+
+#include "gap_fc_malloc.h"
 #endif

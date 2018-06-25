@@ -38,18 +38,26 @@
 #define INITIAL_SP              (0x1C080000UL)
 #endif
 
-extern char __heapfcram_start;
-extern char __heapfcram_size;
+#if defined(__cplusplus)
+extern "C" {
+#endif /* __cplusplus */
 
-static inline uint32_t cmsis_getFcTcdmHeapBase() { return (uint32_t)&__heapfcram_start;}
-static inline uint32_t cmsis_getFcTcdmHeapSize() { return (uint32_t)&__heapfcram_size;}
+extern char __heapl2ram_start;
+extern char __heapl2ram_size;
+
+#if defined(__cplusplus)
+}
+#endif /* __cplusplus */
+
+static inline uint32_t cmsis_getL2HeapBase() { return (uint32_t)&__heapl2ram_start;}
+static inline uint32_t cmsis_getL2HeapSize() { return (uint32_t)&__heapl2ram_size;}
 
 #ifndef HEAP_START
-#define HEAP_START (unsigned char *)cmsis_getFcTcdmHeapBase()
+#define HEAP_START (unsigned char *)cmsis_getL2HeapBase()
 #endif
 
 #ifndef HEAP_SIZE
-#define HEAP_SIZE cmsis_getFcTcdmHeapSize()
+#define HEAP_SIZE cmsis_getL2HeapSize()
 #endif
 
 #endif

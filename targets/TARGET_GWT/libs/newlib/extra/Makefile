@@ -5,7 +5,7 @@ CFLAGS = -O3 -g -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-un
 	-ffunction-sections -fno-jump-tables -fno-tree-loop-distribute-patterns -march=rv32imcxgap8 -mPE=8 -mFC=1 \
 	-DPREFER_SIZE_OVER_SPEED -D__STD_C  -DDEFINE_MALLOC -DDEFINE_FREE -DINTERNAL_NEWLIB -DHAVE_INITFINI_ARRAY
 
-BUILDDIR = $(shell pwd)/build
+BUILDDIR = $(shell pwd)/BUILD
 LIBC     = libc.a
 
 OBJECTS  = $(patsubst %.c, $(BUILDDIR)/%.o, $(wildcard $(shell find . -name "*.c")))
@@ -24,6 +24,11 @@ libc_ar:
 
 libc_ar_move:
 	$(AR) d ../$(LIBC) lib_a-exit.o
+	$(AR) d ../$(LIBC) lib_a-sprintf.o
+	$(AR) d ../$(LIBC) lib_a-vsprintf.o
+	$(AR) d ../$(LIBC) lib_a-snprintf.o
+	$(AR) d ../$(LIBC) lib_a-vsnprintf.o
+	$(AR) d ../$(LIBC) lib_a-assert.o
 	$(AR) r ../$(LIBC) $(OBJECTS)
 
 $(OBJECTS) : $(BUILDDIR)/%.o : %.c #$(HEADERS)

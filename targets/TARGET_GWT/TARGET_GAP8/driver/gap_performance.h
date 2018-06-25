@@ -42,10 +42,11 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
+#define  PERFORMANCE_USING_TIMER_MASK   0xFFFFFFFF
 
 /*! @brief performance transfer blocking or nonblocking hint */
 typedef struct performance_s {
-    uint32_t events;     /*!< Which events */
+    uint32_t events_mask;     /*!< Events mask */
     uint32_t count[PCER_EVENTS_NUM];  /*!< Count value for all events */
 } performance_t;
 
@@ -69,10 +70,10 @@ extern "C" {
  * according to specific events, finally enable the counter.
  *
  * @param base The PERFORMANCE channel base pointer.
- * @param events The logic or of wanted PERFORMANCE counter number.
+ * @param mask The logic or of wanted PERFORMANCE counter number bit mask.
  * @note .
  */
-void PERFORMANCE_Start(performance_t *base, uint32_t events);
+void PERFORMANCE_Start(performance_t *base, uint32_t mask);
 
 /*!
  * @brief Stop the performance counter.

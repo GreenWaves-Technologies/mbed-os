@@ -106,6 +106,12 @@ typedef struct {
 #define EU_CORES    ((CLUSTER_EU_CORES_Type   *)   CORE_EU_BASE)              /*!< CLUSTER_EU_CORES configuration struct */
 #define SCB         ((SCB_Type   *)    CLUSTER_SCB_BASE )                     /*!< CLUSTER SCB configuration struct */
 
+#define CLUSTER_SysTick             ((SysTick_Type   *)     CLUSTER_SysTick_BASE  )   /*!< SysTick configuration struct */
+#define CLUSTER_TIMERL              ((TimerL_Type    *)     CLUSTER_SysTick_BASE  )   /*!< SysTick configuration struct */
+#define CLUSTER_TIMERH              ((TimerH_Type    *)     CLUSTER_SysTick_BASE  )   /*!< SysTick configuration struct */
+
+
+     
 #ifdef __cplusplus
 }
 #endif

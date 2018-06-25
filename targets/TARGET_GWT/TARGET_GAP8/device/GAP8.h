@@ -2652,6 +2652,149 @@ typedef struct {
  * @}
  */ /* end of group CLUSTER_STDOUT_Peripheral_Access_Layer */
 
+
+
+
+/* ----------------------------------------------------------------------------
+   -- HWCE Peripheral Access Layer
+   ---------------------------------------------------------------------------- */
+
+/*!
+ * @addtogroup HWCE Peripheral_Access_Layer HWCE Peripheral Access Layer
+ * @{
+ */
+
+/** HWCE - Registers Layout Typedef */
+typedef struct {
+    __IO  uint32_t HWCE_TRIGGER_REG;              /**< HWCE Trigger register, offset: 0x00 */
+    __IO  uint32_t HWCE_ACQUIRE_REG;              /**< HWCE Acquire register, offset: 0x04 */
+    __IO  uint32_t HWCE_FINISHED_REG;             /**< HWCE Finished register, offset: 0x08 */
+    __IO  uint32_t HWCE_STATUS_REG;               /**< HWCE Status register, offset: 0x0C */
+    __IO  uint32_t HWCE_RUNNING_JOB_REG;          /**< HWCE Running Job register, offset: 0x10 */
+    __IO  uint32_t HWCE_SOFT_CLEAR_REG;           /**< HWCE Soft_Clear register, offset: 0x14 */
+    __IO  uint32_t _reserved0[2];                 /**< HWCE Non used registers, offser: 0x18 */
+    __IO  uint32_t HWCE_GEN_CONFIG0_REG;          /**< HWCE Gen_Config0 register, offset: 0x20 */
+    __IO  uint32_t HWCE_GEN_CONFIG1_REG;          /**< HWCE Gen_Config1 register, offset: 0x24 */
+    __IO  uint32_t _reserved1[6];                 /**< HWCE unused registers, offset: 0x28 */
+    __IO  uint32_t HWCE_Y_TRANS_SIZE_REG;         /**< HWCE Y_Trans_Size register, offset: 0x40 */
+    __IO  uint32_t HWCE_Y_LINE_STRIDE_LENGTH_REG; /**< HWCE Y_Line_Stride_Length register, offset: 0x44 */
+    __IO  uint32_t HWCE_Y_FEAT_STRIDE_LENGTH_REG; /**< HWCE Y_Feat_Stride_Length register, offset: 0x48 */
+    __IO  uint32_t HWCE_Y_OUT_3_REG;              /**< HWCE Y_Out_3 register, offset: 0x4C */
+    __IO  uint32_t HWCE_Y_OUT_2_REG;              /**< HWCE Y_Out_2 register, offset: 0x50 */
+    __IO  uint32_t HWCE_Y_OUT_1_REG;              /**< HWCE Y_Out_1 register, offset: 0x54 */
+    __IO  uint32_t HWCE_Y_OUT_0_REG;              /**< HWCE Y_Out_0 register, offset: 0x58 */
+    __IO  uint32_t HWCE_Y_IN_3_REG;               /**< HWCE Y_In_3 register, offset: 0x5C */
+    __IO  uint32_t HWCE_Y_IN_2_REG;               /**< HWCE Y_In_2 register, offset: 0x60 */
+    __IO  uint32_t HWCE_Y_IN_1_REG;               /**< HWCE Y_In_1 register, offset: 0x64 */
+    __IO  uint32_t HWCE_Y_IN_0_REG;               /**< HWCE Y_In_0 register, offset: 0x68 */
+    __IO  uint32_t HWCE_X_TRANS_SIZE_REG;         /**< HWCE X_Trans_Size register, offset: 0x6C */
+    __IO  uint32_t HWCE_X_LINE_STRIDE_LENGTH_REG; /**< HWCE X_Line_Stride_Length register, offset: 0x70 */
+    __IO  uint32_t HWCE_X_FEAT_STRIDE_LENGTH_REG; /**< HWCE X_Feat_Stride_Length register, offset: 0x74 */
+    __IO  uint32_t HWCE_X_IN_REG;                 /**< HWCE X_In register, offset: 0x78 */
+    __IO  uint32_t HWCE_W_REG;                    /**< HWCE W register, offset: 0x7C */
+    __IO  uint32_t HWCE_JOB_CONFIG0_REG;          /**< HWCE Job_Config0 register, offset: 0x80 */
+    __IO  uint32_t HWCE_JOB_CONFIG1_REG;          /**< HWCE Job_Config1 register, offset: 0x84 */
+} HWCE_Type;
+
+
+/* ----------------------------------------------------------------------------
+   -- HWCE Register Masks
+   ---------------------------------------------------------------------------- */
+
+/*!
+ * @addtogroup HWCE_Register_Masks HWCE Register Masks
+ * @{
+ */
+/*! @name INFO - HWCE information register */
+/* Internal registers */
+#define HWCE_TRIGGER              ( 0x00 )
+#define HWCE_ACQUIRE              ( 0x04 )
+#define HWCE_FINISHED             ( 0x08 )
+#define HWCE_STATUS               ( 0x0C )
+#define HWCE_RUNNING_JOB          ( 0x10 )
+#define HWCE_SOFT_CLEAR           ( 0x14 )
+#define HWCE_GEN_CONFIG0          ( 0x20 )
+#define HWCE_GEN_CONFIG1          ( 0x24 )
+
+/* Configuration registers */
+#define HWCE_Y_TRANS_SIZE         ( 0x40 )
+#define HWCE_Y_LINE_STRIDE_LENGTH ( 0x44 )
+#define HWCE_Y_FEAT_STRIDE_LENGTH ( 0x48 )
+#define HWCE_Y_OUT_3_BASE_ADDR    ( 0x4C )
+#define HWCE_Y_OUT_2_BASE_ADDR    ( 0x50 )
+#define HWCE_Y_OUT_1_BASE_ADDR    ( 0x54 )
+#define HWCE_Y_OUT_0_BASE_ADDR    ( 0x58 )
+#define HWCE_Y_IN_3_BASE_ADDR     ( 0x5C )
+#define HWCE_Y_IN_2_BASE_ADDR     ( 0x60 )
+#define HWCE_Y_IN_1_BASE_ADDR     ( 0x64 )
+#define HWCE_Y_IN_0_BASE_ADDR     ( 0x68 )
+#define HWCE_X_TRANS_SIZE         ( 0x6C )
+#define HWCE_X_LINE_STRIDE_LENGTH ( 0x70 )
+#define HWCE_X_FEAT_STRIDE_LENGTH ( 0x74 )
+#define HWCE_X_IN_BASE_ADDR       ( 0x78 )
+#define HWCE_W_BASE_ADDR          ( 0x7C )
+#define HWCE_JOB_CONFIG0          ( 0x80 )
+#define HWCE_JOB_CONFIG1          ( 0x84 )
+
+#define HWCE_NB_IO_REGS           ( 18 )
+
+#define HWCE_ACQUIRE_CONTEXT_COPY ( -3 )
+#define HWCE_ACQUIRE_LOCKED       ( -2 )
+#define HWCE_ACQUIRE_QUEUE_FULL   ( -1 )
+#define HWCE_ACQUIRE_READY        ( 0 )
+
+#define HWCE_GEN_CONFIG0_WSTRIDE(x)           ((x) >> 16)
+#define HWCE_GEN_CONFIG0_NCP(x)               (((x) >> 13) & 0x1)
+#define HWCE_GEN_CONFIG0_CONV(x)              (((x) >> 11) & 0x3)
+#define HWCE_GEN_CONFIG0_VECT(x)              (((x) >> 9) & 0x3)
+#define HWCE_GEN_CONFIG0_UNS(x)               (((x) >> 8) & 1)
+#define HWCE_GEN_CONFIG0_NY(x)                (((x) >> 7) & 1)
+#define HWCE_GEN_CONFIG0_NF(x)                (((x) >> 6) & 1)
+#define HWCE_GEN_CONFIG0_QF(x)                ((x) & 0x3f)
+
+#define HWCE_GEN_CONFIG0_CONV_5x5 ( 0 )
+#define HWCE_GEN_CONFIG0_CONV_3x3 ( 1 )
+#define HWCE_GEN_CONFIG0_CONV_4x7 ( 2 )
+
+#define HWCE_GEN_CONFIG0_VECT_1   ( 0 )
+#define HWCE_GEN_CONFIG0_VECT_2   ( 1 )
+#define HWCE_GEN_CONFIG0_VECT_4   ( 2 )
+
+#define HWCE_GEN_CONFIG1_PIXSHIFTR(x)         (((x) >> 16) & 0x1F)
+#define HWCE_GEN_CONFIG1_PIXMODE(x)           (((x) >> 8) & 0x3)
+#define HWCE_GEN_CONFIG1_PIXSHIFTL(x)         (((x) >> 0) & 0x1F)
+
+#define HWCE_JOB_CONFIG0_NOYCONST(x)          ((x) >> 16)
+#define HWCE_JOB_CONFIG0_LBUFLEN(x)           ((x) & 0x3ff)
+
+#define HWCE_JOB_CONFIG1_LO(x)                (((x) >> 24) & 0x1)
+#define HWCE_JOB_CONFIG1_WIF(x)               (((x) >> 16) & 0x3F)
+#define HWCE_JOB_CONFIG1_WOF(x)               (((x) >> 8) & 0x1F)
+#define HWCE_JOB_CONFIG1_VECT_DISABLE_MASK(x) (((x) >> 0) & 0xF)
+
+#define HWCE_JOB_STRIDE(x)                    ((x) >> 16)
+#define HWCE_JOB_LENGTH(x)                    ((x) & 0xffff)
+
+  /*!
+   * @}
+   */ /* end of group HWCE_Register_Masks */
+
+
+/* HWCE - Peripheral instance base addresses */
+/** Peripheral HWCE base address */
+#define HWCE_BASE                                (CORE_PERI_BASE + 0x00001000)
+/** Peripheral HWCE base pointer */
+#define HWCE                                     ((HWCE_Type *) HWCE_BASE)
+/** Array initializer of HWCE base addresses */
+#define HWCE_BASE_ADDRS                          { HWCE_BASE }
+/** Array initializer of HWCE base pointers */
+#define HWCE_BASE_PTRS                           { HWCE }
+
+/*!
+ * @}
+ */ /* end of group HWCE_Peripheral_Access_Layer */
+
+
 #endif
 
 

@@ -192,9 +192,11 @@ static void PMU_FLLSInit()
     /* Initial FC SOC domain FLL */
     FLL_Init(uFLL_SOC, READ_PMU_CTRL_SLEEP_CTRL_CFG_FLL_SOC_RET(PMU_Sleep_Ctrl));
 
+    #ifdef FEATURE_CLUSTER
     /* Initial Cluster SOC domain FLL if cluster is power on */
     if (PMU_ClusterIsOn())
         FLL_Init(uFLL_CLUSTER, READ_PMU_CTRL_SLEEP_CTRL_CFG_FLL_CLUSTER_RET(PMU_Sleep_Ctrl));
+    #endif
 }
 
 void PMU_Init()

@@ -28,6 +28,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "gap_performance.h"
+#include "gap_timer.h"
+
+/*******************************************************************************
+ * Variables
+ ******************************************************************************/
+uint32_t fc_total_cycles = 0;
+
+#ifdef FEATURE_CLUSTER
+uint32_t cluster_total_cycles = 0;
+#endif
 
 /*!
  * @brief Initializes the performance counter.
@@ -50,27 +60,53 @@ static inline void PERFORMANCE_Init(performance_t *base)
  * to the configuration structure.
  *
  * @param base The PERFORMANCE channel base pointer.
- * @param events The logic or of wanted events.
+ * @param mask The logic or of wanted events bit mask.
  * @note .
  */
-static inline void PERFORMANCE_Config(performance_t *base, uint32_t events)
+static inline void PERFORMANCE_Config(performance_t *base, uint32_t mask)
 {
-    base->events = events;
+    base->events_mask = mask;
 
-    __PCER_Set(events);
+    __PCER_Set(mask);
 }
 
-void PERFORMANCE_Start(performance_t *base, uint32_t events)
+/*!
+ * @brief Initialize and enable the Cluster Timer.
+ *
+ * @param timer The Cluster Timer to enable.
+ * @note .
+ */
+static inline void PERFORMANCE_Timer_Start(uint32_t timer)
 {
-    PERFORMANCE_Init(base);
+    Timer_Initialize(timer, 0);
 
-    PERFORMANCE_Config(base, events);
+    Timer_Enable(timer);
+}
 
-    /* Set all PCCR to 0 */
-    __PCCR31_Set(0);
+void PERFORMANCE_Start(performance_t *base, uint32_t mask)
+{
+    if (mask == PERFORMANCE_USING_TIMER_MASK) {
+        base->events_mask = mask;
 
-    /* Enable PCMR */
-    __PCMR_Set((1 << PCMR_GLBEN_Pos) | (1 << PCMR_SATU_Pos));
+        #ifdef FEATURE_CLUSTER
+        cluster_total_cycles = 0;
+        if( !__is_FC() )
+            PERFORMANCE_Timer_Start(TIMER0_CLUSTER);
+        else
+        #endif
+            PERFORMANCE_Timer_Start(TIMER1);
+        fc_total_cycles = 0;
+    } else {
+        PERFORMANCE_Init(base);
+
+        PERFORMANCE_Config(base, mask);
+
+        /* Set all PCCR to 0 */
+        __PCCR31_Set(0);
+
+        /* Enable PCMR */
+        __PCMR_Set((1 << PCMR_GLBEN_Pos) | (1 << PCMR_SATU_Pos));
+    }
 }
 
 /*!
@@ -81,27 +117,63 @@ void PERFORMANCE_Start(performance_t *base, uint32_t events)
  */
 static inline void PERFORMANCE_Save(performance_t *base)
 {
-    uint32_t mask = base->events;
+    uint32_t mask = base->events_mask;
 
-    while (mask)
-    {
-        int event = __FL1(mask);
+    if (mask == PERFORMANCE_USING_TIMER_MASK) {
+        #ifdef FEATURE_CLUSTER
+        if( !__is_FC() )
+            cluster_total_cycles += Timer_ReadCycle(TIMER0_CLUSTER);
+        else
+        #endif
+            fc_total_cycles += Timer_ReadCycle(TIMER1);
+    } else {
 
-        mask &= ~(1 << event);
+        while (mask)
+        {
+            int event = __FL1(mask);
 
-        base->count[event] += __PCCRs_Get(event);
+            mask &= ~(1 << event);
+
+            base->count[event] += __PCCRs_Get(event);
+        }
     }
 }
 
 void PERFORMANCE_Stop(performance_t *base)
 {
-    /* Disable PCMR */
-    __PCMR_Set(0);
+    if (base->events_mask == PERFORMANCE_USING_TIMER_MASK) {
+        PERFORMANCE_Save(base);
 
-    PERFORMANCE_Save(base);
+        /* Disable Timer */
+        #ifdef FEATURE_CLUSTER
+        if( !__is_FC() )
+        {
+            Timer_Disable(TIMER0_CLUSTER);
+        }
+        else
+        #endif
+        {
+            Timer_Disable(TIMER1);
+        }
+    } else {
+
+        /* Disable PCMR */
+        __PCMR_Set(0);
+
+        PERFORMANCE_Save(base);
+    }
 }
 
 uint32_t PERFORMANCE_Get(performance_t *base, uint32_t event)
 {
+    if (base->events_mask == PERFORMANCE_USING_TIMER_MASK) {
+        #ifdef FEATURE_CLUSTER
+        if( !__is_FC() )
+            return cluster_total_cycles;
+        else
+        #endif
+            return fc_total_cycles;
+    }
+
     return base->count[event];
 }

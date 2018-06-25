@@ -30,9 +30,11 @@ extern "C" {
 #endif
 
 /* Supported Number of Timers */
-#define NUM_TIMERS  2
+#define NUM_TIMERS  4
 #define TIMER0  0
 #define TIMER1  1
+#define TIMER0_CLUSTER  2
+#define TIMER1_CLUSTER  3
 
 /* Default compare */
 #define TIMER_DEFAULT_COMPARE    0xFFFFFFFF

@@ -43,9 +43,17 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-/* CLUSTER FC heap */
+#if defined(__cplusplus)
+extern "C" {
+#endif /* __cplusplus */
+
+/* FC heap */
 extern char  __heapfcram_start;
 extern char  __heapfcram_size;
+
+#if defined(__cplusplus)
+}
+#endif /* __cplusplus */
 
 /*******************************************************************************
  * APIs

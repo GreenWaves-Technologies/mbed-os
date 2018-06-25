@@ -52,7 +52,7 @@ MEMORY
 
 __L1_STACK_SIZE      = 0x400;
 
-__FC_STACK_SIZE      = 0x800;
+__FC_STACK_SIZE      = 0x1000;
 
 /* We have to align each sector to word boundaries as our current s19->slm
  * conversion scripts are not able to handle non-word aligned sections. */
@@ -248,11 +248,14 @@ SECTIONS
         __fc_bss_start__ = .;
         *(.fcbss)
         *(.fcbss.*)
-        . = ALIGN(4);
-        __fc_bss_end__ = .;
+        __fc_stack_end__ = .;
+        __fc_stack_start__ = . + __FC_STACK_SIZE;
+        __fc_bss_end__ = . + __FC_STACK_SIZE;
      } > FC_tcdm_aliased
 
-    .heapfcram (ORIGIN(FC_tcdm_aliased) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny) + SIZEOF(.fcbss)) : AT(ORIGIN(FC_tcdm) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny) + SIZEOF(.fcbss))
+     __fc_bss_size__ = __fc_bss_end__ - __fc_bss_start__;
+
+    .heapfcram (ORIGIN(FC_tcdm_aliased) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny) + __fc_bss_size__ ) : AT(ORIGIN(FC_tcdm) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny) + __fc_bss_size__)
     {
         . = ALIGN(4);
         *(.heapfcram)
@@ -261,7 +264,7 @@ SECTIONS
         __heapfcram_start = .;
     } > FC_tcdm_aliased
 
-     __heapfcram_size = LENGTH(FC_tcdm_aliased) - __heapfcram_start + ORIGIN(FC_tcdm_aliased) - __FC_STACK_SIZE;
+     __heapfcram_size = LENGTH(FC_tcdm_aliased) + ORIGIN(FC_tcdm_aliased) - __heapfcram_start;
 
     .libgomp (ORIGIN(L1_sram_aliased) ): AT(__l1_preload_start_inL2)
     {
@@ -335,7 +338,7 @@ SECTIONS
         __heapl2ram_start = .;
     } > L2
 
-    __heapl2ram_size = LENGTH(L2) - __heapl2ram_start + ORIGIN(L2);
+    __heapl2ram_size = LENGTH(L2) + ORIGIN(L2) - __heapl2ram_start;
     __heapl2ram_limit = __heapl2ram_size + __heapl2ram_start;
 
     .stab  0 (NOLOAD) :
