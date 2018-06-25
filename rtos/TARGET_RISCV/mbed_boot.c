@@ -345,7 +345,7 @@ void mbed_start_main(void)
         #if(__RISCV_ARCH_GAP__ == 1U)
         asm volatile("csrr t0, 0x342");
         #endif
-        error("Pre main thread not created");
+        MBED_ERROR1(MBED_MAKE_ERROR(MBED_MODULE_PLATFORM, MBED_ERROR_CODE_INITIALIZATION_FAILED), "Pre main thread not created", &_main_thread_attr);
     }
 
     osKernelStart();

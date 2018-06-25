@@ -480,6 +480,18 @@ void sys_msleep(u32_t ms) {
     osDelay(ms);
 }
 
+osThreadId_t lwip_tcpip_thread_id = 0;
+
+void sys_tcpip_thread_set(void)
+{
+    lwip_tcpip_thread_id = osThreadGetId();
+}
+
+bool sys_tcpip_thread_check(void)
+{
+    return osThreadGetId() == lwip_tcpip_thread_id;
+}
+
 // Keep a pool of thread structures
 static int thread_pool_index = 0;
 static sys_thread_data_t thread_pool[SYS_THREAD_POOL_N];
@@ -502,7 +514,11 @@ static sys_thread_data_t thread_pool[SYS_THREAD_POOL_N];
  * Outputs:
  *      sys_thread_t              -- Pointer to thread handle.
  *---------------------------------------------------------------------------*/
-sys_thread_t sys_thread_new(const char *pcName,
+#ifndef MBED_TZ_DEFAULT_ACCESS
+#define MBED_TZ_DEFAULT_ACCESS   0
+#endif    
+
+ sys_thread_t sys_thread_new(const char *pcName,
                             void (*thread)(void *arg),
                             void *arg, int stacksize, int priority) {
     LWIP_DEBUGF(SYS_DEBUG, ("New Thread: %s\n", pcName));
@@ -519,6 +535,7 @@ sys_thread_t sys_thread_new(const char *pcName,
     t->attr.cb_mem = &t->data;
     t->attr.stack_size = stacksize;
     t->attr.stack_mem = malloc(stacksize);
+    t->attr.tz_module = MBED_TZ_DEFAULT_ACCESS;
     if (t->attr.stack_mem == NULL) {
       error("Error allocating the stack memory");
     }

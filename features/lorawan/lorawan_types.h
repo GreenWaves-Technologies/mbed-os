@@ -36,37 +36,15 @@
 
 /**
  * Option Flags for send(), receive() APIs
+ *
+ * Special Notes for UPLINK:
+ *  i)  All of the flags are mutually exclusive.
+ *  ii) MSG_MULTICAST_FLAG cannot be used.
  */
 #define MSG_UNCONFIRMED_FLAG                  0x01
 #define MSG_CONFIRMED_FLAG                    0x02
 #define MSG_MULTICAST_FLAG                    0x04
 #define MSG_PROPRIETARY_FLAG                  0x08
-
-/**
- * Bit mask for message flags
- */
-
-#define MSG_FLAG_MASK                         0x0F
-
-/**
- * Mask for unconfirmed multicast message
- */
-#define MSG_UNCONFIRMED_MULTICAST              0x05
-
-/**
- * Mask for confirmed multicast message
- */
-#define MSG_CONFIRMED_MULTICAST                0x06
-
-/**
- * Mask for unconfirmed message proprietary message
- */
-#define MSG_UNCONFIRMED_PROPRIETARY            0x09
-
-/**
- * Mask for confirmed proprietary message
- */
-#define MSG_CONFIRMED_PROPRIETARY              0x0A
 
 /**
  * LoRaWAN device classes definition.
@@ -123,6 +101,7 @@ typedef enum lorawan_status {
     LORAWAN_STATUS_DUTYCYCLE_RESTRICTED = -1020,
     LORAWAN_STATUS_NO_CHANNEL_FOUND = -1021,
     LORAWAN_STATUS_NO_FREE_CHANNEL_FOUND = -1022,
+    LORAWAN_STATUS_METADATA_NOT_AVAILABLE = -1023
 } lorawan_status_t;
 
 /** The lorawan_connect_otaa structure.
@@ -213,7 +192,7 @@ typedef struct lorawan_connect {
  * TX_DONE              - When a packet is sent
  * TX_TIMEOUT,          - When stack was unable to send packet in TX window
  * TX_ERROR,            - A general TX error
- * TX_CRYPTO_ERROR,     - If MIC fails, or any other crypto relted error
+ * CRYPTO_ERROR,        - A crypto error indicating wrong keys
  * TX_SCHEDULING_ERROR, - When stack is unable to schedule packet
  * RX_DONE,             - When there is something to receive
  * RX_TIMEOUT,          - Not yet mapped
@@ -225,12 +204,13 @@ typedef struct lorawan_connect {
  *
  */
 typedef enum lora_events {
-    CONNECTED=0,
+    CONNECTED = 0,
     DISCONNECTED,
     TX_DONE,
     TX_TIMEOUT,
     TX_ERROR,
-    TX_CRYPTO_ERROR,
+    CRYPTO_ERROR,
+    TX_CRYPTO_ERROR = CRYPTO_ERROR, //keeping this for backward compatibility
     TX_SCHEDULING_ERROR,
     RX_DONE,
     RX_TIMEOUT,
@@ -264,26 +244,26 @@ typedef enum lora_events {
  * the stack about the battery level by calling a function provided
  * by the upper layers.
  */
-typedef struct  {
-     /**
-      * Mandatory. Event Callback must be provided
-      */
-     mbed::Callback<void(lorawan_event_t)> events;
+typedef struct {
+    /**
+     * Mandatory. Event Callback must be provided
+     */
+    mbed::Callback<void(lorawan_event_t)> events;
 
-     /**
-      * Optional
-      */
-     mbed::Callback<void(uint8_t, uint8_t)> link_check_resp;
+    /**
+     * Optional
+     */
+    mbed::Callback<void(uint8_t, uint8_t)> link_check_resp;
 
-     /**
-      * Battery level return value must follow the specification
-      * for DevStatusAns MAC command:
-      *
-      *     0       The end-device is connected to an external power source
-      *     1 - 254 The battery level, 1 being at minimum and 254 being at maximum
-      *     255     The end-device was not able to measure the battery level.
-      */
-     mbed::Callback<uint8_t(void)> battery_level;
+    /**
+     * Battery level return value must follow the specification
+     * for DevStatusAns MAC command:
+     *
+     *     0       The end-device is connected to an external power source
+     *     1 - 254 The battery level, 1 being at minimum and 254 being at maximum
+     *     255     The end-device was not able to measure the battery level.
+     */
+    mbed::Callback<uint8_t(void)> battery_level;
 } lorawan_app_callbacks_t;
 
 /**
@@ -295,7 +275,7 @@ typedef union {
     /**
      * Byte-access to the bits.
      */
-    int8_t value;
+    uint8_t value;
     /**
      * The structure to store the minimum and the maximum datarate.
      */
@@ -308,7 +288,7 @@ typedef union {
          * The allowed ranges are region-specific.
          * Please refer to \ref DR_0 to \ref DR_15 for details.
          */
-        int8_t min :4;
+        uint8_t min : 4;
         /**
          * The maximum data rate.
          *
@@ -317,7 +297,7 @@ typedef union {
          * The allowed ranges are region-specific.
          * Please refer to \ref DR_0 to \ref DR_15 for details.
          */
-        int8_t max :4;
+        uint8_t max : 4;
     } fields;
 } dr_range_t;
 
@@ -365,5 +345,322 @@ typedef struct lora_channelplan {
     uint8_t nb_channels;    // number of channels
     loramac_channel_t *channels;
 } lorawan_channelplan_t;
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | SF12 - BW125
+ * AU915        | SF10 - BW125
+ * CN470        | SF12 - BW125
+ * CN779        | SF12 - BW125
+ * EU433        | SF12 - BW125
+ * EU868        | SF12 - BW125
+ * IN865        | SF12 - BW125
+ * KR920        | SF12 - BW125
+ * US915        | SF10 - BW125
+ * US915_HYBRID | SF10 - BW125
+ */
+#define DR_0                                        0
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | SF11 - BW125
+ * AU915        | SF9  - BW125
+ * CN470        | SF11 - BW125
+ * CN779        | SF11 - BW125
+ * EU433        | SF11 - BW125
+ * EU868        | SF11 - BW125
+ * IN865        | SF11 - BW125
+ * KR920        | SF11 - BW125
+ * US915        | SF9  - BW125
+ * US915_HYBRID | SF9  - BW125
+ */
+#define DR_1                                        1
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | SF10 - BW125
+ * AU915        | SF8  - BW125
+ * CN470        | SF10 - BW125
+ * CN779        | SF10 - BW125
+ * EU433        | SF10 - BW125
+ * EU868        | SF10 - BW125
+ * IN865        | SF10 - BW125
+ * KR920        | SF10 - BW125
+ * US915        | SF8  - BW125
+ * US915_HYBRID | SF8  - BW125
+ */
+#define DR_2                                        2
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | SF9  - BW125
+ * AU915        | SF7  - BW125
+ * CN470        | SF9  - BW125
+ * CN779        | SF9  - BW125
+ * EU433        | SF9  - BW125
+ * EU868        | SF9  - BW125
+ * IN865        | SF9  - BW125
+ * KR920        | SF9  - BW125
+ * US915        | SF7  - BW125
+ * US915_HYBRID | SF7  - BW125
+ */
+#define DR_3                                        3
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | SF8  - BW125
+ * AU915        | SF8  - BW500
+ * CN470        | SF8  - BW125
+ * CN779        | SF8  - BW125
+ * EU433        | SF8  - BW125
+ * EU868        | SF8  - BW125
+ * IN865        | SF8  - BW125
+ * KR920        | SF8  - BW125
+ * US915        | SF8  - BW500
+ * US915_HYBRID | SF8  - BW500
+ */
+#define DR_4                                        4
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | SF7  - BW125
+ * AU915        | RFU
+ * CN470        | SF7  - BW125
+ * CN779        | SF7  - BW125
+ * EU433        | SF7  - BW125
+ * EU868        | SF7  - BW125
+ * IN865        | SF7  - BW125
+ * KR920        | SF7  - BW125
+ * US915        | RFU
+ * US915_HYBRID | RFU
+ */
+#define DR_5                                        5
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | SF7  - BW250
+ * AU915        | RFU
+ * CN470        | SF12 - BW125
+ * CN779        | SF7  - BW250
+ * EU433        | SF7  - BW250
+ * EU868        | SF7  - BW250
+ * IN865        | SF7  - BW250
+ * KR920        | RFU
+ * US915        | RFU
+ * US915_HYBRID | RFU
+ */
+#define DR_6                                        6
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | FSK
+ * AU915        | RFU
+ * CN470        | SF12 - BW125
+ * CN779        | FSK
+ * EU433        | FSK
+ * EU868        | FSK
+ * IN865        | FSK
+ * KR920        | RFU
+ * US915        | RFU
+ * US915_HYBRID | RFU
+ */
+#define DR_7                                        7
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | RFU
+ * AU915        | SF12 - BW500
+ * CN470        | RFU
+ * CN779        | RFU
+ * EU433        | RFU
+ * EU868        | RFU
+ * IN865        | RFU
+ * KR920        | RFU
+ * US915        | SF12 - BW500
+ * US915_HYBRID | SF12 - BW500
+ */
+#define DR_8                                        8
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | RFU
+ * AU915        | SF11 - BW500
+ * CN470        | RFU
+ * CN779        | RFU
+ * EU433        | RFU
+ * EU868        | RFU
+ * IN865        | RFU
+ * KR920        | RFU
+ * US915        | SF11 - BW500
+ * US915_HYBRID | SF11 - BW500
+ */
+#define DR_9                                        9
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | RFU
+ * AU915        | SF10 - BW500
+ * CN470        | RFU
+ * CN779        | RFU
+ * EU433        | RFU
+ * EU868        | RFU
+ * IN865        | RFU
+ * KR920        | RFU
+ * US915        | SF10 - BW500
+ * US915_HYBRID | SF10 - BW500
+ */
+#define DR_10                                       10
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | RFU
+ * AU915        | SF9  - BW500
+ * CN470        | RFU
+ * CN779        | RFU
+ * EU433        | RFU
+ * EU868        | RFU
+ * IN865        | RFU
+ * KR920        | RFU
+ * US915        | SF9  - BW500
+ * US915_HYBRID | SF9  - BW500
+ */
+#define DR_11                                       11
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | RFU
+ * AU915        | SF8  - BW500
+ * CN470        | RFU
+ * CN779        | RFU
+ * EU433        | RFU
+ * EU868        | RFU
+ * IN865        | RFU
+ * KR920        | RFU
+ * US915        | SF8  - BW500
+ * US915_HYBRID | SF8  - BW500
+ */
+#define DR_12                                       12
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | RFU
+ * AU915        | SF7  - BW500
+ * CN470        | RFU
+ * CN779        | RFU
+ * EU433        | RFU
+ * EU868        | RFU
+ * IN865        | RFU
+ * KR920        | RFU
+ * US915        | SF7  - BW500
+ * US915_HYBRID | SF7  - BW500
+ */
+#define DR_13                                       13
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | RFU
+ * AU915        | RFU
+ * CN470        | RFU
+ * CN779        | RFU
+ * EU433        | RFU
+ * EU868        | RFU
+ * IN865        | RFU
+ * KR920        | RFU
+ * US915        | RFU
+ * US915_HYBRID | RFU
+ */
+#define DR_14                                       14
+
+/*!
+ * Region       | SF
+ * ------------ | :-----:
+ * AS923        | RFU
+ * AU915        | RFU
+ * CN470        | RFU
+ * CN779        | RFU
+ * EU433        | RFU
+ * EU868        | RFU
+ * IN865        | RFU
+ * KR920        | RFU
+ * US915        | RFU
+ * US915_HYBRID | RFU
+ */
+#define DR_15                                       15
+
+/**
+ * Enumeration for LoRaWAN connection type.
+ */
+typedef enum lorawan_connect_type {
+    LORAWAN_CONNECTION_OTAA = 0,    /**< Over The Air Activation */
+    LORAWAN_CONNECTION_ABP          /**< Activation By Personalization */
+} lorawan_connect_type_t;
+
+
+/**
+ * Meta-data collection for a transmission
+ */
+typedef struct {
+    /**
+     * The transmission time on air of the frame.
+     */
+    uint32_t tx_toa;
+    /**
+     * The uplink channel used for transmission.
+     */
+    uint32_t channel;
+    /**
+     * The transmission power.
+     */
+    int8_t tx_power;
+    /**
+     * The uplink datarate.
+     */
+    uint8_t data_rate;
+    /**
+     * Provides the number of retransmissions.
+     */
+    uint8_t nb_retries;
+    /**
+     * A boolean to mark if the meta data is stale
+     */
+    bool stale;
+} lorawan_tx_metadata;
+
+/**
+ * Meta-data collection for the received packet
+ */
+typedef struct {
+    /**
+     * The RSSI for the received packet.
+     */
+    int16_t rssi;
+    /**
+     * Data rate of reception
+     */
+    uint8_t rx_datarate;
+    /**
+     * The SNR for the received packet.
+     */
+    uint8_t snr;
+    /**
+     * A boolean to mark if the meta data is stale
+     */
+    bool stale;
+} lorawan_rx_metadata;
 
 #endif /* MBED_LORAWAN_TYPES_H_ */

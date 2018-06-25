@@ -390,20 +390,6 @@ void thread_tasklet_trace_bootstrap_info()
 }
 #endif /* #define TRACE_THREAD_TASKLET */
 
-int8_t thread_tasklet_get_ip_address(char *address, int8_t len)
-{
-    uint8_t binary_ipv6[16];
-
-    if ((len >= 40) && (0 == arm_net_address_get(
-                            thread_tasklet_data_ptr->nwk_if_id, ADDR_IPV6_GP, binary_ipv6))) {
-        ip6tos(binary_ipv6, address);
-        //tr_debug("IP address: %s", address);
-        return 0;
-    } else {
-        return -1;
-    }
-}
-
 int8_t thread_tasklet_connect(mesh_interface_cb callback, int8_t nwk_interface_id)
 {
     int8_t re_connecting = true;
@@ -431,9 +417,7 @@ int8_t thread_tasklet_connect(mesh_interface_cb callback, int8_t nwk_interface_i
             // -1 handler already used by other tasklet
             // -2 memory allocation failure
             return thread_tasklet_data_ptr->tasklet;
-        }
-
-        ns_event_loop_thread_start();
+        }        
     } else {
         thread_tasklet_data_ptr->tasklet = tasklet;
         mesh_system_send_connect_event(thread_tasklet_data_ptr->tasklet);

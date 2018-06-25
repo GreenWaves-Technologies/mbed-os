@@ -70,7 +70,7 @@ __STATIC_INLINE char __svcPutChar (char c) {
 }
 
 char osPutChar(char c) {
-  if (IS_IRQ_MODE() || IS_IRQ_MASKED()) {
+  if (IsIrqMode() || IsIrqMasked()) {
      return -1 ;
   }
   return __svcPutChar(c);

@@ -30,6 +30,7 @@
 
 #ifndef MBED_MBED_RTX_H
 #define MBED_MBED_RTX_H
+#include <stdint.h>
 
 #ifdef __GAP8__
 
