@@ -34,6 +34,9 @@ namespace
     NetworkInterface* net;
 }
 
+char tcp_global::rx_buffer[RX_BUFF_SIZE];
+char tcp_global::tx_buffer[TX_BUFF_SIZE];
+
 NetworkInterface* get_interface()
 {
     return net;
@@ -93,7 +96,7 @@ void fill_tx_buffer_ascii(char *buff, size_t len)
 // Test setup
 utest::v1::status_t greentea_setup(const size_t number_of_cases)
 {
-    GREENTEA_SETUP(240, "default_auto");
+    GREENTEA_SETUP(480, "default_auto");
     _ifup();
     return greentea_test_setup_handler(number_of_cases);
 }

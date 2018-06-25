@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#if 1 || !DEVICE_SLEEP
+#if !DEVICE_SLEEP
 #error [NOT_SUPPORTED] sleep not supported for this target
 #endif
 
@@ -28,6 +28,22 @@
 
 #define US_PER_S 1000000
 
+/* Flush serial buffer before deep sleep
+ *
+ * Since deepsleep() may shut down the UART peripheral, we wait for some time
+ * to allow for hardware serial buffers to completely flush.
+ *
+ * Take NUMAKER_PFM_NUC472 as an example:
+ * Its UART peripheral has 16-byte Tx FIFO. With baud rate set to 9600, flush
+ * Tx FIFO would take: 16 * 8 * 1000 / 9600 = 13.3 (ms). So set wait time to
+ * 20ms here for safe.
+ *
+ * This should be replaced with a better function that checks if the
+ * hardware buffers are empty. However, such an API does not exist now,
+ * so we'll use the wait_ms() function for now.
+ */
+#define SERIAL_FLUSH_TIME_MS    20
+
 using namespace utest::v1;
 
 /* The following ticker frequencies are possible:
@@ -37,7 +53,12 @@ using namespace utest::v1;
 
 /* Used for regular sleep mode, a target should be awake within 10 us. Define us delta value as follows:
  * delta = default 10 us + worst ticker resolution + extra time for code execution */
+#if defined(MBED_CPU_STATS_ENABLED)
+/* extra 25us for stats computation (for more details see MBED_CPU_STATS_ENABLED) */
+static const uint32_t sleep_mode_delta_us = (10 + 4 + 5 + 25);
+#else
 static const uint32_t sleep_mode_delta_us = (10 + 4 + 5);
+#endif
 
 /* Used for deep-sleep mode, a target should be awake within 10 ms. Define us delta value as follows:
  * delta = default 10 ms + worst ticker resolution + extra time for code execution */
@@ -98,12 +119,22 @@ void lp_ticker_isr(const ticker_data_t *const ticker_data)
  * high frequency ticker interrupt can wake-up target from sleep. */
 void sleep_usticker_test()
 {
-#if 0
     const ticker_data_t * ticker = get_us_ticker_data();
     const unsigned int ticker_freq = ticker->interface->get_info()->frequency;
     const unsigned int ticker_width = ticker->interface->get_info()->bits;
 
     const ticker_irq_handler_type us_ticker_irq_handler_org = set_us_ticker_irq_handler(us_ticker_isr);
+
+    // call ticker_read_us to initialize ticker upper layer
+    // prevents subsequent scheduling of max_delta interrupt during ticker initialization while test execution
+    // (e.g when ticker_read_us is called)
+    ticker_read_us(ticker);
+#ifdef DEVICE_LPTICKER
+    // call ticker_read_us to initialize lp_ticker
+    // prevents scheduling interrupt during ticker initialization (in lp_ticker_init) while test execution
+    // (e.g when ticker_read_us is called for lp_ticker, see MBED_CPU_STATS_ENABLED)
+    ticker_read_us(get_lp_ticker_data());
+#endif
 
     /* Test only sleep functionality. */
     sleep_manager_lock_deep_sleep();
@@ -130,7 +161,6 @@ void sleep_usticker_test()
 
     sleep_manager_unlock_deep_sleep();
     TEST_ASSERT_TRUE(sleep_manager_can_deep_sleep());
-#endif
 }
 
 #ifdef DEVICE_LPTICKER
@@ -143,12 +173,17 @@ void deepsleep_lpticker_test()
     const unsigned int ticker_freq = ticker->interface->get_info()->frequency;
     const unsigned int ticker_width = ticker->interface->get_info()->bits;
 
+    // call ticker_read_us to initialize ticker upper layer
+    // prevents subsequent scheduling of max_delta interrupt during ticker initialization while test execution
+    // (e.g when ticker_read_us is called)
+    ticker_read_us(ticker);
+
     const ticker_irq_handler_type lp_ticker_irq_handler_org = set_lp_ticker_irq_handler(lp_ticker_isr);
 
     /* Give some time Green Tea to finish UART transmission before entering
      * deep-sleep mode.
      */
-    wait_ms(10);
+    wait_ms(SERIAL_FLUSH_TIME_MS);
 
     TEST_ASSERT_TRUE_MESSAGE(sleep_manager_can_deep_sleep(), "deep sleep should not be locked");
 
@@ -183,7 +218,7 @@ void deepsleep_high_speed_clocks_turned_off_test()
     /* Give some time Green Tea to finish UART transmission before entering
      * deep-sleep mode.
      */
-    wait_ms(10);
+    wait_ms(SERIAL_FLUSH_TIME_MS);
 
     TEST_ASSERT_TRUE_MESSAGE(sleep_manager_can_deep_sleep(), "deep sleep should not be locked");
 

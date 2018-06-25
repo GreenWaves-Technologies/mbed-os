@@ -142,6 +142,9 @@ ble_error_t GenericSecurityManager::purgeAllBondingState(void) {
 ble_error_t GenericSecurityManager::generateWhitelistFromBondTable(Gap::Whitelist_t *whitelist) const {
     if (!_db) return BLE_ERROR_INITIALIZATION_INCOMPLETE;
     if (eventHandler) {
+        if (!whitelist) {
+            return BLE_ERROR_INVALID_PARAM;
+        }
         _db->generate_whitelist_from_bond_table(
             mbed::callback(eventHandler, &::SecurityManager::EventHandler::whitelistFromBondTable),
             whitelist
@@ -1141,6 +1144,7 @@ void GenericSecurityManager::on_pairing_request(
     /* cancel pairing if secure connection paring is not possible */
     if (!_legacy_pairing_allowed && !authentication.get_secure_connections()) {
         cancelPairingRequest(connection);
+        return;
     }
 
     ControlBlock_t *cb = get_control_block(connection);

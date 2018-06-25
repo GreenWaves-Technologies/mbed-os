@@ -22,14 +22,14 @@
 
 namespace mbed {
 
-class QUECTEL_BC95_CellularSIM : public AT_CellularSIM
-{
+class QUECTEL_BC95_CellularSIM : public AT_CellularSIM {
 public:
     QUECTEL_BC95_CellularSIM(ATHandler &atHandler);
     virtual ~QUECTEL_BC95_CellularSIM();
 
 public: //from CellularSIM
     virtual nsapi_error_t get_sim_state(SimState &state);
+    virtual nsapi_error_t get_iccid(char *buf, size_t buf_size);
 };
 
 } // namespace mbed

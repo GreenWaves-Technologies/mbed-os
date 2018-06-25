@@ -33,8 +33,13 @@
 #error [NOT_SUPPORTED] Both wifi and ethernet testing cannot be enabled
 #endif
 #if MBED_CONF_APP_TEST_WIFI
-#if !defined(TARGET_UBLOX_EVK_ODIN_W2) && !defined(TARGET_REALTEK_RTL8195AM)
-#error [NOT_SUPPORTED] Tests are valid only for UBLOX_EVK_ODIN_W2 and REALTEK_RTL8195AM
+#if !defined(TARGET_UBLOX_EVK_ODIN_W2)      && \
+    !defined(TARGET_REALTEK_RTL8195AM)      && \
+    !defined(TARGET_MTB_ADV_WISE_1530)      && \
+    !defined(TARGET_MTB_USI_WM_BN_BM_22)    && \
+    !defined(TARGET_MTB_MXCHIP_EMW3166)     && \
+    !defined(TARGET_MTB_UBLOX_ODIN_W2)
+#error [NOT_SUPPORTED] Wifi tests are not valid for the target
 #endif
 #endif
 
@@ -65,6 +70,7 @@ Case cases[] = {
     Case("EMAC unicast", test_emac_unicast),
     Case("EMAC unicast frame length", test_emac_unicast_frame_len),
     Case("EMAC unicast burst", test_emac_unicast_burst),
+    Case("EMAC unicast long", test_emac_unicast_long),
     Case("EMAC multicast filter", test_emac_multicast_filter),
     Case("EMAC memory", test_emac_memory)
 };

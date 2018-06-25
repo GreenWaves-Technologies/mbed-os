@@ -45,7 +45,7 @@ nsapi_error_t AT_CellularPower::set_at_mode()
     return NSAPI_ERROR_OK;
 }
 
-nsapi_error_t AT_CellularPower::set_power_level(int func_level)
+nsapi_error_t AT_CellularPower::set_power_level(int func_level, int do_reset)
 {
     return NSAPI_ERROR_OK;
 }
@@ -74,3 +74,7 @@ void AT_CellularPower::remove_device_ready_urc_cb(mbed::Callback<void()> callbac
 
 }
 
+nsapi_error_t AT_CellularPower::is_device_ready()
+{
+    return NSAPI_ERROR_OK;
+}

@@ -458,8 +458,7 @@ def merge_region_list(region_list, destination, notify, padding=b'\xFF'):
         makedirs(dirname(destination))
     notify.info("Space used after regions merged: 0x%x" %
                 (merged.maxaddr() - merged.minaddr() + 1))
-    with open(destination, "wb+") as output:
-        merged.tofile(output, format=format.strip("."))
+    merged.tofile(destination, format=format.strip("."))
 
 def scan_resources(src_paths, toolchain, dependencies_paths=None,
                    inc_dirs=None, base_path=None, collect_ignores=False):
@@ -612,6 +611,9 @@ def build_project(src_paths, build_path, target, toolchain_name,
             # Write output to file in CSV format for the CI
             map_csv = join(build_path, name + "_map.csv")
             memap_instance.generate_output('csv-ci', stats_depth, map_csv)
+
+            map_html = join(build_path, name + "_map.html")
+            memap_instance.generate_output('html', stats_depth, map_html)
 
         resources.detect_duplicates(toolchain)
 

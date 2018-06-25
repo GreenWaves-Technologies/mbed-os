@@ -376,6 +376,14 @@ void btle_handler(const ble_evt_t *p_ble_evt)
         		break;
         }
 #endif
+        case BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST: {
+            Gap::Handle_t connection = p_ble_evt->evt.gap_evt.conn_handle;
+            const ble_gap_evt_conn_param_update_request_t *update_request =
+                &p_ble_evt->evt.gap_evt.params.conn_param_update_request;
+
+            sd_ble_gap_conn_param_update(connection, &update_request->conn_params);
+            break;
+        }
 
         case BLE_GAP_EVT_TIMEOUT:
             gap.processTimeoutEvent(static_cast<Gap::TimeoutSource_t>(p_ble_evt->evt.gap_evt.params.timeout.src));
@@ -402,10 +410,10 @@ void btle_handler(const ble_evt_t *p_ble_evt)
     gattServer.hwCallback(p_ble_evt);
 }
 
-/*! @brief      Callback when an error occurs inside the SoftDevice */
+/*! @brief      Callback when an error occurs inside the SoftDevice or ASSERT in debug*/
 void assert_nrf_callback(uint16_t line_num, const uint8_t *p_file_name)
 {
-    ASSERT_TRUE(false, (void) 0);
+    error("nrf failure at %s:%d", p_file_name, line_num);
 }
 
 #if NRF_SD_BLE_API_VERSION >= 5

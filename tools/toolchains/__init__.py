@@ -33,6 +33,7 @@ from os.path import (join, splitext, exists, relpath, dirname, basename, split,
 from itertools import chain
 from inspect import getmro
 from copy import deepcopy
+from collections import namedtuple
 from abc import ABCMeta, abstractmethod
 from distutils.spawn import find_executable
 from multiprocessing import Pool, cpu_count
@@ -45,13 +46,14 @@ from ..settings import MBED_ORG_USER, PRINT_COMPILER_OUTPUT_AS_LINK
 from .. import hooks
 from ..notifier.term import TerminalNotifier
 from ..memap import MemapParser
+from ..config import ConfigException
 
 
 #Disables multiprocessing if set to higher number than the host machine CPUs
 CPU_COUNT_MIN = 1
 CPU_COEF = 1
 
-class LazyDict(dict):
+class LazyDict(object):
     def __init__(self):
         self.eager = {}
         self.lazy = {}
@@ -258,8 +260,6 @@ class Resources:
             headername = basename(filename)
             dupe_headers.setdefault(headername, set())
             dupe_headers[headername] |= set([headername])
-        for res in self.features.values():
-            res._collect_duplicates(dupe_dict, dupe_headers)
         return dupe_dict, dupe_headers
 
     def detect_duplicates(self, toolchain):
@@ -441,7 +441,7 @@ class mbedToolchain:
         self.build_all = False
 
         # Build output dir
-        self.build_dir = build_dir
+        self.build_dir = abspath(build_dir) if PRINT_COMPILER_OUTPUT_AS_LINK else build_dir
         self.timestamp = time()
 
         # Number of concurrent build jobs. 0 means auto (based on host system cores)
@@ -542,8 +542,7 @@ class mbedToolchain:
 
     def get_labels(self):
         if self.labels is None:
-            toolchain_labels = [c.__name__ for c in getmro(self.__class__)]
-            toolchain_labels.remove('mbedToolchain')
+            toolchain_labels = self._get_toolchain_labels()
             self.labels = {
                 'TARGET': self.target.labels,
                 'FEATURE': self.target.features,
@@ -560,6 +559,12 @@ class mbedToolchain:
             else:
                 self.labels['TARGET'].append("RELEASE")
         return self.labels
+
+    def _get_toolchain_labels(self):
+        toolchain_labels = [c.__name__ for c in getmro(self.__class__)]
+        toolchain_labels.remove('mbedToolchain')
+        toolchain_labels.remove('object')
+        return toolchain_labels
 
 
     # Determine whether a source file needs updating/compiling
@@ -741,7 +746,7 @@ class mbedToolchain:
 
         elif ext == self.LINKER_EXT:
             if resources.linker_script is not None:
-                self.info("Warning: Multiple linker scripts detected: %s -> %s" % (resources.linker_script, file_path))
+                self.notify.info("Warning: Multiple linker scripts detected: %s -> %s" % (resources.linker_script, file_path))
             resources.linker_script = file_path
 
         elif ext == '.lib':
@@ -996,6 +1001,8 @@ class mbedToolchain:
         _, ext = splitext(source)
         ext = ext.lower()
 
+        source = abspath(source) if PRINT_COMPILER_OUTPUT_AS_LINK else source
+
         if ext == '.c' or  ext == '.cpp':
             base, _ = splitext(object)
             dep_path = base + '.d'
@@ -1093,7 +1100,7 @@ class mbedToolchain:
         lib = self.STD_LIB_NAME % name
         fout = join(dir, lib)
         if self.need_update(fout, objects):
-            self.info("Library: %s" % lib)
+            self.notify.info("Library: %s" % lib)
             self.archive(objects, fout)
             needed_update = True
 
@@ -1183,7 +1190,7 @@ class mbedToolchain:
 
         # Parse and decode a map file
         if memap.parse(abspath(map), toolchain) is False:
-            self.info("Unknown toolchain for memory statistics %s" % toolchain)
+            self.notify.info("Unknown toolchain for memory statistics %s" % toolchain)
             return None
 
         # Store the memap instance for later use
@@ -1194,33 +1201,59 @@ class mbedToolchain:
 
         return None
 
-    def add_regions(self):
-        """Add regions to the build profile, if there are any.
-        """
-        regions = list(self.config.regions)
-        self.notify.info("Using regions %s in this build."
-                         % ", ".join(region.name for region in regions))
-        for region in regions:
-            for define in [(region.name.upper() + "_ADDR", region.start),
-                           (region.name.upper() + "_SIZE", region.size)]:
-                define_string = "-D%s=0x%x" %  define
-                self.cc.append(define_string)
-                self.cppc.append(define_string)
-                self.flags["common"].append(define_string)
+    def _add_defines_from_region(self, region, suffixes=['_ADDR', '_SIZE']):
+        for define in [(region.name.upper() + suffixes[0], region.start),
+                       (region.name.upper() + suffixes[1], region.size)]:
+            define_string = "-D%s=0x%x" %  define
+            self.cc.append(define_string)
+            self.cppc.append(define_string)
+            self.flags["common"].append(define_string)
+
+    def _add_all_regions(self, region_list, active_region_name):
+        for region in region_list:
+            self._add_defines_from_region(region)
             if region.active:
-                for define in [("MBED_APP_START", region.start),
-                               ("MBED_APP_SIZE", region.size)]:
+                for define in [
+                        ("%s_START" % active_region_name, region.start),
+                        ("%s_SIZE" % active_region_name, region.size)
+                ]:
                     define_string = self.make_ld_define(*define)
                     self.ld.append(define_string)
                     self.flags["ld"].append(define_string)
             self.notify.info("  Region %s: size 0x%x, offset 0x%x"
                              % (region.name, region.size, region.start))
 
+    def add_regions(self):
+        """Add regions to the build profile, if there are any.
+        """
+        if self.config.has_regions:
+            regions = list(self.config.regions)
+            self.notify.info("Using ROM region%s %s in this build." % (
+                "s" if len(regions) > 1 else "",
+                ", ".join(r.name for r in regions)
+            ))
+            self._add_all_regions(regions, "MBED_APP")
+        if self.config.has_ram_regions:
+            regions = list(self.config.ram_regions)
+            self.notify.info("Using RAM region%s %s in this build." % (
+                "s" if len(regions) > 1 else "",
+                ", ".join(r.name for r in regions)
+            ))
+            self._add_all_regions(regions, "MBED_RAM")
+        try:
+            rom_start, rom_size = self.config.rom
+            Region = namedtuple("Region", "name start size")
+            self._add_defines_from_region(
+                Region("MBED_ROM", rom_start, rom_size),
+                suffixes=["_START", "_SIZE"]
+            )
+        except ConfigException:
+            pass
+
     # Set the configuration data
     def set_config_data(self, config_data):
         self.config_data = config_data
-        if self.config.has_regions:
-            self.add_regions()
+        self.add_regions()
 
     # Creates the configuration header if needed:
     # - if there is no configuration data, "mbed_config.h" is not create (or deleted if it exists).

@@ -14,11 +14,12 @@
 # limitations under the License.
 
 from __future__ import print_function, division, absolute_import
+from past.builtins import basestring
 
 import re
 import sys
 from os import getcwd
-from os.path import basename
+from os.path import (basename, abspath)
 
 from . import Notifier
 from ..settings import (PRINT_COMPILER_OUTPUT_AS_LINK,
@@ -86,7 +87,7 @@ class TerminalNotifier(Notifier):
             event['severity'] = event['severity'].title()
 
             if PRINT_COMPILER_OUTPUT_AS_LINK:
-                event['file'] = getcwd() + event['file'].strip('.')
+                event['file'] = abspath(event['file'])
                 return '[{severity}] {file}:{line}:{col}: {message}'.format(
                     **event)
             else:
