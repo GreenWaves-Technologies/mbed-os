@@ -4164,18 +4164,6 @@
         "release_versions": ["5"],
         "bootloader_supported": true
     },
-<<<<<<< HEAD
-    "GAP8": {
-        "inherits": ["Target"],
-        "core": "IMXGAP8",
-        "extra_labels": ["GWT", "GAP8"],
-        "macros": ["__GAP8__"],
-        "features": ["CLUSTER"],
-        "default_toolchain": "GCC_RISCV",
-        "supported_toolchains": ["GCC_RISCV"],
-        "device_has": ["I2C", "I2C_ASYNCH", "INTERRUPTIN", "PORTIN", "PORTINOUT", "PORTOUT", "PWMOUT", "SERIAL", "SERIAL_ASYNCH", "STDIO_MESSAGES", "SLEEP", "SPI", "SPI_ASYNCH", "HYPERBUS", "HYPERBUS_ASYNCH", "SPISLAVE"],
-        "device_name": [ "GAP8"]
-=======
     "ARM_FM": {
         "inherits": ["Target"],
         "public": false,
@@ -4213,6 +4201,16 @@
         "inherits": ["FVP_MPS2"],
         "core": "Cortex-M7",
         "macros": ["CMSDK_CM7"]
->>>>>>> mbed-os-5.9.1
+    },
+    "GAP8": {
+        "inherits": ["Target"],
+        "core": "IMXGAP8",
+        "extra_labels": ["GWT", "GAP8"],
+        "macros": ["__GAP8__"],
+        "features": ["CLUSTER"],
+        "default_toolchain": "GCC_RISCV",
+        "supported_toolchains": ["GCC_RISCV"],
+        "device_has": ["I2C", "I2C_ASYNCH", "INTERRUPTIN", "PORTIN", "PORTINOUT", "PORTOUT", "PWMOUT", "SERIAL", "SERIAL_ASYNCH", "STDIO_MESSAGES", "SLEEP", "SPI", "SPI_ASYNCH", "HYPERBUS", "HYPERBUS_ASYNCH", "SPISLAVE"],
+        "device_name": [ "GAP8"]
     }
 }
