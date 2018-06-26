@@ -64,7 +64,7 @@
                    "-ffunction-sections", "-fdata-sections", "-funsigned-char",
                    "-MMD", "-fno-delete-null-pointer-checks",
                    "-fomit-frame-pointer", "-O0", "-g3", "-DMBED_DEBUG",
-                   "-DMBED_TRAP_ERRORS_ENABLED=1"],
+                   "-DMBED_TRAP_ERRORS_ENABLED=1", "-D_RTE_"],
         "asm": ["-x", "assembler-with-cpp"],
         "c": ["-std=gnu99"],
         "cxx": ["-std=gnu++98", "-fno-rtti", "-Wvla"],
