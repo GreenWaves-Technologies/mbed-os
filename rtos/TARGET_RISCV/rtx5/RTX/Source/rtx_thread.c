@@ -814,7 +814,7 @@ osThreadId_t svcRtxThreadNew (osThreadFunc_t func, void *argument, const osThrea
     #else
     for (n = 0U; n != 13U; n++) {
     #endif
-      ptr[n] = 0U;                      // R4..R11, R0..R3, R12
+      *ptr++ = 0U;                      // R4..R11, R0..R3, R12
     }
     *ptr++ = (uint32_t)osThreadExit;   // LR/RA
     *ptr++ = (uint32_t)func;           // PC
