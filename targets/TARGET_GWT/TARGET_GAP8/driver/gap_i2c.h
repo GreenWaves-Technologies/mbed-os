@@ -49,9 +49,6 @@ enum _i2c_status
     uStatus_I2C_Error = MAKE_STATUS(uStatusGroup_I2C, 2)            /*!< Error received during transfer. */
 };
 
-/*! @brief I2C Clock defaut frequency.*/
-#define I2C_CLK_FRE_DEFAUT     5000000
-
 /*! @brief I2C  configuration structure.*/
 typedef struct _i2c_config
 {

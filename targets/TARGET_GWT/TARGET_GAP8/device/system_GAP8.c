@@ -79,11 +79,13 @@ uint32_t SystemCoreClock = DEFAULT_SYSTEM_CLOCK;
 Handler_Wrapper_Light(FC_EventHandler);
 
 void SystemInit (void) {
+
+  /* Deactivate all soc events as they are active by default */
+  SOCEU->FC_MASK_MSB = 0xFFFFFFFF;
+  SOCEU->FC_MASK_LSB = 0xFFFFFFFF;
+
   /* PMU Init */
   PMU_Init();
-
-  /* Initialize first the FLLs */
-  CLOCK_Init();
 
   /* FC Icache Enable*/
   SCBC->ICACHE_ENABLE = 0xFFFFFFFF;
@@ -100,6 +102,10 @@ void SystemInit (void) {
   FC_MallocInit();
 
   __enable_irq();
+}
+
+void SystemCoreClockUpdate () {
+    SystemCoreClock = FLL_GetFrequency(uFLL_SOC);
 }
 
 void Boot_Deinit()

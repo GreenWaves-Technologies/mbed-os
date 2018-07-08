@@ -84,7 +84,7 @@ typedef enum IRQn {
   SysTick_IRQn                 = 10,               /**< GAP8 U -> M System Tick Interrupt */
   FC_TIMER1_IRQn               = 11,               /**< FC timer1 interrupt */
 
-  EU_HWCE_EVENT                = 15,              /**< GAP8 HWCE SW Event */
+  EU_HWCE_EVENT                = 12,              /**< GAP8 HWCE SW Event */
   EU_HW_BARRIER_EVENT          = 16,              /**< GAP8 Hardware Barrier SW Event */
   EU_MUTEX_EVENT               = 17,              /**< GAP8 Mutex SW Event */
   EU_DISPATCH_EVENT            = 18,              /**< GAP8 Dispatch SW Event */
@@ -184,11 +184,11 @@ typedef enum IRQn {
 
 /** FLL_CTRL - Registers Layout Typedef */
 typedef struct {
-  __IO  uint32_t SOC_STATUS;                /**< FLL_CTRL Status register, offset: 0x00 */
+  __IO  uint32_t SOC_FLL_STATUS;            /**< FLL_CTRL Status register, offset: 0x00 */
   __IO  uint32_t SOC_CONF1;                 /**< FLL_CTRL Configuration1 register, offset: 0x04 */
   __IO  uint32_t SOC_CONF2;                 /**< FLL_CTRL Configuration2 register, offset: 0x08 */
   __IO  uint32_t SOC_INTEGRATOR;            /**< FLL_CTRL INTEGRATOR register, offset: 0x0C */
-  __IO  uint32_t CLUSTER_STATUS;            /**< FLL_CTRL Status register, offset: 0x10 */
+  __IO  uint32_t CLUSTER_FLL_STATUS;        /**< FLL_CTRL Status register, offset: 0x10 */
   __IO  uint32_t CLUSTER_CONF1;             /**< FLL_CTRL Configuration1 register, offset: 0x14 */
   __IO  uint32_t CLUSTER_CONF2;             /**< FLL_CTRL Configuration2 register, offset: 0x18 */
   __IO  uint32_t CLUSTER_INTEGRATOR;        /**< FLL_CTRL INTEGRATOR register, offset: 0x1C */
@@ -204,7 +204,7 @@ typedef struct {
  * @addtogroup FLL_CTRL_Register_Masks FLL_CTRL Register Masks
  * @{
  */
-/*! @name SOC_STATUS - FLL_CTRL status register */
+/*! @name FLL_STATUS - FLL_CTRL status register */
 #define FLL_CTRL_STATUS_MULTI_FACTOR_MASK              (0xFFFFU)
 #define FLL_CTRL_STATUS_MULTI_FACTOR_SHIFT             (0U)
 #define FLL_CTRL_STATUS_MULTI_FACTOR(x)                (((uint32_t)(((uint32_t)(x)) /* << FLL_CTRL_STATUS_MULTI_FACTOR_SHIFT */)) & FLL_CTRL_STATUS_MULTI_FACTOR_MASK)
@@ -1914,7 +1914,7 @@ typedef struct {
    ---------------------------------------------------------------------------- */
 
 /*!
- * @addtogroup GPIO_Register_Masks GPIO Register Masks
+ * @addtogroup PORT_Register_Masks GPIO Register Masks
  * @{
  */
 #define GPIO_NUM                32
@@ -1939,7 +1939,7 @@ typedef struct {
 
 /*!
  * @}
- */ /* end of group GPIO_Register_Masks */
+ */ /* end of group PORT_Register_Masks */
 
 
 /* PORT - Peripheral instance base addresses */
@@ -1955,6 +1955,65 @@ typedef struct {
 /*!
  * @}
  */ /* end of group PORT_Access_Layer */
+
+
+
+/* ----------------------------------------------------------------------------
+   -- IO POWER DOMAINS ISOLATION Peripheral Access Layer
+   ---------------------------------------------------------------------------- */
+
+/*!
+ * @addtogroup IO_ISO_Peripheral_Access_Layer IO_ISO Peripheral Access Layer
+ * @{
+ */
+
+/** IO_ISO - Register Layout Typedef */
+typedef struct {
+  __IO  uint32_t GPIO_ISO;                       /**< IO_ISO GPIO power domains isolation, offset: 0x000 */
+  __IO  uint32_t CAM_ISO;                        /**< IO_ISO Cemera power domains isolation, offset: 0x004 */
+  __IO  uint32_t LVDS_ISO;                       /**< IO_ISO LVDS power domains isolation, offset: 0x008 */
+
+} IO_ISO_Type;
+
+/* ----------------------------------------------------------------------------
+   -- IO_ISO Register Masks
+   ---------------------------------------------------------------------------- */
+
+/*!
+ * @addtogroup IO_ISO_Register_Masks GPIO Register Masks
+ * @{
+ */
+#define IO_ISO_GPIO_ISO_MASK                 (0x1U)
+#define IO_ISO_GPIO_ISO_SHIFT                (0U)
+#define IO_ISO_GPIO_ISO(x)                   (((uint32_t)(((uint32_t)(x)) /* << IO_ISO_GPIO_ISO_SHIFT */)) & IO_ISO_GPIO_ISO_MASK)
+
+#define IO_ISO_CAM_ISO_MASK                 (0x1U)
+#define IO_ISO_CAM_ISO_SHIFT                (0U)
+#define IO_ISO_CAM_ISO(x)                   (((uint32_t)(((uint32_t)(x)) /* << IO_ISO_CAM_ISO_SHIFT */)) & IO_ISO_CAM_ISO_MASK)
+
+#define IO_ISO_LVDS_ISO_MASK                 (0x1U)
+#define IO_ISO_LVDS_ISO_SHIFT                (0U)
+#define IO_ISO_LVDS_ISO(x)                   (((uint32_t)(((uint32_t)(x)) /* << IO_ISO_LVDS_ISO_SHIFT */)) & IO_ISO_LVDS_ISO_MASK)
+
+
+/*!
+ * @}
+ */ /* end of group IO_ISO_Register_Masks */
+
+
+/* IO_ISO - Peripheral instance base addresses */
+/** Peripheral IO_ISO base address */
+#define IO_ISO_BASE                               (SOC_CTRL_BASE + 0x01C0u)
+/** Peripheral IO_ISO base pointer */
+#define IO_ISO                                    ((IO_ISO_Type *)IO_ISO_BASE)
+/** Array initializer of IO_ISO base addresses */
+#define IO_ISO_BASE_ADDRS                         { IO_ISO_BASE }
+/** Array initializer of IO_ISO base pointers */
+#define IO_ISO_BASE_PTRS                          { IO_ISO }
+
+/*!
+ * @}
+ */ /* end of group IO_ISO_Access_Layer */
 
 
 

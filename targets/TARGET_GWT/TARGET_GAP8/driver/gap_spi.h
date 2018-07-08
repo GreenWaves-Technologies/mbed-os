@@ -39,10 +39,6 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-/*! @brief SPI Clock defaut frequency (50M).*/
-#define SPI_CLK_FRE_DEFAUT     50000000
-
-
 /*! @brief Status for the SPI driver.*/
 enum _spi_status
 {

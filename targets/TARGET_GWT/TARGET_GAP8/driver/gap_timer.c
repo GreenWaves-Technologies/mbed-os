@@ -25,6 +25,7 @@
 
 #include "cmsis.h"
 #include "gap_timer.h"
+#include "gap_fll.h"
 
 /* Timer Private Data */
 typedef struct {

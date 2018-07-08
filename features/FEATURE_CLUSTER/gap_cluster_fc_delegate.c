@@ -80,7 +80,7 @@ static void hyperbus_block_transfer(const int addr, const void *tx, size_t tx_le
 
         HYPERBUS_MasterGetDefaultConfig(&masterConfig);
 
-        HYPERBUS_MasterInit(HYPERBUS0, &masterConfig, HYPERBUS_CLK_FRE_DEFAUT);
+        HYPERBUS_MasterInit(HYPERBUS0, &masterConfig, SystemCoreClock);
 
         /* Config memory maximum transfer data length for TX and RX*/
         HYPERBUS_SetMaxLength(HYPERBUS0, 1, 0x1ff, 0, uHYPERBUS_Ram);

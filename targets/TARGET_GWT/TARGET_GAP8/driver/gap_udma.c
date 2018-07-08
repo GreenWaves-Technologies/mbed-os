@@ -151,6 +151,7 @@ void UDMA_Init(UDMA_Type *base)
         SOC_EU_SetFCMask((index << 1) + 1);
     }
 
+    /* Initilal auto polling flag for SPI */
     auto_polling_end = 0;
 }
 

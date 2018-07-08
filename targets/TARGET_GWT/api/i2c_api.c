@@ -67,7 +67,7 @@ void i2c_init(i2c_t *obj, PinName sda, PinName scl)
 
     I2C_GetDefaultConfig(&config);
 
-    I2C_Init(i2c_address[obj->i2c.instance], &config, I2C_CLK_FRE_DEFAUT);
+    I2C_Init(i2c_address[obj->i2c.instance], &config, SystemCoreClock);
 }
 
 static inline void i2c_buffer_set(i2c_t *obj, const void *tx, uint32_t tx_length, void *rx, uint32_t rx_length, uint8_t bit_width)
@@ -84,9 +84,7 @@ static inline void i2c_buffer_set(i2c_t *obj, const void *tx, uint32_t tx_length
 
 void i2c_frequency(i2c_t *obj, int hz)
 {
-    uint32_t busClock;
-
-    busClock = I2C_CLK_FRE_DEFAUT;
+    uint32_t busClock = SystemCoreClock;
     I2C_SetBaudRate(i2c_address[obj->i2c.instance], hz, busClock);
 }
 

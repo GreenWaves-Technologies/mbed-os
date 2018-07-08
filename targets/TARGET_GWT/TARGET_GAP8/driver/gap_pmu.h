@@ -43,29 +43,6 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-
-/* Voltage regulator and power states */
-#define    PMU_DCDC_OPER_POINTS       4
-
-#define    PMU_DCDC_DEFAULT_NV        1200
-#define    PMU_DCDC_DEFAULT_MV        1200
-#define    PMU_DCDC_DEFAULT_LV        1000
-#define    PMU_DCDC_DEFAULT_RET       800
-#define    PMU_DCDC_RANGE             5
-#define    PMU_DCDC_RANGE_MASK        0x1F
-#define    PMU_DCDC_BASE_VALUE        550
-#define    PMU_DCDC_STEP              50
-
-#define    PMU_LV_MAX_FREQUENCY       150000000
-#define    PMU_NV_MAX_FREQUENCY       250000000
-#define    PMU_SOC_MIN_FREQUENCY      150000000
-#define    PMU_SOC_MAX_FREQUENCY      250000000
-#define    PMU_CLUSTER_MIN_FREQUENCY   87000000
-#define    PMU_CLUSTER_MAX_FREQUENCY  175000000
-
-#define    PMU_SOC_FV_SLOPE       ((PMU_SOC_MAX_FREQUENCY - PMU_SOC_MIN_FREQUENCY) / (PMU_DCDC_DEFAULT_NV - PMU_DCDC_DEFAULT_LV))
-#define    PMU_CLUSTER_FV_SLOPE   ((PMU_CLUSTER_MAX_FREQUENCY - PMU_CLUSTER_MIN_FREQUENCY) / (PMU_DCDC_DEFAULT_NV - PMU_DCDC_DEFAULT_LV))
-
 /* PMU error type */
 #define    PMU_ERROR_NO_ERROR                      (0)
 #define    PMU_ERROR_FREQ_TOO_HIGH                 (0x1<<0)
@@ -74,8 +51,6 @@
 #define    PMU_ERROR_SOC_STATE_CHANGE_FAILED       (0x1<<3)
 #define    PMU_ERROR_CLUSTER_STATE_CHANGE_FAILED   (0x1<<4)
 #define    PMU_ERROR_VDD_OUT_OF_RANGE              (0x1<<5)
-
-#define    PMU_MAX_DCDC_VARIATION   (int) (0.1*32767)
 
 /* PMU State:
    State:          SOC_LP/HP, SOC_CLUSTER_LP/HP, RETENTIVE, DEEP_SLEEP.
@@ -193,8 +168,8 @@ typedef enum _pmu_system_state {
 
 #define PMU_POWER_SYSTEM_STATE(ReguState, ClusterState) ((pmu_system_state_t) ((ReguState << PMU_REGULATOR_STATE_SHIFT) | ClusterState))
 
-#define mV_TO_DCDC(mV)    ((uint32_t) (((mV) - PMU_DCDC_BASE_VALUE) / PMU_DCDC_STEP))
-#define DCDC_TO_mV(Dc)    ((uint32_t) ((Dc) * PMU_DCDC_STEP + PMU_DCDC_BASE_VALUE))
+#define mV_TO_DCDC(mV)    ((uint32_t) (((mV) - DCDC_BASE_VALUE) / DCDC_STEP))
+#define DCDC_TO_mV(Dc)    ((uint32_t) ((Dc) * DCDC_STEP + DCDC_BASE_VALUE))
 
 /*******************************************************************************
  * APIs
@@ -229,30 +204,6 @@ int PMU_SetVoltage(uint32_t voltage, uint32_t frequency_check);
  * @note .
  */
 void PMU_DeInit(int retentive, pmu_system_state_t wakeup_state);
-
-/*!
- * @brief Calculate FC SOC domain's max frequency with certain voltage
- *
- * @param  voltage  Given voltage
- *
- * @return max frquency.
- */
-static inline int PMU_SoCMaxFreqAtV(int voltage)
-{
-    return (PMU_SOC_MIN_FREQUENCY + (voltage - PMU_DCDC_DEFAULT_LV) * PMU_SOC_FV_SLOPE);
-}
-
-/*!
- * @brief Calculate cluster domain's max frequency with certain voltage
- *
- * @param  voltage  Given voltage
- *
- * @return max frquency.
- */
-static inline int PMU_ClusterMaxFreqAtV(int voltage)
-{
-    return (PMU_CLUSTER_MIN_FREQUENCY + (voltage - PMU_DCDC_DEFAULT_LV) * PMU_CLUSTER_FV_SLOPE);
-}
 
 #ifdef FEATURE_CLUSTER
 /*!

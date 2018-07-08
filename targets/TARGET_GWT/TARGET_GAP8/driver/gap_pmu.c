@@ -47,10 +47,10 @@ uint32_t    PMU_Sleep_Ctrl;
 pmu_state_t PMU_State = {0, 0, {0, 0, 0, 0}, {0, 0}};
 
 #ifdef FEATURE_CLUSTER
-static uint16_t PMU_DCDC_Voltage[PMU_DCDC_OPER_POINTS] = {
-  /* REGU_NV  */    PMU_DCDC_DEFAULT_NV,
-  /* REGU_LV  */    PMU_DCDC_DEFAULT_LV,
-  /* REGU_RET */    PMU_DCDC_DEFAULT_RET,
+static uint16_t DCDC_Voltage[DCDC_OPER_POINTS] = {
+  /* REGU_NV  */    DCDC_DEFAULT_NV,
+  /* REGU_LV  */    DCDC_DEFAULT_LV,
+  /* REGU_RET */    DCDC_DEFAULT_RET,
   /* REGU_OFF */    0,
 };
 #endif
@@ -92,10 +92,10 @@ static uint8_t SystemState_To_SCU_Fast_Seq[7] = {
  ******************************************************************************/
 static void PMU_ChangeDCDC(pmu_dcdc_hw_operatingpoint_t operating_point, uint32_t value)
 {
-    /* PMU_CTRL->RAR_DCDC |= (value & PMU_DCDC_RANGE_MASK) << DCDC_HW_Operating_Point[dcdc_operating_point]; */
+    /* PMU_CTRL->RAR_DCDC |= (value & DCDC_RANGE_MASK) << DCDC_HW_Operating_Point[dcdc_operating_point]; */
     PMU_CTRL->RAR_DCDC = __BIT_INSERT_R(PMU_CTRL->RAR_DCDC,
                                         value,
-                                        PMU_DCDC_RANGE,
+                                        DCDC_RANGE,
                                         DCDC_HW_Operating_Point[operating_point]);
 }
 
@@ -132,53 +132,6 @@ static uint32_t PMU_ChangeRegulatorState(pmu_system_state_t prev_state, pmu_syst
     #endif
 }
 
-#ifdef FEATURE_CLUSTER
-int PMU_ChangePowerSystemState(pmu_system_state_t state, uint32_t new_voltage)
-{
-    #define Abs(x)   ((x<0)?-(x):(x))
-    pmu_regulator_state_t TargetDCDCState = READ_PMU_REGULATOR_STATE(state);
-    uint32_t TargetDCDCVal = PMU_State.DCDC_Settings[TargetDCDCState];
-    uint32_t SavedDCDCVal = 0;
-
-    uint32_t status = PMU_ERROR_NO_ERROR;
-    if (new_voltage)
-        SavedDCDCVal = PMU_State.DCDC_Settings[READ_PMU_REGULATOR_STATE(PMU_State.State)];
-
-    /* Check if after DCDC changes the current frequency is still ok with the new voltage */
-    if (READ_PMU_REGULATOR_STATE(state) == uPMU_REGU_LV) {
-        if ((PMU_State.Frequency[uFLL_SOC] > PMU_LV_MAX_FREQUENCY) ||
-            ((READ_PMU_CLUSTER_STATE(state) == uPMU_CLUSTER_ON) && (PMU_State.Frequency[uFLL_CLUSTER] > PMU_LV_MAX_FREQUENCY))) {
-            status |= PMU_ERROR_FREQ_TOO_HIGH; goto Fail;
-        }
-    }
-    /* Check if we want a new setting for the DCDC regulator of this state */
-    if (new_voltage) {
-        if (TargetDCDCState == READ_PMU_REGULATOR_STATE(PMU_State.State)) {
-            status |= PMU_ERROR_NEED_STATE_CHANGE; goto Fail;
-        }
-        /* New voltage must be in +/- 10% around the default value for this dcdc mode */
-        if (Abs((int) new_voltage - (int) PMU_DCDC_Voltage[TargetDCDCState]) > ((PMU_DCDC_Voltage[TargetDCDCState] * PMU_MAX_DCDC_VARIATION) >> 15)) {
-            status |= PMU_ERROR_VDD_CHANGE_TOO_HIGH; goto Fail;
-        }
-        TargetDCDCVal = mV_TO_DCDC(new_voltage);
-        PMU_ChangeDCDC(TargetDCDCState, TargetDCDCVal);
-    }
-    if (state != PMU_State.State) {
-        if (PMU_ChangeRegulatorState(state, PMU_State.State) != uPMU_CHANGE_OK) {
-            status |= (PMU_ERROR_SOC_STATE_CHANGE_FAILED | PMU_ERROR_CLUSTER_STATE_CHANGE_FAILED); goto Fail;
-        }
-    }
-    /* Update circuit state, what do we do in case of shutdown ? */
-    PMU_State.State = state;
-    if (new_voltage) PMU_State.DCDC_Settings[TargetDCDCState] = TargetDCDCVal;
-    return status;
-
-Fail:
-    if (new_voltage) PMU_ChangeDCDC(TargetDCDCState, SavedDCDCVal);
-    return status;
-    #undef Abs
-}
-#endif
 
 /*!
  * @brief Flls init.
@@ -201,7 +154,7 @@ static void PMU_FLLSInit()
 
 void PMU_Init()
 {
-  #if !defined( __PLATFORM_FPGA__)
+    #if !defined( __PLATFORM_FPGA__)
     uint32_t regulator_mode = PMU_CTRL->RAR_DCDC;
     uint32_t Bypass;
 
@@ -220,8 +173,6 @@ void PMU_Init()
     PMU_State.DCDC_Settings[uPMU_REGU_OFF] = 0;
 
     Bypass = SOC_CTRL->CLUSTER_BYPASS;
-    // Bypass.Fields.ClusterState =  0;
-    // Bypass.Fields.ClusterClockGate = 1;
     Bypass |= (SOC_CTRL_CLUSTER_BYPASS_BYP_POW(1) |
                SOC_CTRL_CLUSTER_BYPASS_BYP_CLK(1));
     SOC_CTRL->CLUSTER_BYPASS = Bypass;
@@ -275,6 +226,7 @@ void PMU_DeInit(int retentive, pmu_system_state_t wakeup_state)
 int PMU_SetVoltage(uint32_t voltage, uint32_t frequency_check)
 {
     #if !defined( __PLATFORM_FPGA__)
+
     uint32_t curr_dcdc_val = PMU_State.DCDC_Settings[READ_PMU_REGULATOR_STATE(PMU_State.State)];
     uint32_t new_dcdc_val  = mV_TO_DCDC(voltage);
     uint32_t status        = PMU_ERROR_NO_ERROR;
@@ -282,13 +234,13 @@ int PMU_SetVoltage(uint32_t voltage, uint32_t frequency_check)
     if (curr_dcdc_val == new_dcdc_val)
         return PMU_ERROR_NO_ERROR;
 
-    if ((voltage < PMU_DCDC_DEFAULT_LV) || (voltage > PMU_DCDC_DEFAULT_NV))
+    if ((voltage < DCDC_DEFAULT_LV) || (voltage > DCDC_DEFAULT_NV))
         return PMU_ERROR_VDD_OUT_OF_RANGE;
 
     if(frequency_check) {
-        if (((int)PMU_State.Frequency[uFLL_SOC] > PMU_SoCMaxFreqAtV(voltage)) ||
+        if (((int)PMU_State.Frequency[uFLL_SOC] > FLL_SoCMaxFreqAtV(voltage)) ||
             ((READ_PMU_CLUSTER_STATE(PMU_State.State) == uPMU_CLUSTER_ON)
-             && ((int)PMU_State.Frequency[uFLL_CLUSTER] > PMU_ClusterMaxFreqAtV(voltage))))
+             && ((int)PMU_State.Frequency[uFLL_CLUSTER] > FLL_ClusterMaxFreqAtV(voltage))))
             return PMU_ERROR_FREQ_TOO_HIGH;
     }
 

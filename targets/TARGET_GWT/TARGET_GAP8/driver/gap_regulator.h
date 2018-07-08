@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, GreenWaves Technologies, Inc.
+ * Copyright (c) 2018, GreenWaves Technologies, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -28,38 +28,44 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GAP_AUTOTILER_H_
-#define _GAP_AUTOTILER_H_
+#ifndef _GAP_REGULATOR_H_
+#define _GAP_REGULATOR_H_
 
-#include <cmsis.h>
-#include "gap_cluster.h"
-#include "gap_dmamchan.h"
-#include "gap_hwce.h"
+#include "cmsis.h"
 
+/*!
+ * @addtogroup regulator
+ * @{
+ */
 
-#ifdef FEATURE_CLUSTER
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
+/* Voltage regulator and power states */
+#define    DCDC_OPER_POINTS       4
 
+#define    DCDC_DEFAULT_NV        1200
+#define    DCDC_DEFAULT_MV        1200
+#define    DCDC_DEFAULT_LV        1000
+#define    DCDC_DEFAULT_RET       800
+#define    DCDC_RANGE             5
+#define    DCDC_RANGE_MASK        0x1F
+#define    DCDC_BASE_VALUE        550
+#define    DCDC_STEP              50
+
+#define    MAX_DCDC_VARIATION   (int) (0.1*32767)
+
+/*******************************************************************************
+ * APIs
+ ******************************************************************************/
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
 
-#define AUTOTILE_DMAMCHAN_Memcpy_1D(a,b,c,d,e,f)            DMAMCHAN_Memcpy_1D(a,b,c,d,f)
-#define AUTOTILE_DMAMCHAN_Memcpy_2D(a,b,c,d,e,f,g,h)        DMAMCHAN_Memcpy_2D(a,b,c,d,e,f,h)
-
-#define GAP_UDMA_L32TCDM GAP_DMA_L22TCDM
-#define GAP_UDMA_TCDM2L3 GAP_DMA_TCDM2L2
-
-#define AUTOTILE_CLUSTER_CoresFork(a,b,c)                   CLUSTER_CoresFork(b,c)
-
-#define rt_team_barrier()                                   CLUSTER_SynchBarrier()
-#define rt_nb_pe()                                          CORE_NUMBER
-#define rt_core_id()                                        __core_ID()
-
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
-#endif /* FEATURE_CLUSTER */
 
-#endif
+/* @} */
 
-
+#endif /*_GAP_REGULATOR_H_*/

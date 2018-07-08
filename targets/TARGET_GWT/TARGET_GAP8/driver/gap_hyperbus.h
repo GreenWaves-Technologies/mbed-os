@@ -41,9 +41,6 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-/*! @brief SPI Clock defaut frequency (50M).*/
-#define HYPERBUS_CLK_FRE_DEFAUT     50000000
-
 /*! @brief Hyperbus transfer request type definition.*/
 #define  hyperbus_req_t udma_req_t
 

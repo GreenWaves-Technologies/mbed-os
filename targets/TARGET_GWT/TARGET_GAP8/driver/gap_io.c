@@ -21,12 +21,12 @@ extern void exit(int code);
 
 debug_struct_t HAL_DEBUG_STRUCT_NAME = GAP_DEBUG_STRUCT_INIT;
 
-
 static int _io_lock() {
     /* user code must know if the cluster is on or off, we'll take care of that later on */
     if (__is_U_Mode()) return 0;
     int irq = 0;
-#ifdef FEATURE_CLUSTER
+
+    #ifdef FEATURE_CLUSTER
     if(!__is_FC()) {
         int needLock = 1;
         if (!cluster_is_on)
@@ -37,7 +37,7 @@ static int _io_lock() {
             EU_MutexLock(0);
         }
     }
-#endif
+    #endif
 
     return irq;
 }
@@ -45,7 +45,7 @@ static int _io_lock() {
 static void _io_unlock(int irq) {
     if (__is_U_Mode()) return;
 
-#ifdef FEATURE_CLUSTER
+    #ifdef FEATURE_CLUSTER
     if(!__is_FC()) {
         int needLock = 1;
         if (!cluster_is_on)
@@ -56,7 +56,7 @@ static void _io_unlock(int irq) {
             __restore_irq(irq);
         }
     }
-#endif
+    #endif
 }
 
 int putchar(int c);

@@ -28,6 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include "gap_fll.h"
 #include "gap_pmu.h"
 
@@ -63,25 +64,11 @@ uint32_t flls_frequency[FLL_NUM];
  ******************************************************************************/
 static uint32_t FLL_GetMultDivFromFrequency(uint32_t freq, uint32_t *mult, uint32_t *div)
 {
-    #ifdef DYNAMIC_FREQ
-    uint32_t fref = FLL_REF_CLK;
-    uint32_t Log2M = __FL1(freq) - __FL1(fref);
-    uint32_t D = __MAX(1, (LOG2_MAXM - Log2M)>>1);
-    uint32_t M = (freq << D) / fref;
-    uint32_t fres;
-
-    fres = (fref * M + (1 << (D - 1))) >> D;   /* Rounding */
-
-    *mult = M;
-    *div  = D + 1;
-    return fres;
-    #else
     uint32_t D = __builtin_pulp_minsi(8, __MAX(1, (8 - (__FL1(freq) - 3 - LOG2_REFCLK))));
     uint32_t M = (freq >> LOG2_REFCLK) * (1 << (D-1));
     *mult = M;
     *div  = D;
     return (((FLL_REF_CLK)*M) / (1 << (D-1)));
-    #endif
 }
 
 static uint32_t FLL_GetFrequencyFromMultDiv(uint32_t mult, uint32_t div)
@@ -94,33 +81,29 @@ static uint32_t FLL_GetFrequencyFromMultDiv(uint32_t mult, uint32_t div)
 
 int FLL_SetFrequency(fll_type_t which_fll, uint32_t frequency, int check)
 {
-    #ifdef FEATURE_CLUSTER
-    if ((which_fll == uFLL_CLUSTER) && PMU_ClusterIsOff())
-        return -1;
-    #else
-    if (which_fll == uFLL_CLUSTER)
-        return -1;
-    #endif
-
     uint32_t val1, val2;
-    uint32_t real_freq, mult, div;
+    uint32_t mult, div, mult_factor_diff;
+
+    int irq =  __disable_irq();
 
     if (check) {
         uint32_t curr_voltage = DCDC_TO_mV(PMU_State.DCDC_Settings[READ_PMU_REGULATOR_STATE(PMU_State.State)]);
 
         if (which_fll == uFLL_SOC) {
-            if (PMU_SoCMaxFreqAtV(curr_voltage) < (int)frequency)
+            if (FLL_SoCMaxFreqAtV(curr_voltage) < (int)frequency)
                 return -1;
         } else {
-            if (PMU_ClusterMaxFreqAtV(curr_voltage) < (int)frequency)
+            if (FLL_ClusterMaxFreqAtV(curr_voltage) < (int)frequency)
                 return -1;
         }
     }
 
-    real_freq = FLL_GetMultDivFromFrequency(frequency, &mult, &div);
+    /* Frequency calculation from theory */
+    FLL_GetMultDivFromFrequency(frequency, &mult, &div);
 
+    /* Gain : 2-1 - 2-10 (0x2-0xB) */
     /* Return to close loop mode and give gain to feedback loop */
-    val2 = FLL_CTRL_CONF2_LOOPGAIN(0xB)         |
+    val2 = FLL_CTRL_CONF2_LOOPGAIN(0x7)         |
            FLL_CTRL_CONF2_DEASSERT_CYCLES(0x10) |
            FLL_CTRL_CONF2_ASSERT_CYCLES(0x10)   |
            FLL_CTRL_CONF2_LOCK_TOLERANCE(0x100) |
@@ -134,6 +117,7 @@ int FLL_SetFrequency(fll_type_t which_fll, uint32_t frequency, int check)
         FLL_CTRL->SOC_CONF2 = val2;
     }
 
+    /* Configure register 1 */
     val1 = FLL_CTRL_CONF1_MODE(1)            |
            FLL_CTRL_CONF1_MULTI_FACTOR(mult) |
            FLL_CTRL_CONF1_CLK_OUT_DIV(div);
@@ -144,9 +128,19 @@ int FLL_SetFrequency(fll_type_t which_fll, uint32_t frequency, int check)
         FLL_CTRL->SOC_CONF1 = val1;
     }
 
-    /* Update Frequency */
-    flls_frequency[which_fll] = real_freq;
-    PMU_State.Frequency[which_fll] = real_freq;
+    /* Check FLL converge by compare status register with multiply factor */
+    do {
+        mult_factor_diff = which_fll ? abs(FLL_CTRL->CLUSTER_FLL_STATUS - mult) :
+                                       abs(FLL_CTRL->SOC_FLL_STATUS - mult);
+    } while ( mult_factor_diff > 0x10 );
+
+    val2 = FLL_CTRL_CONF2_LOOPGAIN(0xB)      |
+        FLL_CTRL_CONF2_DEASSERT_CYCLES(0x10) |
+        FLL_CTRL_CONF2_ASSERT_CYCLES(0x10)   |
+        FLL_CTRL_CONF2_LOCK_TOLERANCE(0x100) |
+        FLL_CTRL_CONF2_CONF_CLK_SEL(0x0)     |
+        FLL_CTRL_CONF2_OPEN_LOOP(0x0)        |
+        FLL_CTRL_CONF2_DITHERING(0x1);
 
     if (which_fll) {
         FLL_CTRL->CLUSTER_CONF2 = val2;
@@ -154,73 +148,57 @@ int FLL_SetFrequency(fll_type_t which_fll, uint32_t frequency, int check)
         FLL_CTRL->SOC_CONF2 = val2;
     }
 
-    return real_freq;
+    if (which_fll == uFLL_SOC)
+        SystemCoreClockUpdate();
+
+    __restore_irq(irq);
+
+    return FLL_GetFrequency(which_fll);
 }
 
 void FLL_Init(fll_type_t which_fll, uint32_t ret_state)
 {
-    uint32_t val, val2;
-    uint32_t mult, div;
+    uint32_t dco_mult_factor, val;
+    uint32_t mult, div, mult_factor_diff;
 
-    val = (which_fll) ? FLL_CTRL->CLUSTER_CONF1 : FLL_CTRL->SOC_CONF1;
-
-    if (ret_state || READ_FLL_CTRL_CONF1_MODE(val)) {
-        flls_frequency[which_fll] = FLL_GetFrequencyFromMultDiv(READ_FLL_CTRL_CONF1_MULTI_FACTOR(val),
-                                                                READ_FLL_CTRL_CONF1_CLK_OUT_DIV(val));
-
-        PMU_State.Frequency[which_fll] = flls_frequency[which_fll];
+    if (ret_state) {
+        FLL_GetFrequency(which_fll);
     } else {
-        /* Return to close loop mode and give gain to feedback loop */
-        val2 = FLL_CTRL_CONF2_LOOPGAIN(0xB)         |
-               FLL_CTRL_CONF2_DEASSERT_CYCLES(0x10) |
-               FLL_CTRL_CONF2_ASSERT_CYCLES(0x10)   |
-               FLL_CTRL_CONF2_LOCK_TOLERANCE(0x100) |
-               FLL_CTRL_CONF2_CONF_CLK_SEL(0x0)     |
-               FLL_CTRL_CONF2_OPEN_LOOP(0x0)        |
-               FLL_CTRL_CONF2_DITHERING(0x1);
+        val = (which_fll) ? FLL_CTRL->CLUSTER_CONF1 : FLL_CTRL->SOC_CONF1;
 
-        if (which_fll) {
-            FLL_CTRL->CLUSTER_CONF2 = val2;
-        } else {
-            FLL_CTRL->SOC_CONF2 = val2;
+        /* Don't set the gain and integrator in case it has already been set by the boot code */
+        /* as it totally blocks the fll on the RTL platform. */
+        /* The boot code is anyway setting the same configuration. */
+        if(!READ_FLL_CTRL_CONF1_MODE(val)) {
+            /* Intergrator register */
+            /* We are in open loop, prime the fll forcing dco input, approx 50 MHz */
+            /* Set int part to 1*/
+            val = FLL_CTRL_INTEGRATOR_INT_PART(332);
+
+            if (which_fll) {
+                FLL_CTRL->CLUSTER_INTEGRATOR = val;
+            } else {
+                FLL_CTRL->SOC_INTEGRATOR = val;
+            }
         }
 
-        /* We are in open loop, prime the fll forcing dco input, approx 70 MHz */
-        val = (which_fll) ? FLL_CTRL->CLUSTER_INTEGRATOR : FLL_CTRL->SOC_INTEGRATOR;
-        /* Set int part to 1*/
-        val = FLL_CTRL_INTEGRATOR_INT_PART(332);
-
-        if (which_fll) {
-            FLL_CTRL->CLUSTER_INTEGRATOR = val;
-        } else {
-            FLL_CTRL->SOC_INTEGRATOR = val;
-        }
-
-        /* Lock Fll */
-        /* Set int part to 1*/
-        /* val |= FLL_CTRL_CONF1_OUTPUT_LOCK_EN(1); */
-        uint32_t real_freq = FLL_GetMultDivFromFrequency(50000000, &mult, &div);
-
-        val = FLL_CTRL_CONF1_MODE(1)            |
-              FLL_CTRL_CONF1_MULTI_FACTOR(mult) |
-              FLL_CTRL_CONF1_CLK_OUT_DIV(div);
-
-        if (which_fll) {
-            FLL_CTRL->CLUSTER_CONF1 = val;
-        } else {
-            FLL_CTRL->SOC_CONF1 = val;
-        }
-
-        /* Update Frequency */
-        flls_frequency[which_fll] = real_freq;
-        PMU_State.Frequency[which_fll] = real_freq;
-
-        if (which_fll) {
-            FLL_CTRL->CLUSTER_CONF2 = val2;
-        } else {
-            FLL_CTRL->SOC_CONF2 = val2;
-        }
+        if (FLL_SetFrequency(which_fll, DEFAULT_SYSTEM_CLOCK, 0) == -1 )
+            exit(-1);
     }
+}
+
+int FLL_GetFrequency(fll_type_t which_fll)
+{
+    /* Frequency calculation from real world */
+    int real_freq = which_fll ? FLL_GetFrequencyFromMultDiv(FLL_CTRL->CLUSTER_FLL_STATUS,
+                                                            READ_FLL_CTRL_CONF1_CLK_OUT_DIV(FLL_CTRL->CLUSTER_CONF1))
+                              : FLL_GetFrequencyFromMultDiv(FLL_CTRL->SOC_FLL_STATUS,
+                                                            READ_FLL_CTRL_CONF1_CLK_OUT_DIV(FLL_CTRL->SOC_CONF1));
+    /* Update Frequency */
+    flls_frequency[which_fll] = real_freq;
+    PMU_State.Frequency[which_fll] = real_freq;
+
+    return flls_frequency[which_fll];
 }
 
 void FLL_DeInit(fll_type_t which_fll)

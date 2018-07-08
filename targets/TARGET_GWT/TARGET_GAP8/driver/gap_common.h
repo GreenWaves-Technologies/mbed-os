@@ -47,9 +47,9 @@
 #include "gap_handler_wrapper.h"
 #include "gap_timer.h"
 #include "gap_performance.h"
-#include "gap_clock.h"
 #include "gap_cpi.h"
 #include "gap_rtc.h"
+#include "gap_fll.h"
 
 #include "gap_fc_malloc.h"
 #endif

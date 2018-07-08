@@ -112,13 +112,13 @@ void spi_format(spi_t *obj, int bits, int mode, int slave)
     master_config.cpol = (mode & 0x2) ? uSPI_ClockPolarityActiveLow : uSPI_ClockPolarityActiveHigh;
     master_config.cpha = (mode & 0x1) ? uSPI_ClockPhaseSecondEdge : uSPI_ClockPhaseFirstEdge;
 
-    SPI_MasterInit(spi_address[spi_obj->instance], &master_config, SPI_CLK_FRE_DEFAUT);
+    SPI_MasterInit(spi_address[spi_obj->instance], &master_config, SystemCoreClock);
 }
 
 void spi_frequency(spi_t *obj, int hz)
 {
     struct spi_s *spi_obj = SPI_S(obj);
-    uint16_t clk_div =  (SPI_CLK_FRE_DEFAUT >> 1) / hz;
+    uint16_t clk_div = (SystemCoreClock >> 1) / hz;
 
     /* Configuration only clock frequence */
     master_config.clkDiv = clk_div;

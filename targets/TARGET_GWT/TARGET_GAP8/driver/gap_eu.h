@@ -413,13 +413,6 @@ __STATIC_INLINE uint32_t EU_LoopGetSingle()
 
 //!@}
 
-/* #ifdef GAP_CKGATE_OFFSET */
-/* // TODO this is not aligned with GAP */
-/* __STATIC_INLINE void fc_eu_trig(uint32_t event) { */
-/*   gap_write32(0x50000000 + GAP_CKGATE_OFFSET + 0x20C, 1 << event); */
-/* } */
-/* #endif */
-
 __STATIC_INLINE uint32_t EU_EVT_GetClusterBase(uint32_t coreId)
 {
   return EU_EVT_GETCLUSTERBASE(coreId);

@@ -106,7 +106,7 @@ void hyperbus_init(hyperbus_t *obj, PinName dq0, PinName dq1, PinName dq2, PinNa
 
     HYPERBUS_MasterGetDefaultConfig(&masterConfig);
 
-    HYPERBUS_MasterInit(hyperbus_address[obj->hyperbus.instance], &masterConfig, HYPERBUS_CLK_FRE_DEFAUT);
+    HYPERBUS_MasterInit(hyperbus_address[obj->hyperbus.instance], &masterConfig, SystemCoreClock);
 }
 
 void hyperbus_free(hyperbus_t *obj)
