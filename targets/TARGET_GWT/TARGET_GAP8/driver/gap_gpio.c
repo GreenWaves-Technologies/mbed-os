@@ -34,8 +34,6 @@
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-static GPIO_Type *const s_gpioBases[] = GPIO_BASE_PTRS;
-
 typedef void (*irq_handler)();
 
 static irq_handler gpio_irq_handler;

@@ -158,8 +158,7 @@ int FLL_SetFrequency(fll_type_t which_fll, uint32_t frequency, int check)
 
 void FLL_Init(fll_type_t which_fll, uint32_t ret_state)
 {
-    uint32_t dco_mult_factor, val;
-    uint32_t mult, div, mult_factor_diff;
+    uint32_t val;
 
     if (ret_state) {
         FLL_GetFrequency(which_fll);

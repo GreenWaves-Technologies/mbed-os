@@ -24,6 +24,7 @@ from __future__ import print_function, division, absolute_import
 
 import re
 import sys
+import json
 from os import stat, walk, getcwd, sep, remove
 from copy import copy
 from time import time, sleep
@@ -540,8 +541,7 @@ class mbedToolchain:
 
     def get_labels(self):
         if self.labels is None:
-            toolchain_labels = [c.__name__ for c in getmro(self.__class__)]
-            toolchain_labels.remove('mbedToolchain')
+            toolchain_labels = self._get_toolchain_labels()
             self.labels = {
                 'TARGET': self.target.labels,
                 'FEATURE': self.target.features,
@@ -558,6 +558,12 @@ class mbedToolchain:
             else:
                 self.labels['TARGET'].append("RELEASE")
         return self.labels
+
+    def _get_toolchain_labels(self):
+        toolchain_labels = [c.__name__ for c in getmro(self.__class__)]
+        toolchain_labels.remove('mbedToolchain')
+        toolchain_labels.remove('object')
+        return toolchain_labels
 
 
     # Determine whether a source file needs updating/compiling
@@ -724,10 +730,10 @@ class mbedToolchain:
         elif ext == '.c':
             resources.c_sources.append(file_path)
 
-        elif ext == '.cpp':
+        elif ext == '.cpp' or ext == '.cc':
             resources.cpp_sources.append(file_path)
 
-        elif ext == '.h' or ext == '.hpp':
+        elif ext == '.h' or ext == '.hpp' or ext == '.hh':
             resources.headers.append(file_path)
 
         elif ext == '.o':
@@ -994,7 +1000,9 @@ class mbedToolchain:
         _, ext = splitext(source)
         ext = ext.lower()
 
-        if ext == '.c' or  ext == '.cpp':
+        source = abspath(source) if PRINT_COMPILER_OUTPUT_AS_LINK else source
+
+        if ext == '.c' or  ext == '.cpp' or ext == '.cc':
             base, _ = splitext(object)
             dep_path = base + '.d'
             try:
@@ -1004,12 +1012,12 @@ class mbedToolchain:
             config_file = ([self.config.app_config_location]
                            if self.config.app_config_location else [])
             deps.extend(config_file)
-            if ext == '.cpp' or self.COMPILE_C_AS_CPP:
+            if ext != '.c' or self.COMPILE_C_AS_CPP:
                 deps.append(join(self.build_dir, self.PROFILE_FILE_NAME + "-cxx"))
             else:
                 deps.append(join(self.build_dir, self.PROFILE_FILE_NAME + "-c"))
             if len(deps) == 0 or self.need_update(object, deps):
-                if ext == '.cpp' or self.COMPILE_C_AS_CPP:
+                if ext != '.c' or self.COMPILE_C_AS_CPP:
                     return self.compile_cpp(source, object, includes)
                 else:
                     return self.compile_c(source, object, includes)
@@ -1272,11 +1280,17 @@ class mbedToolchain:
         """Dump the current build profile and macros into the `.profile` file
         in the build directory"""
         for key in ["cxx", "c", "asm", "ld"]:
-            to_dump = (str(self.flags[key]) + str(sorted(self.macros)))
+            to_dump = {
+                "flags": sorted(self.flags[key]),
+                "macros": sorted(self.macros),
+                "symbols": sorted(self.get_symbols(for_asm=(key == "asm"))),
+            }
             if key in ["cxx", "c"]:
-                to_dump += str(self.flags['common'])
+                to_dump["symbols"].remove('MBED_BUILD_TIMESTAMP=%s' % self.timestamp)
+                to_dump["flags"].extend(sorted(self.flags['common']))
             where = join(self.build_dir, self.PROFILE_FILE_NAME + "-" + key)
-            self._overwrite_when_not_equal(where, to_dump)
+            self._overwrite_when_not_equal(where, json.dumps(
+                to_dump, sort_keys=True, indent=4))
 
     @staticmethod
     def _overwrite_when_not_equal(filename, content):
@@ -1539,6 +1553,13 @@ class mbedToolchain:
     # Return the list of macros geenrated by the build system
     def get_config_macros(self):
         return self.config.config_to_macros(self.config_data) if self.config_data else []
+
+    @abstractmethod
+    def version_check(self):
+        """Check the version of a compiler being used and raise a
+        NotSupportedException when it's incorrect.
+        """
+        raise NotImplemented
 
     @property
     def report(self):

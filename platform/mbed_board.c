@@ -20,6 +20,7 @@
  - Change to let mbed_die do nothing for GAP architecture
  - Change mbed_error_vfprintf to support GAP architecture
  */
+#include <stdlib.h>
 #include <stdio.h>
 #include "hal/gpio_api.h"
 #include "platform/mbed_wait_api.h"
@@ -27,22 +28,19 @@
 #include "platform/mbed_interface.h"
 #include "platform/mbed_critical.h"
 #include "hal/serial_api.h"
-#if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
-#include <stdlib.h>
-#include "tinyprintf.h"
-#endif
 
 #if DEVICE_SERIAL
 extern int stdio_uart_inited;
 extern serial_t stdio_uart;
 #endif
 
-WEAK void mbed_die(void) {
-#if (__RISCV_ARCH_GAP__ == 0U)
+WEAK void mbed_die(void)
+{
 #if !defined (NRF51_H) && !defined(TARGET_EFM32)
     core_util_critical_section_enter();
 #endif
-    gpio_t led_err; gpio_init_out(&led_err, LED1);
+    gpio_t led_err;
+    gpio_init_out(&led_err, LED1);
 
     while (1) {
         for (int i = 0; i < 4; ++i) {
@@ -59,19 +57,18 @@ WEAK void mbed_die(void) {
             wait_ms(400);
         }
     }
-#else
-    exit(-1);
-#endif
 }
 
-void mbed_error_printf(const char* format, ...) {
+void mbed_error_printf(const char *format, ...)
+{
     va_list arg;
     va_start(arg, format);
     mbed_error_vfprintf(format, arg);
     va_end(arg);
 }
 
-void mbed_error_vfprintf(const char * format, va_list arg) {
+void mbed_error_vfprintf(const char *format, va_list arg)
+{
 #if DEVICE_SERIAL
 #define ERROR_BUF_SIZE      (128)
     core_util_critical_section_enter();
@@ -86,7 +83,7 @@ void mbed_error_vfprintf(const char * format, va_list arg) {
         char stdio_out_prev = '\0';
         for (int i = 0; i < size; i++) {
             if (buffer[i] == '\n' && stdio_out_prev != '\r') {
-                 serial_putc(&stdio_uart, '\r');
+                serial_putc(&stdio_uart, '\r');
             }
             serial_putc(&stdio_uart, buffer[i]);
             stdio_out_prev = buffer[i];

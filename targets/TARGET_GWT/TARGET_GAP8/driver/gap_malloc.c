@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "gap_malloc.h"
-#include "tinyprintf.h"
 
 // Allocate at least 4 bytes to avoid misaligned accesses when parsing free blocks
 // and actually 8 to fit free chunk header size and make sure a e free block to always have

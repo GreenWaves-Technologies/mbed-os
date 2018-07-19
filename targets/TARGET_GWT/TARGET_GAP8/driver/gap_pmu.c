@@ -46,15 +46,6 @@ GAP_FC_DATA uint32_t pmu_events_status;
 uint32_t    PMU_Sleep_Ctrl;
 pmu_state_t PMU_State = {0, 0, {0, 0, 0, 0}, {0, 0}};
 
-#ifdef FEATURE_CLUSTER
-static uint16_t DCDC_Voltage[DCDC_OPER_POINTS] = {
-  /* REGU_NV  */    DCDC_DEFAULT_NV,
-  /* REGU_LV  */    DCDC_DEFAULT_LV,
-  /* REGU_RET */    DCDC_DEFAULT_RET,
-  /* REGU_OFF */    0,
-};
-#endif
-
 static uint8_t PMU_RET_State[] = {
   uPMU_SOC_HP,               /* 0: SOC_HP */
   uPMU_SOC_LP,               /* 1: SOC_LP */

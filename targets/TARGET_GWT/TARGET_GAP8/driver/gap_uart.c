@@ -218,9 +218,6 @@ status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, co
     assert(tx_length);
 
     status_t status;
-    uint32_t buf_len;
-    uint32_t rest_len = tx_length;
-    uint32_t i;
 
     /* Return error if current TX busy. */
     if (uUART_TxBusy == handle->txState)
