@@ -225,7 +225,7 @@ int SPI_Master_AutoPolling(SPIM_Type *base, spi_polling_config_t *conf)
     UDMA_GC->EVTIN = 0;
 
     /* Disble SPI master end event mask */
-    SOC_EU_SetFCMask(UDMA_EVENT_SPIM0_EOT + SPI_GetInstance(base));
+    SOC_EU_ClearFCMask(UDMA_EVENT_SPIM0_EOT + SPI_GetInstance(base));
 
     return 0;
 }
