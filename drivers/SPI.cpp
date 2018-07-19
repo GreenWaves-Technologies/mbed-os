@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
-   Modifications copyright (C) 2018 GreenWaves Technologies
-   - Add two functions "read" and "transfer_command_sequence" for SPI
-*/
 #include "drivers/SPI.h"
 #include "platform/mbed_critical.h"
 
@@ -33,23 +29,25 @@ CircularBuffer<Transaction<SPI>, TRANSACTION_QUEUE_SIZE_SPI> SPI::_transaction_b
 #endif
 
 SPI::SPI(PinName mosi, PinName miso, PinName sclk, PinName ssel) :
-        _spi(),
+    _spi(),
 #if DEVICE_SPI_ASYNCH
-        _irq(this),
-        _usage(DMA_USAGE_NEVER),
-        _deep_sleep_locked(false),
+    _irq(this),
+    _usage(DMA_USAGE_NEVER),
+    _deep_sleep_locked(false),
 #endif
-        _bits(8),
-        _mode(0),
-        _hz(1000000),
-        _write_fill(SPI_FILL_CHAR) {
+    _bits(8),
+    _mode(0),
+    _hz(1000000),
+    _write_fill(SPI_FILL_CHAR)
+{
     // No lock needed in the constructor
 
     spi_init(&_spi, mosi, miso, sclk, ssel);
     _acquire();
 }
 
-void SPI::format(int bits, int mode) {
+void SPI::format(int bits, int mode)
+{
     lock();
     _bits = bits;
     _mode = mode;
@@ -64,7 +62,8 @@ void SPI::format(int bits, int mode) {
     unlock();
 }
 
-void SPI::frequency(int hz) {
+void SPI::frequency(int hz)
+{
     lock();
     _hz = hz;
     // If changing format while you are the owner then just
@@ -78,13 +77,14 @@ void SPI::frequency(int hz) {
     unlock();
 }
 
-SPI* SPI::_owner = NULL;
+SPI *SPI::_owner = NULL;
 SingletonPtr<PlatformMutex> SPI::_mutex;
 
 // ignore the fact there are multiple physical spis, and always update if it wasn't us last
-void SPI::aquire() {
+void SPI::aquire()
+{
     lock();
-     if (_owner != this) {
+    if (_owner != this) {
         spi_format(&_spi, _bits, _mode, 0);
         spi_frequency(&_spi, _hz);
         _owner = this;
@@ -93,15 +93,17 @@ void SPI::aquire() {
 }
 
 // Note: Private function with no locking
-void SPI::_acquire() {
-     if (_owner != this) {
+void SPI::_acquire()
+{
+    if (_owner != this) {
         spi_format(&_spi, _bits, _mode, 0);
         spi_frequency(&_spi, _hz);
         _owner = this;
     }
 }
 
-int SPI::write(int value) {
+int SPI::write(int value)
+{
     lock();
     _acquire();
     int ret = spi_master_write(&_spi, value);
@@ -110,7 +112,8 @@ int SPI::write(int value) {
 }
 
 #ifdef __RISCV_ARCH_GAP__
-int SPI::read(int value) {
+int SPI::read(int value)
+{
     lock();
     _acquire();
     int ret = spi_master_read(&_spi, value);
@@ -118,7 +121,8 @@ int SPI::read(int value) {
     return ret;
 }
 
-int SPI::transfer_command_sequence(spi_command_sequence_t *s_command) {
+int SPI::transfer_command_sequence(spi_command_sequence_t *s_command)
+{
     lock();
     _acquire();
     int ret = spi_master_transfer_command_sequence(&_spi, s_command);
@@ -127,7 +131,8 @@ int SPI::transfer_command_sequence(spi_command_sequence_t *s_command) {
 }
 #endif
 
-int SPI::write(const char *tx_buffer, int tx_length, char *rx_buffer, int rx_length) {
+int SPI::write(const char *tx_buffer, int tx_length, char *rx_buffer, int rx_length)
+{
     lock();
     _acquire();
     int ret = spi_master_block_write(&_spi, tx_buffer, tx_length, rx_buffer, rx_length, _write_fill);
@@ -135,15 +140,18 @@ int SPI::write(const char *tx_buffer, int tx_length, char *rx_buffer, int rx_len
     return ret;
 }
 
-void SPI::lock() {
+void SPI::lock()
+{
     _mutex->lock();
 }
 
-void SPI::unlock() {
+void SPI::unlock()
+{
     _mutex->unlock();
 }
 
-void SPI::set_default_write_value(char data) {
+void SPI::set_default_write_value(char data)
+{
     lock();
     _write_fill = data;
     unlock();
@@ -151,7 +159,7 @@ void SPI::set_default_write_value(char data) {
 
 #if DEVICE_SPI_ASYNCH
 
-int SPI::transfer(const void *tx_buffer, int tx_length, void *rx_buffer, int rx_length, unsigned char bit_width, const event_callback_t& callback, int event)
+int SPI::transfer(const void *tx_buffer, int tx_length, void *rx_buffer, int rx_length, unsigned char bit_width, const event_callback_t &callback, int event)
 {
     if (spi_active(&_spi)) {
         return queue_transfer(tx_buffer, tx_length, rx_buffer, rx_length, bit_width, callback, event);
@@ -192,7 +200,7 @@ int SPI::set_dma_usage(DMAUsage usage)
     return  0;
 }
 
-int SPI::queue_transfer(const void *tx_buffer, int tx_length, void *rx_buffer, int rx_length, unsigned char bit_width, const event_callback_t& callback, int event)
+int SPI::queue_transfer(const void *tx_buffer, int tx_length, void *rx_buffer, int rx_length, unsigned char bit_width, const event_callback_t &callback, int event)
 {
 #if TRANSACTION_QUEUE_SIZE_SPI
     transaction_t t;
@@ -221,13 +229,13 @@ int SPI::queue_transfer(const void *tx_buffer, int tx_length, void *rx_buffer, i
 #endif
 }
 
-void SPI::start_transfer(const void *tx_buffer, int tx_length, void *rx_buffer, int rx_length, unsigned char bit_width, const event_callback_t& callback, int event)
+void SPI::start_transfer(const void *tx_buffer, int tx_length, void *rx_buffer, int rx_length, unsigned char bit_width, const event_callback_t &callback, int event)
 {
     lock_deep_sleep();
     _acquire();
     _callback = callback;
     _irq.callback(&SPI::irq_handler_asynch);
-    spi_master_transfer(&_spi, tx_buffer, tx_length, rx_buffer, rx_length, bit_width, _irq.entry(), event , _usage);
+    spi_master_transfer(&_spi, tx_buffer, tx_length, rx_buffer, rx_length, bit_width, _irq.entry(), event, _usage);
 }
 
 void SPI::lock_deep_sleep()
@@ -257,8 +265,8 @@ void SPI::dequeue_transaction()
 {
     Transaction<SPI> t;
     if (_transaction_buffer.pop(t)) {
-        SPI* obj = t.get_object();
-        transaction_t* data = t.get_transaction();
+        SPI *obj = t.get_object();
+        transaction_t *data = t.get_transaction();
         obj->start_transaction(data);
     }
 }

@@ -67,7 +67,7 @@ static char *get_rand_string(char *str, size_t size)
 static bool fsm_callback(int state, int next_state)
 {
     if (next_state == CellularConnectionFSM::STATE_SIM_PIN) {
-        MBED_ASSERT(network_semaphore.release() == osOK);
+        TEST_ASSERT(network_semaphore.release() == osOK);
         return false;
     }
     return true;
@@ -106,27 +106,27 @@ static void test_sim_interface()
 
     // change pin and change it back
     err = sim->change_pin(MBED_CONF_APP_CELLULAR_SIM_PIN, pin);
-    MBED_ASSERT(err == NSAPI_ERROR_OK);
+    TEST_ASSERT(err == NSAPI_ERROR_OK);
     err = sim->change_pin(pin, MBED_CONF_APP_CELLULAR_SIM_PIN);
-    MBED_ASSERT(err == NSAPI_ERROR_OK);
+    TEST_ASSERT(err == NSAPI_ERROR_OK);
 
     // 3. test set_pin_query
     err = sim->set_pin_query(MBED_CONF_APP_CELLULAR_SIM_PIN, false);
-    MBED_ASSERT(err == NSAPI_ERROR_OK);
+    TEST_ASSERT(err == NSAPI_ERROR_OK);
     err = sim->set_pin_query(MBED_CONF_APP_CELLULAR_SIM_PIN, true);
-    MBED_ASSERT(err == NSAPI_ERROR_OK);
+    TEST_ASSERT(err == NSAPI_ERROR_OK);
 
     // 4. test get_sim_state
     CellularSIM::SimState state;
     err = sim->get_sim_state(state);
-    MBED_ASSERT(err == NSAPI_ERROR_OK);
-    MBED_ASSERT(state == CellularSIM::SimStateReady);
+    TEST_ASSERT(err == NSAPI_ERROR_OK);
+    TEST_ASSERT(state == CellularSIM::SimStateReady);
 
     // 5. test get_imsi
     char imsi[16] = {0};
     err = sim->get_imsi(imsi);
-    MBED_ASSERT(err == NSAPI_ERROR_OK);
-    MBED_ASSERT(strlen(imsi) > 0);
+    TEST_ASSERT(err == NSAPI_ERROR_OK);
+    TEST_ASSERT(strlen(imsi) > 0);
 }
 
 using namespace utest::v1;

@@ -21,6 +21,14 @@
 #include "hal/us_ticker_api.h"
 #include "hal/lp_ticker_api.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "os_tick.h"
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
 #if !DEVICE_USTICKER
 #error [NOT_SUPPORTED] test not supported
 #endif
@@ -52,6 +60,7 @@ unsigned int ticker_overflow_delta;
 
 /* Auxiliary function to count ticker ticks elapsed during execution of N cycles of empty while loop.
  * Parameter <step> is used to disable compiler optimisation. */
+MBED_NOINLINE
 uint32_t count_ticks(uint32_t cycles, uint32_t step)
 {
     register uint32_t reg_cycles = cycles;
@@ -117,7 +126,7 @@ void ticker_event_handler_stub(const ticker_data_t * const ticker)
     }
 
     /* Indicate that ISR has been executed in interrupt context. */
-    if (IsIrqMode()) {
+    if (core_util_is_isr_active()) {
         intFlag++;
     }
 }

@@ -24,13 +24,13 @@ from __future__ import print_function, division, absolute_import
 
 import re
 import sys
+import json
 from os import stat, walk, getcwd, sep, remove
 from copy import copy
 from time import time, sleep
 from shutil import copyfile
 from os.path import (join, splitext, exists, relpath, dirname, basename, split,
                      abspath, isfile, isdir, normcase)
-from itertools import chain
 from inspect import getmro
 from copy import deepcopy
 from collections import namedtuple
@@ -38,13 +38,13 @@ from abc import ABCMeta, abstractmethod
 from distutils.spawn import find_executable
 from multiprocessing import Pool, cpu_count
 from hashlib import md5
-import fnmatch
 
 from ..utils import (run_cmd, mkdir, rel_path, ToolException,
                     NotSupportedException, split_path, compile_worker)
 from ..settings import MBED_ORG_USER, PRINT_COMPILER_OUTPUT_AS_LINK
 from .. import hooks
 from ..notifier.term import TerminalNotifier
+from ..resources import FileType
 from ..memap import MemapParser
 from ..config import ConfigException
 
@@ -53,6 +53,7 @@ from ..config import ConfigException
 CPU_COUNT_MIN = 1
 CPU_COEF = 1
 
+<<<<<<< HEAD
 class LazyDict(object):
     def __init__(self):
         self.eager = {}
@@ -362,6 +363,8 @@ LEGACY_TOOLCHAIN_NAMES = {
 }
 
 
+=======
+>>>>>>> upstream/master
 class mbedToolchain:
     # Verbose logging
     VERBOSE = True
@@ -447,12 +450,6 @@ class mbedToolchain:
         # Number of concurrent build jobs. 0 means auto (based on host system cores)
         self.jobs = 0
 
-        # Ignore patterns from .mbedignore files
-        self.ignore_patterns = []
-        self._ignore_regex = re.compile("$^")
-
-        # Pre-mbed 2.0 ignore dirs
-        self.legacy_ignore_dirs = (LEGACY_IGNORE_DIRS | TOOLCHAINS) - set([target.name, LEGACY_TOOLCHAIN_NAMES[self.name]])
 
         # Output notify function
         # This function is passed all events, and expected to handle notification of the
@@ -591,185 +588,6 @@ class mbedToolchain:
 
         return False
 
-    def is_ignored(self, file_path):
-        """Check if file path is ignored by any .mbedignore thus far"""
-        return self._ignore_regex.match(normcase(file_path))
-
-    def add_ignore_patterns(self, root, base_path, patterns):
-        """Add a series of patterns to the ignored paths
-
-        Positional arguments:
-        root - the directory containing the ignore file
-        base_path - the location that the scan started from
-        patterns - the list of patterns we will ignore in the future
-        """
-        real_base = relpath(root, base_path)
-        if real_base == ".":
-            self.ignore_patterns.extend(normcase(p) for p in patterns)
-        else:
-            self.ignore_patterns.extend(normcase(join(real_base, pat)) for pat in patterns)
-        if self.ignore_patterns:
-            self._ignore_regex = re.compile("|".join(fnmatch.translate(p) for p in self.ignore_patterns))
-
-    # Create a Resources object from the path pointed to by *path* by either traversing a
-    # a directory structure, when *path* is a directory, or adding *path* to the resources,
-    # when *path* is a file.
-    # The parameter *base_path* is used to set the base_path attribute of the Resources
-    # object and the parameter *exclude_paths* is used by the directory traversal to
-    # exclude certain paths from the traversal.
-    def scan_resources(self, path, exclude_paths=None, base_path=None,
-                       collect_ignores=False):
-        self.progress("scan", path)
-
-        resources = Resources(path, collect_ignores=collect_ignores)
-        if not base_path:
-            if isfile(path):
-                base_path = dirname(path)
-            else:
-                base_path = path
-        resources.base_path = base_path
-
-        if isfile(path):
-            self._add_file(path, resources, base_path, exclude_paths=exclude_paths)
-        else:
-            self._add_dir(path, resources, base_path, exclude_paths=exclude_paths)
-        return resources
-
-    # A helper function for scan_resources. _add_dir traverses *path* (assumed to be a
-    # directory) and heeds the ".mbedignore" files along the way. _add_dir calls _add_file
-    # on every file it considers adding to the resources object.
-    def _add_dir(self, path, resources, base_path, exclude_paths=None):
-        """ os.walk(top[, topdown=True[, onerror=None[, followlinks=False]]])
-        When topdown is True, the caller can modify the dirnames list in-place
-        (perhaps using del or slice assignment), and walk() will only recurse into
-        the subdirectories whose names remain in dirnames; this can be used to prune
-        the search, impose a specific order of visiting, or even to inform walk()
-        about directories the caller creates or renames before it resumes walk()
-        again. Modifying dirnames when topdown is False is ineffective, because in
-        bottom-up mode the directories in dirnames are generated before dirpath
-        itself is generated.
-        """
-        labels = self.get_labels()
-        for root, dirs, files in walk(path, followlinks=True):
-            # Check if folder contains .mbedignore
-            if ".mbedignore" in files:
-                with open (join(root,".mbedignore"), "r") as f:
-                    lines=f.readlines()
-                    lines = [l.strip() for l in lines] # Strip whitespaces
-                    lines = [l for l in lines if l != ""] # Strip empty lines
-                    lines = [l for l in lines if not re.match("^#",l)] # Strip comment lines
-                    # Append root path to glob patterns and append patterns to ignore_patterns
-                    self.add_ignore_patterns(root, base_path, lines)
-
-            # Skip the whole folder if ignored, e.g. .mbedignore containing '*'
-            root_path =join(relpath(root, base_path))
-            if  (self.is_ignored(join(root_path,"")) or
-                 self.build_dir == root_path):
-                resources.ignore_dir(root_path)
-                dirs[:] = []
-                continue
-
-            for d in copy(dirs):
-                dir_path = join(root, d)
-                # Add internal repo folders/files. This is needed for exporters
-                if d == '.hg' or d == '.git':
-                    resources.repo_dirs.append(dir_path)
-
-                if ((d.startswith('.') or d in self.legacy_ignore_dirs) or
-                    # Ignore targets that do not match the TARGET in extra_labels list
-                    (d.startswith('TARGET_') and d[7:] not in labels['TARGET']) or
-                    # Ignore toolchain that do not match the current TOOLCHAIN
-                    (d.startswith('TOOLCHAIN_') and d[10:] not in labels['TOOLCHAIN']) or
-                    # Ignore .mbedignore files
-                    self.is_ignored(join(relpath(root, base_path), d,"")) or
-                    # Ignore TESTS dir
-                    (d == 'TESTS')):
-                        resources.ignore_dir(dir_path)
-                        dirs.remove(d)
-                elif d.startswith('FEATURE_'):
-                    # Recursively scan features but ignore them in the current scan.
-                    # These are dynamically added by the config system if the conditions are matched
-                    def closure (dir_path=dir_path, base_path=base_path):
-                        return self.scan_resources(dir_path, base_path=base_path,
-                                                   collect_ignores=resources.collect_ignores)
-                    resources.features.add_lazy(d[8:], closure)
-                    resources.ignore_dir(dir_path)
-                    dirs.remove(d)
-                elif exclude_paths:
-                    for exclude_path in exclude_paths:
-                        rel_path = relpath(dir_path, exclude_path)
-                        if not (rel_path.startswith('..')):
-                            resources.ignore_dir(dir_path)
-                            dirs.remove(d)
-                            break
-
-            # Add root to include paths
-            root = root.rstrip("/")
-            resources.inc_dirs.append(root)
-            resources.file_basepath[root] = base_path
-
-            for file in files:
-                file_path = join(root, file)
-                self._add_file(file_path, resources, base_path)
-
-    # A helper function for both scan_resources and _add_dir. _add_file adds one file
-    # (*file_path*) to the resources object based on the file type.
-    def _add_file(self, file_path, resources, base_path, exclude_paths=None):
-
-        if  (self.is_ignored(relpath(file_path, base_path)) or
-             basename(file_path).startswith(".")):
-            resources.ignore_dir(relpath(file_path, base_path))
-            return
-
-        resources.file_basepath[file_path] = base_path
-        _, ext = splitext(file_path)
-        ext = ext.lower()
-
-        if   ext == '.s':
-            resources.s_sources.append(file_path)
-
-        elif ext == '.c':
-            resources.c_sources.append(file_path)
-
-        elif ext == '.cpp':
-            resources.cpp_sources.append(file_path)
-
-        elif ext == '.h' or ext == '.hpp':
-            resources.headers.append(file_path)
-
-        elif ext == '.o':
-            resources.objects.append(file_path)
-
-        elif ext == self.LIBRARY_EXT:
-            resources.libraries.append(file_path)
-            resources.lib_dirs.add(dirname(file_path))
-
-        elif ext == self.LINKER_EXT:
-            if resources.linker_script is not None:
-                self.notify.info("Warning: Multiple linker scripts detected: %s -> %s" % (resources.linker_script, file_path))
-            resources.linker_script = file_path
-
-        elif ext == '.lib':
-            resources.lib_refs.append(file_path)
-
-        elif ext == '.bld':
-            resources.lib_builds.append(file_path)
-
-        elif basename(file_path) == '.hgignore':
-            resources.repo_files.append(file_path)
-
-        elif basename(file_path) == '.gitignore':
-            resources.repo_files.append(file_path)
-
-        elif ext == '.hex':
-            resources.hex_files.append(file_path)
-
-        elif ext == '.bin':
-            resources.bin_files.append(file_path)
-
-        elif ext == '.json':
-            resources.json_files.append(file_path)
-
 
     def scan_repository(self, path):
         resources = []
@@ -786,36 +604,24 @@ class mbedToolchain:
 
         return resources
 
-    def copy_files(self, files_paths, trg_path, resources=None, rel_path=None):
+    def copy_files(self, files_paths, trg_path, resources=None):
         # Handle a single file
         if not isinstance(files_paths, list):
             files_paths = [files_paths]
 
-        for source in files_paths:
-            if source is None:
-                files_paths.remove(source)
-
-        for source in files_paths:
-            if resources is not None and source in resources.file_basepath:
-                relative_path = relpath(source, resources.file_basepath[source])
-            elif rel_path is not None:
-                relative_path = relpath(source, rel_path)
-            else:
-                _, relative_path = split(source)
-
-            target = join(trg_path, relative_path)
-
+        for dest, source in files_paths:
+            target = join(trg_path, dest)
             if (target != source) and (self.need_update(target, [source])):
-                self.progress("copy", relative_path)
+                self.progress("copy", dest)
                 mkdir(dirname(target))
                 copyfile(source, target)
 
     # THIS METHOD IS BEING OVERRIDDEN BY THE MBED ONLINE BUILD SYSTEM
     # ANY CHANGE OF PARAMETERS OR RETURN VALUES WILL BREAK COMPATIBILITY
-    def relative_object_path(self, build_path, base_dir, source):
-        source_dir, name, _ = split_path(source)
+    def relative_object_path(self, build_path, file_ref):
+        source_dir, name, _ = split_path(file_ref.name)
 
-        obj_dir = relpath(join(build_path, relpath(source_dir, base_dir)))
+        obj_dir = relpath(join(build_path, source_dir))
         if obj_dir is not self.prev_dir:
             self.prev_dir = obj_dir
             mkdir(obj_dir)
@@ -870,13 +676,17 @@ class mbedToolchain:
     # ANY CHANGE OF PARAMETERS OR RETURN VALUES WILL BREAK COMPATIBILITY
     def compile_sources(self, resources, inc_dirs=None):
         # Web IDE progress bar for project build
-        files_to_compile = resources.s_sources + resources.c_sources + resources.cpp_sources
+        files_to_compile = (
+            resources.get_file_refs(FileType.ASM_SRC) +
+            resources.get_file_refs(FileType.C_SRC) +
+            resources.get_file_refs(FileType.CPP_SRC)
+        )
         self.to_be_compiled = len(files_to_compile)
         self.compiled = 0
 
         self.notify.cc_verbose("Macros: "+' '.join(['-D%s' % s for s in self.get_symbols()]))
 
-        inc_paths = resources.inc_dirs
+        inc_paths = resources.get_file_paths(FileType.INC_DIR)
         if inc_dirs is not None:
             if isinstance(inc_dirs, list):
                 inc_paths.extend(inc_dirs)
@@ -901,11 +711,10 @@ class mbedToolchain:
         # Sort compile queue for consistency
         files_to_compile.sort()
         for source in files_to_compile:
-            object = self.relative_object_path(
-                self.build_dir, resources.file_basepath[source], source)
+            object = self.relative_object_path(self.build_dir, source)
 
             # Queue mode (multiprocessing)
-            commands = self.compile_command(source, object, inc_paths)
+            commands = self.compile_command(source.path, object, inc_paths)
             if commands is not None:
                 queue.append({
                     'source': source,
@@ -931,7 +740,7 @@ class mbedToolchain:
             result = compile_worker(item)
 
             self.compiled += 1
-            self.progress("compile", item['source'], build_update=True)
+            self.progress("compile", item['source'].name, build_update=True)
             for res in result['results']:
                 self.notify.cc_verbose("Compile: %s" % ' '.join(res['command']), result['source'])
                 self.compile_output([
@@ -969,7 +778,7 @@ class mbedToolchain:
                         results.remove(r)
 
                         self.compiled += 1
-                        self.progress("compile", result['source'], build_update=True)
+                        self.progress("compile", result['source'].name, build_update=True)
                         for res in result['results']:
                             self.notify.cc_verbose("Compile: %s" % ' '.join(res['command']), result['source'])
                             self.compile_output([
@@ -1003,7 +812,7 @@ class mbedToolchain:
 
         source = abspath(source) if PRINT_COMPILER_OUTPUT_AS_LINK else source
 
-        if ext == '.c' or  ext == '.cpp':
+        if ext == '.c' or  ext == '.cpp' or ext == '.cc':
             base, _ = splitext(object)
             dep_path = base + '.d'
             try:
@@ -1013,12 +822,12 @@ class mbedToolchain:
             config_file = ([self.config.app_config_location]
                            if self.config.app_config_location else [])
             deps.extend(config_file)
-            if ext == '.cpp' or self.COMPILE_C_AS_CPP:
+            if ext != '.c' or self.COMPILE_C_AS_CPP:
                 deps.append(join(self.build_dir, self.PROFILE_FILE_NAME + "-cxx"))
             else:
                 deps.append(join(self.build_dir, self.PROFILE_FILE_NAME + "-c"))
             if len(deps) == 0 or self.need_update(object, deps):
-                if ext == '.cpp' or self.COMPILE_C_AS_CPP:
+                if ext != '.c' or self.COMPILE_C_AS_CPP:
                     return self.compile_cpp(source, object, includes)
                 else:
                     return self.compile_c(source, object, includes)
@@ -1130,15 +939,20 @@ class mbedToolchain:
         bin = None if ext == 'elf' else full_path
         map = join(tmp_path, name + '.map')
 
-        r.objects = sorted(set(r.objects))
+        objects = sorted(set(r.get_file_paths(FileType.OBJECT)))
         config_file = ([self.config.app_config_location]
                        if self.config.app_config_location else [])
-        dependencies = r.objects + r.libraries + [r.linker_script] + config_file
+        linker_script = [path for _, path in r.get_file_refs(FileType.LD_SCRIPT)
+                         if path.endswith(self.LINKER_EXT)][-1]
+        lib_dirs = r.get_file_paths(FileType.LIB_DIR)
+        libraries = [l for l in r.get_file_paths(FileType.LIB)
+                     if l.endswith(self.LIBRARY_EXT)]
+        dependencies = objects + libraries + [linker_script] + config_file
         dependencies.append(join(self.build_dir, self.PROFILE_FILE_NAME + "-ld"))
         if self.need_update(elf, dependencies):
             needed_update = True
             self.progress("link", name)
-            self.link(elf, r.objects, r.libraries, r.lib_dirs, r.linker_script)
+            self.link(elf, objects, libraries, lib_dirs, linker_script)
 
         if bin and self.need_update(bin, [elf]):
             needed_update = True
@@ -1253,6 +1067,8 @@ class mbedToolchain:
     # Set the configuration data
     def set_config_data(self, config_data):
         self.config_data = config_data
+        # new configuration data can change labels, so clear the cache
+        self.labels = None
         self.add_regions()
 
     # Creates the configuration header if needed:
@@ -1307,11 +1123,17 @@ class mbedToolchain:
         """Dump the current build profile and macros into the `.profile` file
         in the build directory"""
         for key in ["cxx", "c", "asm", "ld"]:
-            to_dump = (str(self.flags[key]) + str(sorted(self.macros)))
+            to_dump = {
+                "flags": sorted(self.flags[key]),
+                "macros": sorted(self.macros),
+                "symbols": sorted(self.get_symbols(for_asm=(key == "asm"))),
+            }
             if key in ["cxx", "c"]:
-                to_dump += str(self.flags['common'])
+                to_dump["symbols"].remove('MBED_BUILD_TIMESTAMP=%s' % self.timestamp)
+                to_dump["flags"].extend(sorted(self.flags['common']))
             where = join(self.build_dir, self.PROFILE_FILE_NAME + "-" + key)
-            self._overwrite_when_not_equal(where, to_dump)
+            self._overwrite_when_not_equal(where, json.dumps(
+                to_dump, sort_keys=True, indent=4))
 
     @staticmethod
     def _overwrite_when_not_equal(filename, content):
@@ -1574,6 +1396,13 @@ class mbedToolchain:
     # Return the list of macros geenrated by the build system
     def get_config_macros(self):
         return self.config.config_to_macros(self.config_data) if self.config_data else []
+
+    @abstractmethod
+    def version_check(self):
+        """Check the version of a compiler being used and raise a
+        NotSupportedException when it's incorrect.
+        """
+        raise NotImplemented
 
     @property
     def report(self):

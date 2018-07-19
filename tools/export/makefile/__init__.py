@@ -24,6 +24,7 @@ import sys
 from subprocess import check_output, CalledProcessError, Popen, PIPE
 import shutil
 from jinja2.exceptions import TemplateNotFound
+from tools.resources import FileType
 from tools.export.exporters import Exporter, apply_supported_whitelist
 from tools.utils import NotSupportedException
 from tools.targets import TARGET_MAP
@@ -69,7 +70,7 @@ class Makefile(Exporter):
                           self.resources.cpp_sources]
 
         libraries = [self.prepare_lib(basename(lib)) for lib
-                     in self.resources.libraries]
+                     in self.libraries]
         sys_libs = [self.prepare_sys_lib(lib) for lib
                     in self.toolchain.sys_libs]
 
@@ -87,17 +88,14 @@ class Makefile(Exporter):
                       if (basename(dirname(dirname(self.export_dir)))
                           == "projectfiles")
                       else [".."]),
-            'cc_cmd': " ".join(["\'" + part + "\'" for part
-                                in ([basename(self.toolchain.cc[0])] +
-                                    self.toolchain.cc[1:])]),
-            'cppc_cmd': " ".join(["\'" + part + "\'" for part
-                                  in ([basename(self.toolchain.cppc[0])] +
-                                      self.toolchain.cppc[1:])]),
-            'asm_cmd': " ".join(["\'" + part + "\'" for part
-                                in ([basename(self.toolchain.asm[0])] +
-                                    self.toolchain.asm[1:])]),
-            'ld_cmd': "\'" + basename(self.toolchain.ld[0]) + "\'",
-            'elf2bin_cmd': "\'" + basename(self.toolchain.elf2bin) + "\'",
+            'cc_cmd': " ".join([basename(self.toolchain.cc[0])] +
+                               self.toolchain.cc[1:]),
+            'cppc_cmd': " ".join([basename(self.toolchain.cppc[0])] +
+                                 self.toolchain.cppc[1:]),
+            'asm_cmd': " ".join([basename(self.toolchain.asm[0])] +
+                                self.toolchain.asm[1:]),
+            'ld_cmd': basename(self.toolchain.ld[0]),
+            'elf2bin_cmd': basename(self.toolchain.elf2bin),
             'link_script_ext': self.toolchain.LINKER_EXT,
             'link_script_option': self.LINK_SCRIPT_OPTION,
             'user_library_flag': self.USER_LIBRARY_FLAG,
@@ -105,10 +103,11 @@ class Makefile(Exporter):
         }
 
         if hasattr(self.toolchain, "preproc"):
-            ctx['pp_cmd'] = " ".join(["\'" + part + "\'" for part
-                                      in ([basename(self.toolchain.preproc[0])] +
-                                          self.toolchain.preproc[1:] + 
-                                          self.toolchain.ld[1:])])
+            ctx['pp_cmd'] = " ".join(
+                [basename(self.toolchain.preproc[0])] +
+                self.toolchain.preproc[1:] +
+                self.toolchain.ld[1:]
+            )
         else:
             ctx['pp_cmd'] = None
 
@@ -239,11 +238,12 @@ class Arm(Makefile):
 
     def generate(self):
         if self.resources.linker_script:
-            sct_file = self.resources.linker_script
+            sct_file = self.resources.get_file_refs(FileType.LD_SCRIPT)[-1]
             new_script = self.toolchain.correct_scatter_shebang(
-                sct_file, join(self.resources.file_basepath[sct_file], "BUILD"))
+                sct_file.path, join("..", dirname(sct_file.name)))
             if new_script is not sct_file:
-                self.resources.linker_script = new_script
+                self.resources.add_files_to_type(
+                    FileType.LD_SCRIPT, [new_script])
                 self.generated_files.append(new_script)
         return super(Arm, self).generate()
 
@@ -257,6 +257,17 @@ class Armc6(Arm):
     """ARM Compiler 6 (armclang) specific generic makefile target"""
     NAME = 'Make-ARMc6'
     TOOLCHAIN = "ARMC6"
+
+    @classmethod
+    def is_target_supported(cls, target_name):
+        target = TARGET_MAP[target_name]
+        if target.core in (
+                "Cortex-M23", "Cortex-M23-NS",
+                "Cortex-M33", "Cortex-M33-NS"
+        ):
+            return False
+        return apply_supported_whitelist(
+            cls.TOOLCHAIN, cls.POST_BINARY_WHITELIST, target)
 
 
 class IAR(Makefile):

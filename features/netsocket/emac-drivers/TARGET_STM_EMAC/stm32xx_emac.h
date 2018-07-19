@@ -155,16 +155,16 @@ private:
     bool low_level_init_successful();
     void packet_rx();
     int low_level_input(emac_mem_buf_t **buf);
-    static void thread_function(void* pvParameters);
-    static void rmii_watchdog_thread_function(void* pvParameters);
+    static void thread_function(void *pvParameters);
+    static void rmii_watchdog_thread_function(void *pvParameters);
     void phy_task();
     void enable_interrupts();
     void disable_interrupts();
 
-    os_thread_t thread_cb;
+    mbed_rtos_storage_thread_t thread_cb;
 #if defined (STM32F767xx) || defined (STM32F769xx) || defined (STM32F777xx)\
     || defined (STM32F779xx)
-    os_thread_t rmii_watchdog_thread_cb;
+    mbed_rtos_storage_thread_t rmii_watchdog_thread_cb;
     osThreadId_t rmii_watchdog_thread; /**< Watchdog processing thread */
 #endif
     rtos::Mutex TXLockMutex;/**< TX critical section mutex */
