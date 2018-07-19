@@ -40,6 +40,8 @@ uint8_t uart_rx_buffer[1];
 /* Indicate whether uart is initialed */
 uint8_t uart_is_init = 0;
 
+
+/* Maximum write datasize in byte is 65536 */
 uart_transfer_t TX_INFO = {
     .dataAddr  = (uint32_t)uart_tx_buffer,
     .dataSize  = 1,
@@ -51,6 +53,7 @@ uart_transfer_t TX_INFO = {
     .ctrl = 0
 };
 
+/* Maximum read datasize in byte is 65536 */
 uart_transfer_t RX_INFO = {
     .dataAddr  = (uint32_t)uart_rx_buffer,
     .dataSize  = 1,
@@ -226,42 +229,20 @@ status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, co
     }
     else
     {
-        do {
-            if (rest_len > UART_TX_BUFFER_SIZE) {
-                buf_len = UART_TX_BUFFER_SIZE;
-            } else {
-                buf_len = rest_len;
-            }
+        uart_req_t *TX = UDMA_FindAvailableRequest();
 
-            /* wait for previous transfer to finish */
-            while (UDMA_TxBusy((UDMA_Type*)base));
+        TX->info = TX_INFO;
+        TX->info.dataAddr = (uint32_t)tx;
+        TX->info.dataSize = tx_length;
+        TX->info.ctrl = 0;
+        TX->info.task = 1;
 
-            /* setup next transfer */
-            for(i = 0; i < buf_len; i++) {
-                uart_tx_buffer[i] = *tx++;
-            }
+        handle->txData = (uint8_t *)tx;
+        handle->txDataSize = tx_length;
+        handle->txDataSizeAll = tx_length;
+        handle->txState = uUART_TxBusy;
 
-            uart_req_t *TX = UDMA_FindAvailableRequest();
-
-            TX->info = TX_INFO;
-            TX->info.dataSize = buf_len;
-            TX->info.ctrl = 0;
-
-            /* Only the last transfer emit handler*/
-            if (rest_len > UART_TX_BUFFER_SIZE) {
-                TX->info.task = 0;
-            } else {
-                TX->info.task = 1;
-                handle->txData = (uint8_t *)tx;
-                handle->txDataSize = tx_length;
-                handle->txDataSizeAll = tx_length;
-                handle->txState = uUART_TxBusy;
-            }
-
-            UDMA_SendRequest((UDMA_Type*)base, TX, UDMA_NO_WAIT);
-
-            rest_len = rest_len - buf_len;
-        } while (rest_len > 0);
+        UDMA_SendRequest((UDMA_Type*)base, TX, UDMA_NO_WAIT);
 
         status = uStatus_Success;
     }

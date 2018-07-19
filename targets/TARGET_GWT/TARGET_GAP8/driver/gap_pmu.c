@@ -132,7 +132,6 @@ static uint32_t PMU_ChangeRegulatorState(pmu_system_state_t prev_state, pmu_syst
     #endif
 }
 
-
 /*!
  * @brief Flls init.
  *
@@ -211,8 +210,9 @@ void PMU_DeInit(int retentive, pmu_system_state_t wakeup_state)
                           PMU_CTRL_SLEEP_CTRL_REBOOT(uPMU_DEEP_SLEEP_BOOT);
     }
 
-    PMU_Sleep_Ctrl |= PMU_CTRL_SLEEP_CTRL_WAKEUP( READ_PMU_REGULATOR_STATE(wakeup_state) ) |
-                      PMU_CTRL_SLEEP_CTRL_CLUSTER_WAKEUP(READ_PMU_CLUSTER_STATE(wakeup_state));
+    PMU_Sleep_Ctrl |= PMU_CTRL_SLEEP_CTRL_WAKEUP( READ_PMU_REGULATOR_STATE(wakeup_state) )     |
+                      PMU_CTRL_SLEEP_CTRL_CLUSTER_WAKEUP(READ_PMU_CLUSTER_STATE(wakeup_state)) |
+                      PMU_CTRL_SLEEP_CTRL_CFG_MEM_RET(0xF);
 
     /* Clear cluster on in case since at wake up it will not be on*/
     PMU_State.State &= ~PMU_CLUSTER_STATE_MASK;
@@ -223,8 +223,31 @@ void PMU_DeInit(int retentive, pmu_system_state_t wakeup_state)
     PMU_ChangeRegulatorState(PMU_State.State, (retentive ? uPMU_RETENTIVE : uPMU_DEEP_SLEEP));
 }
 
-int PMU_SetVoltage(uint32_t voltage, uint32_t frequency_check)
-{
+int PMU_StateSwitch(pmu_switch_state_t state, pmu_switch_mode_t mode) {
+    int retentive = 0;
+
+    /* Need retentive or not */
+    if (state == uPMU_SWITCH_DEEP_SLEEP)
+        retentive = 0;
+    else if (state == uPMU_SWITCH_SLEEP)
+        retentive = 1;
+
+    /* PMU shutdown, change state and set wakeup state */
+    if (mode == uPMU_SWITCH_FAST) {
+        PMU_DeInit(retentive, uPMU_SOC_HP);
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+pmu_wakeup_state_t PMU_WakeupState() {
+    int boot_type = READ_PMU_CTRL_SLEEP_CTRL_REBOOT(PMU_Sleep_Ctrl);
+
+    return (pmu_wakeup_state_t)boot_type;
+}
+
+int PMU_SetVoltage(uint32_t voltage, uint32_t frequency_check) {
     #if !defined( __PLATFORM_FPGA__)
 
     uint32_t curr_dcdc_val = PMU_State.DCDC_Settings[READ_PMU_REGULATOR_STATE(PMU_State.State)];
@@ -259,30 +282,22 @@ int PMU_SetVoltage(uint32_t voltage, uint32_t frequency_check)
     #endif
 }
 
-/*!
- * @brief pmu init.
- *
- * This function finish initializing the pmu.
- *
- * @note .
- */
-void PMU_InitEnd()
+int PMU_EnableGPIOWakeUp(int gpio_number, pmu_gpio_wakeup_t type)
 {
-    PMU_Sleep_Ctrl = PMU_CTRL->SLEEP_CTRL;
+    /* Clear bits */
+    PMU_Sleep_Ctrl &= ~(PMU_CTRL_SLEEP_CTRL_EXT_WAKE_SEL_MASK | PMU_CTRL_SLEEP_CTRL_EXT_WAKE_TYPE_MASK);
 
-    if (READ_PMU_CTRL_SLEEP_CTRL_REBOOT(PMU_Sleep_Ctrl) != uPMU_COLD_BOOT &&
-        READ_PMU_CTRL_SLEEP_CTRL_CLUSTER_WAKEUP(PMU_Sleep_Ctrl)) {
+    /* GPIO wake up configure */
+    PMU_Sleep_Ctrl |= PMU_CTRL_SLEEP_CTRL_EXT_WAKE_SEL(gpio_number)  |
+                      PMU_CTRL_SLEEP_CTRL_EXT_WAKE_TYPE((int)type)   |
+                      PMU_CTRL_SLEEP_CTRL_EXT_WAKE_EN(1);
 
-        /* PMU_ChangePowerSystemState( */
-        /*   PMU_POWER_SYSTEM_STATE( */
-        /*     READ_PMU_CTRL_SLEEP_CTRL_WAKEUP(PMU_Sleep_Ctrl), */
-        /*     READ_PMU_CTRL_SLEEP_CTRL_CLUSTER_WAKEUP(PMU_Sleep_Ctrl)), */
-        /*   0); */
+    return (gpio_number < GPIO_NUM);
+}
 
-        if ( READ_PMU_CLUSTER_STATE(PMU_State.State) == uPMU_CLUSTER_ON &&
-             READ_PMU_CTRL_SLEEP_CTRL_CFG_FLL_CLUSTER_RET(PMU_Sleep_Ctrl) )
-            FLL_Init(uFLL_CLUSTER, 1);
-    }
+void PMU_DisableGPIOWakeUp() {
+    /* Clear enable bits */
+    PMU_Sleep_Ctrl &= ~PMU_CTRL_SLEEP_CTRL_EXT_WAKE_EN_MASK;
 }
 
 #ifdef FEATURE_CLUSTER

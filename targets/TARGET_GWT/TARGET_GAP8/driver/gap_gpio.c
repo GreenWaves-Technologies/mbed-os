@@ -51,15 +51,7 @@ void GPIO_PinInit(GPIO_Type *base, uint32_t pin, const gpio_pin_config_t *config
 {
     assert(config);
 
-    if (config->pinDirection == uGPIO_DigitalInput)
-    {
-        base->DIR &= ~(1U << pin);
-    }
-    else
-    {
-        GPIO_WritePinOutput(s_gpioBases[0], pin, config->outputLogic);
-        base->DIR |= (1U << pin);
-    }
+    GPIO_SetPinDirection(base, pin, config->pinDirection);
 }
 
 void GPIO_IRQHandlerBind(GPIO_Type *base, uint32_t irq)

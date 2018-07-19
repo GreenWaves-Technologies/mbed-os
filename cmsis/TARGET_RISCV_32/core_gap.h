@@ -515,6 +515,7 @@ typedef union
 /**
   \brief  Structure type to access the Nested Vectored Interrupt Controller (NVIC).
  */
+#if defined(__GAP8__)
 typedef struct
 {
   __IOM  uint32_t MASK;                    /**< EU_DEMUX mask register, offset: 0x00 */
@@ -525,7 +526,20 @@ typedef struct
   __IOM  uint32_t MASK_IRQ_OR;             /**< EU_DEMUX mask irq or register, offset: 0x14 */
   __IOM  uint32_t STATUS;                  /**< EU_DEMUX Status register, offset: 0x18 */
 }  NVIC_Type;
-
+#elif defined(__VEGA__)
+typedef struct {
+  __IO  uint32_t MASK;           /**< FC_ITC Mask register, offset: 0x00 */
+  __IO  uint32_t MASK_SET;       /**< FC_ITC Mask set register, offset: 0x04 */
+  __IO  uint32_t MASK_CLR;       /**< FC_ITC Mask clean register, offset: 0x08 */
+  __IO  uint32_t STATUS;         /**< FC_ITC Status register, offset: 0x0C */
+  __IO  uint32_t STATUS_SET;     /**< FC_ITC Status set register, offset: 0x10 */
+  __IO  uint32_t STATUS_CLR;     /**< FC_ITC Status clean register, offset: 0x14 */
+  __IO  uint32_t ACK;            /**< FC_ITC ACK register, offset: 0x18 */
+  __IO  uint32_t ACK_SET;        /**< FC_ITC ACK set register, offset: 0x1C */
+  __IO  uint32_t ACK_CLR;        /**< FC_ITC ACK clean register, offset: 0x20 */
+  __IO  uint32_t FIFO;           /**< FC_ITC FIFO register, offset: 024 */
+} NVIC_Type;
+#endif
 /*@} end of group CMSIS_NVIC */
 
 
@@ -568,11 +582,9 @@ typedef struct
 {
   __IOM uint32_t ICACHE_ENABLE;            /*!< Offset: 0x00 (R/W ) Cluster Icache Enable Register  */
   __IOM uint32_t ICACHE_FLUSH;             /*!< Offset: 0x04 (R/W)  Cluster Icache Flush Register */
-  __IOM uint32_t ICACHE_LEVEL_FLUSH;       /*!< Offset: 0x08 (R/W)  Cluster Icache Level Flush Register,*/
-                                           /*  If Icache has several levels, use it to flush L0, or L1.5. If not, reserved */
-  __IOM uint32_t ICACHE_ADDR_FLUSH;        /*!< Offset: 0x0C (R/W)  Cluster Icache Flush Selected Address Register */
-  __IOM uint32_t ICACHE_CNTS_CLEAR;        /*!< Offset: 0x10 (R/W)  Vector Table Offset Register */
-  __IOM uint32_t ICACHE_CNTS_ENABLE;       /*!< Offset: 0x14 (R/W)  Vector Table Offset Register */
+  __IOM uint32_t ICACHE_LX_SEL_FLUSH;      /*!< Offset: 0x08 (R/W)  Cluster Icache Level-X Flush Register or FC Flush Selected Address Register*/
+  __IOM uint32_t ICACHE_SEL_FLUSH_STATUS;  /*!< Offset: 0x0C (R/W)  Cluster Icache Flush Selected Address Register or FC ICACHE status */
+  __IOM uint32_t ICACHE_IS_PRI;            /*!< Offset: 0x10 (R/W)  Cluster Icache is private Icache */
 } SCBC_Type;
 
 /* SCBC Registers Definitions */
@@ -605,6 +617,10 @@ typedef struct
   __IOM uint32_t VALUE_HI;                     /*!< Offset: 0x00C (R/W)  SysTick Timer Value Register for high 32-bits */
   __IOM uint32_t CMP_LO;                       /*!< Offset: 0x010 (R/W)  SysTick Timer comparator Register for low 32-bits */
   __IOM uint32_t CMP_HI;                       /*!< Offset: 0x014 (R/W)  SysTick Timer comparator Register for high 32-bits */
+  __OM  uint32_t START_LO;                     /*!< Offset: 0x014 (R/W)  SysTick Timer start Register for low 32-bits */
+  __OM  uint32_t START_HI;                     /*!< Offset: 0x014 (R/W)  SysTick Timer start Register for high 32-bits */
+  __OM  uint32_t RESET_LO;                     /*!< Offset: 0x014 (R/W)  SysTick Timer reset Register for low 32-bits */
+  __OM  uint32_t RESET_HI;                     /*!< Offset: 0x014 (R/W)  SysTick Timer reset Register for high 32-bits */
 
 } SysTick_Type;
 
@@ -619,6 +635,9 @@ typedef struct
         uint32_t _reserved1;                   /*!< Offset: 0x00C (R/W)  Empty Registers */
   __IOM uint32_t COMPARE;                      /*!< Offset: 0x010 (R/W)  TIMERL Timer comparator Register for low 32-bits */
         uint32_t _reserved2;                   /*!< Offset: 0x014 (R/W)  Empty Registers */
+  __OM  uint32_t START;                        /*!< Offset: 0x014 (R/W)  SysTick Timer start Register for low 32-bits */
+        uint32_t _reserved3;                   /*!< Offset: 0x014 (R/W)  Empty Registers */
+  __OM  uint32_t RESET;                        /*!< Offset: 0x014 (R/W)  SysTick Timer reset Register for low 32-bits */
 } TimerL_Type;
 
 /**
@@ -631,7 +650,11 @@ typedef struct
         uint32_t _reserved1;                   /*!< Offset: 0x008 (R/W)  Empty Registers */
   __IOM uint32_t VALUE;                        /*!< Offset: 0x00C (R/W)  TIMERH Timer Value Register for high 32-bits */
         uint32_t _reserved2;                   /*!< Offset: 0x010 (R/W)  Empty Registers */
-  __IOM uint32_t COMPARE;                       /*!< Offset: 0x014 (R/W)  TIMERH Timer comparator Register for high 32-bits */
+  __IOM uint32_t COMPARE;                      /*!< Offset: 0x014 (R/W)  TIMERH Timer comparator Register for high 32-bits */
+        uint32_t _reserved3;                   /*!< Offset: 0x014 (R/W)  Empty Registers */
+  __OM  uint32_t START;                        /*!< Offset: 0x014 (R/W)  SysTick Timer start Register for high 32-bits */
+        uint32_t _reserved4;                   /*!< Offset: 0x014 (R/W)  Empty Registers */
+  __OM  uint32_t RESET;                        /*!< Offset: 0x014 (R/W)  SysTick Timer reset Register for high 32-bits */
 } TimerH_Type;
 
 
@@ -1035,11 +1058,6 @@ typedef struct
 #define CORE_PERI_BASE      (0x00200000UL)                             /*!< RISC Core Peripheral Base Address */
 #define CORE_SCB_BASE       (CORE_PERI_BASE)                           /*!< RISC Core System Control Block Base Address */
 #define CORE_SCBC_BASE      (CORE_PERI_BASE +  0x1400UL)               /*!< RISC Core System Control Block Cache Base Address */
-#if defined(__GAP8__)
-#define CORE_SysTick_BASE   (CORE_PERI_BASE +  0x0400UL)               /*!< RISC Core SysTick Base Address */
-#elif defined(__VEGA__)
-#define CORE_SysTick_BASE   (SOC_PERI_BASE  +  0xB000UL)               /*!< RISC Core SysTick Base Address */
-#endif
 
 #define CORE_EU_BASE        (0x00200800UL)                             /*!< RISC Core Event Unit Base Address */
 #define CORE_EU_BARRIER_BASE         (CORE_EU_BASE + 0x0400UL)         /*!< RISC Core Event Unit HW Barrier Base Address */
@@ -1058,6 +1076,15 @@ typedef struct
 #define CORE_EU_BARRIER_DEMUX_BASE   (CORE_EU_DEMUX_BASE + 0x0200UL)   /*!< RISC Core Event Unit HW Barrier Demux Base Address */
 
 #define CORE_MCHAN_BASE              (CORE_EU_DEMUX_BASE + 0x0400UL)   /*!< RISC Core DMAMCHAN Base Address between L2 and Cluster TCDM */
+
+#if defined(__GAP8__)
+#define CORE_SysTick_BASE   (CORE_PERI_BASE +  0x0400UL)               /*!< RISC Core SysTick Base Address */
+#define NVIC_BASE           (CORE_EU_CORE_DEMUX_BASE)                  /*!< RISC NVIC Base Address */
+
+#elif defined(__VEGA__)
+#define CORE_SysTick_BASE   (SOC_PERI_BASE  +  0xB000UL)               /*!< RISC Core SysTick Base Address */
+#define NVIC_BASE           (SOC_PERI_BASE  +  0x9000UL)               /*!< RISC NVIC Base Address */
+#endif
 
 /* FC core Memory map */
 #define FC_SCBC_BASE        (FC_BASE + CORE_SCBC_BASE)                 /*!< FC System Control Block Cache Base Address */
@@ -1095,7 +1122,8 @@ typedef struct
 #define EU_SOC_EVENTS        ((EU_SOC_EVENTS_Type   *)      CORE_EU_SOC_EVENTS_BASE)          /*!< EU_SW_EVENTS_DEMUX configuration struct */
 
 
-#define NVIC                ((NVIC_Type   *)      CORE_EU_CORE_DEMUX_BASE)         /*!< NVIC configuration struct */
+#define NVIC                ((NVIC_Type   *)      NVIC_BASE)                       /*!< NVIC configuration struct */
+
 #define EU_CORE_DEMUX       ((EU_CORE_DEMUX_Type   *)      CORE_EU_CORE_DEMUX_BASE)         /*!< EU_CORE_DEMUX configuration struct */
 #define EU_SEC_DEMUX        ((EU_SEC_DEMUX_Type   *)       CORE_EU_SEC_DEMUX_BASE)          /*!< EU_SEC_DEMUX configuration struct */
 #define EU_LOOP_DEMUX       ((EU_LOOP_DEMUX_Type   *)      CORE_EU_LOOP_DEMUX_BASE)         /*!< EU_LOOP_DEMUX configuration struct */
@@ -1177,11 +1205,11 @@ typedef struct
 __STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
 {
   /* U mode does not has the right */
-  /* #if defined(__GAP8__) */
-    NVIC->MASK_IRQ_OR = (1UL << IRQn);
-  /* #elif defined(__VEGA__) */
-  /* NVIC->MASK_SET = (1UL << IRQn); */
-  /* #endif */
+  #if defined(__GAP8__)
+  NVIC->MASK_IRQ_OR = (1UL << IRQn);
+  #elif defined(__VEGA__)
+  NVIC->MASK_SET = (1UL << IRQn);
+  #endif
 }
 
 /**
@@ -1195,7 +1223,11 @@ __STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
 __STATIC_INLINE uint32_t __NVIC_GetEnableIRQ(IRQn_Type IRQn)
 {
   /* U mode does not has the right */
+  #if defined(__GAP8__)
   return ((uint32_t)((NVIC->MASK_IRQ & (1UL << IRQn)) ? 1UL : 0UL));
+  #elif defined(__VEGA__)
+  return ((uint32_t)((NVIC->MASK & (1UL << IRQn)) ? 1UL : 0UL));
+  #endif
 }
 
 
@@ -1208,7 +1240,11 @@ __STATIC_INLINE uint32_t __NVIC_GetEnableIRQ(IRQn_Type IRQn)
 __STATIC_INLINE void __NVIC_DisableIRQ(IRQn_Type IRQn)
 {
   /* U mode does not has the right */
+  #if defined(__GAP8__)
   NVIC->MASK_IRQ_AND = (1UL << IRQn);
+  #elif defined(__VEGA__)
+  NVIC->MASK_CLR = (1UL << IRQn);
+  #endif
 }
 
 

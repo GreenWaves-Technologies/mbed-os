@@ -504,12 +504,8 @@ void UDMA_WaitRequestEnd(udma_req_t *req)
 void UDMA_AutoPollingWait(UDMA_Type *base)
 {
     /* if polling already finished, do not need to wait */
-    if(!auto_polling_end) {
-
-        /* Wait util Polling RX End */
-        while(!auto_polling_end) {
-            EU_EVT_MaskWaitAndClr(1<<FC_SW_NOTIF_EVENT);
-        }
+    while(!auto_polling_end) {
+        EU_EVT_MaskWaitAndClr(1<<FC_SW_NOTIF_EVENT);
     }
 
     /* Set flag */

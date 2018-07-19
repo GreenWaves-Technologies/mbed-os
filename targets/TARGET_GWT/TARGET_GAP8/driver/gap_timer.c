@@ -32,10 +32,10 @@ typedef struct {
     /* Timer Definition */
     TimerL_Type   *timerL;
     TimerH_Type   *timerH;
-#ifdef FEATURE_CLUSTER
+    #ifdef FEATURE_CLUSTER
     TimerL_Type   *CLUSTER_TimerL;
     TimerH_Type   *CLUSTER_TimerH;
-#endif
+    #endif
     /* Timer IRQn */
     uint32_t timerIRQn[NUM_TIMERS];
     /* Timer Compare Value */
@@ -83,14 +83,14 @@ void Timer_Initialize(uint32_t timer, uint32_t time_us)
             case 1: Timer64.timerH = TIMERH;
                     Timer64.timerIRQn[timer] = FC_TIMER1_IRQn;
                     break;
-#ifdef FEATURE_CLUSTER
+            #ifdef FEATURE_CLUSTER
             case 2: Timer64.CLUSTER_TimerL = CLUSTER_TIMERL;
                     Timer64.timerIRQn[timer] = FC_TIMER0_IRQn;
                     break;
             case 3: Timer64.CLUSTER_TimerH = CLUSTER_TIMERH;
                     Timer64.timerIRQn[timer] = FC_TIMER1_IRQn;
                     break;
-#endif
+            #endif
             default: break;
         }
 
@@ -99,17 +99,18 @@ void Timer_Initialize(uint32_t timer, uint32_t time_us)
     }
 }
 
-static inline uint32_t Timer_Config(char enable, char reset, char irq_enable, char event_mask, char cmp_clr, char one_shot, char prescaler_enable, char prescaler, char mode_64)
+static inline uint32_t Timer_Config(char enable, char reset, char irq_enable, char event_mask, char cmp_clr, char one_shot, char prescaler_enable, char prescaler, char clock_src, char mode_64)
 {
-    return (enable << SysTick_CFG_REG_LOW_ENABLE_Pos)
-        | (reset << SysTick_CFG_REG_LOW_RESET_Pos)
-        | (irq_enable << SysTick_CFG_REG_LOW_IRQE_Pos)
-        | (event_mask << SysTick_CFG_REG_LOW_IEM_Pos)
-        | (cmp_clr << SysTick_CFG_REG_LOW_CMP_CLR_Pos)
-        | (one_shot << SysTick_CFG_REG_LOW_ONE_SHOT_Pos)
-        | (prescaler_enable << SysTick_CFG_REG_LOW_PRESCALERE_Pos)
-        | (prescaler << SysTick_CFG_REG_LOW_PRESCALER_Pos)
-        | (mode_64 << SysTick_CFG_REG_LOW_64BIT_Pos);
+    return (enable << TIMERL_CFG_REG_LOW_ENABLE_Pos)
+        | (reset << TIMERL_CFG_REG_LOW_RESET_Pos)
+        | (irq_enable << TIMERL_CFG_REG_LOW_IRQE_Pos)
+        | (event_mask << TIMERL_CFG_REG_LOW_IEM_Pos)
+        | (cmp_clr << TIMERL_CFG_REG_LOW_CMP_CLR_Pos)
+        | (one_shot << TIMERL_CFG_REG_LOW_ONE_SHOT_Pos)
+        | (prescaler_enable << TIMERL_CFG_REG_LOW_PRESCALERE_Pos)
+        | (clock_src << TIMERL_CFG_REG_LOW_CLKS_Pos)
+        | (prescaler << TIMERL_CFG_REG_LOW_PRESCALER_Pos)
+        | (mode_64 << TIMERL_CFG_REG_LOW_64BIT_Pos);
 }
 
 /*
@@ -128,7 +129,7 @@ void Timer_Enable(uint32_t timer)
                 /* Compare Value */
                 (Timer64.timerL)->COMPARE = Timer64.timerCompare[TIMER0];
                 /* Reset Enable Counter */
-                (Timer64.timerL)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
+                (Timer64.timerL)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0, 0);
                 /* Reset value */
                 (Timer64.timerL)->VALUE = 0;
             }
@@ -137,16 +138,16 @@ void Timer_Enable(uint32_t timer)
                 /* Compare Value */
                 (Timer64.timerH)->COMPARE = Timer64.timerCompare[TIMER1];
                 /* Reset Enable Counter */
-                (Timer64.timerH)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
+                (Timer64.timerH)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0, 0);
                 /* Reset value */
                 (Timer64.timerH)->VALUE = 0;
             }
-#ifdef FEATURE_CLUSTER
+            #ifdef FEATURE_CLUSTER
             if (timer == TIMER0_CLUSTER) {
                 /* Compare Value */
                 (Timer64.CLUSTER_TimerL)->COMPARE = Timer64.timerCompare[TIMER0_CLUSTER];
                 /* Reset Enable Counter */
-                (Timer64.CLUSTER_TimerL)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
+                (Timer64.CLUSTER_TimerL)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0, 0);
                 /* Reset value */
                 (Timer64.CLUSTER_TimerL)->VALUE = 0;
             }
@@ -154,11 +155,11 @@ void Timer_Enable(uint32_t timer)
                 /* Compare Value */
                 (Timer64.CLUSTER_TimerH)->COMPARE = Timer64.timerCompare[TIMER1_CLUSTER];
                 /* Reset Enable Counter */
-                (Timer64.CLUSTER_TimerH)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
+                (Timer64.CLUSTER_TimerH)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0, 0);
                 /* Reset value */
                 (Timer64.CLUSTER_TimerH)->VALUE = 0;
             }
-#endif
+            #endif
             /* Change timer state */
             Timer64.state[timer] |= TIMER_ENABLED;
         }
@@ -180,12 +181,12 @@ void Timer_Disable(uint32_t timer)
                 break;
             case 1: (Timer64.timerH)->CTRL = 0x0;
                 break;
-#ifdef FEATURE_CLUSTER
+            #ifdef FEATURE_CLUSTER
             case 2: (Timer64.CLUSTER_TimerL)->CTRL = 0x0;
                 break;
             case 3: (Timer64.CLUSTER_TimerH)->CTRL = 0x0;
                 break;
-#endif
+            #endif
             default: break;
             }
             /* Change timer state */
@@ -227,12 +228,12 @@ uint32_t Timer_ReadCycle(uint32_t timer)
             break;
         case 1: return_value = (Timer64.timerH)->VALUE;
             break;
-#ifdef FEATURE_CLUSTER
+        #ifdef FEATURE_CLUSTER
         case 2: return_value = (Timer64.CLUSTER_TimerL)->VALUE;
             break;
         case 3: return_value = (Timer64.CLUSTER_TimerH)->VALUE;
             break;
-#endif
+        #endif
         default: break;
         }
     }
@@ -278,33 +279,33 @@ void Timer_SetInterrupt(uint32_t timer, uint32_t time_us)
             (Timer64.timerL)->COMPARE = Timer64.timerCompare[timer];
             (Timer64.timerL)->VALUE = 0;
             /* Enable Counter */
-            (Timer64.timerL)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
+            (Timer64.timerL)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0, 0);
         }
             break;
         case 1: {
             (Timer64.timerH)->COMPARE = Timer64.timerCompare[timer];
             (Timer64.timerH)->VALUE = 0;
             /* Enable Counter */
-            (Timer64.timerH)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
+            (Timer64.timerH)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0, 0);
         }
             break;
-#ifdef FEATURE_CLUSTER
+        #ifdef FEATURE_CLUSTER
         case 2: {
             /* Enable Interrupt */
             (Timer64.CLUSTER_TimerL)->COMPARE = Timer64.timerCompare[timer];
             (Timer64.CLUSTER_TimerL)->VALUE = 0;
             /* Enable Counter */
-            (Timer64.CLUSTER_TimerL)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
+            (Timer64.CLUSTER_TimerL)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0, 0);
         }
             break;
         case 3: {
             (Timer64.CLUSTER_TimerH)->COMPARE = Timer64.timerCompare[timer];
             (Timer64.CLUSTER_TimerH)->VALUE = 0;
             /* Enable Counter */
-            (Timer64.CLUSTER_TimerH)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0);
+            (Timer64.CLUSTER_TimerH)->CTRL = Timer_Config(1, 1, 1, 0, 1, 0, 0, 0, 0, 0);
         }
             break;
-#endif
+        #endif
         default: break;
         }
 
@@ -323,16 +324,16 @@ void Timer_DisableInterrupt(uint32_t timer)
     if (Timer_isEnabled(timer) == 1) {
         /* Disable Interrupt */
         switch(timer) {
-        case 0: (Timer64.timerL)->CTRL &= ~(1 << SysTick_CFG_REG_LOW_IRQE_Pos);
+        case 0: (Timer64.timerL)->CTRL &= ~(1 << TIMERL_CFG_REG_LOW_IRQE_Pos);
             break;
-        case 1: (Timer64.timerH)->CTRL &= ~(1 << SysTick_CFG_REG_LOW_IRQE_Pos);
+        case 1: (Timer64.timerH)->CTRL &= ~(1 << TIMERL_CFG_REG_LOW_IRQE_Pos);
             break;
-#ifdef FEATURE_CLUSTER
-        case 2: (Timer64.CLUSTER_TimerL)->CTRL &= ~(1 << SysTick_CFG_REG_LOW_IRQE_Pos);
+        #ifdef FEATURE_CLUSTER
+        case 2: (Timer64.CLUSTER_TimerL)->CTRL &= ~(1 << TIMERL_CFG_REG_LOW_IRQE_Pos);
             break;
-        case 3: (Timer64.CLUSTER_TimerH)->CTRL &= ~(1 << SysTick_CFG_REG_LOW_IRQE_Pos);
+        case 3: (Timer64.CLUSTER_TimerH)->CTRL &= ~(1 << TIMERL_CFG_REG_LOW_IRQE_Pos);
             break;
-#endif
+        #endif
         default: break;
         }
     }

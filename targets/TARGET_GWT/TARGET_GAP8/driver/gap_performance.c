@@ -101,7 +101,7 @@ void PERFORMANCE_Start(performance_t *base, uint32_t mask)
 
         PERFORMANCE_Config(base, mask);
 
-        /* Set all PCCR to 0 */
+        /* Reset all PCCR to 0 */
         __PCCR31_Set(0);
 
         /* Enable PCMR */

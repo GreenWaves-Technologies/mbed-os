@@ -36,6 +36,13 @@ typedef enum {
     PIN_OUTPUT
 } PinDirection;
 
+#define GAP_PIN_OFFSET  8
+
+/* Mapping for GPIO type pinname */
+#define GPIO_PIN_NUM_SHIFT 0
+#define GPIO_PIN_NUM_MASK  0xFF
+#define GET_GPIO_PIN_NUM(x)                 ((((uint32_t)(((uint32_t)(x)) & GPIO_PIN_NUM_MASK )) /* >> GPIO_PIN_NUM_SHIFT */) - GAP_PIN_OFFSET)
+
 #define GPIO_PORT_SHIFT 8
 #define GPIO_PORT_MASK  0xF00
 #define GET_GPIO_PORT(x)                    (((uint32_t)(((uint32_t)(x)) & GPIO_PORT_MASK )) >> GPIO_PORT_SHIFT)
@@ -47,8 +54,6 @@ typedef enum {
 #define GPIO_IS_SHIFT   20
 #define GPIO_IS_MASK   0x100000
 #define GET_IS_GPIO(x)                      (((uint32_t)(((uint32_t)(x)) & GPIO_IS_MASK )) >> GPIO_IS_SHIFT)
-
-#define GAP_PIN_OFFSET  8
 
 typedef enum {
     B20  = 0,
@@ -174,7 +179,7 @@ typedef enum {
     I2S0_SDI = B23,
 
     // I2S1
-    I2S1_SCK_B13 = B13,
+    I2S1_SCK = B13,
     I2S1_WS  = A15,
     I2S1_SDI_B14 = B14,
     I2S1_SDI_B13 = B13,
@@ -229,6 +234,8 @@ typedef enum {
     // UART Pins
     USBTX = A7,
     USBRX = B6,
+    UART_TX = A7,
+    UART_RX = B6,
 
     // Timer0 Pins
     TIMER0_CH0 = B11,

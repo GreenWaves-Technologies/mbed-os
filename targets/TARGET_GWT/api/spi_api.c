@@ -171,7 +171,7 @@ int spi_master_cs(spi_t *obj, int status)
     int index = 0;
 
     if (status)
-        s_command_sequence[index++] = SPIM_CMD_EOT(0);
+        s_command_sequence[index++] = SPIM_CMD_EOT(1);
     else
         s_command_sequence[index++] = SPIM_CMD_SOT(master_config.whichCsn);
 

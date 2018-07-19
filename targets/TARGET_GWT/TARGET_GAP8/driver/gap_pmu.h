@@ -61,8 +61,8 @@
    REGU_LV         Low,       BaseValue + Incr*ValueLv             BaseValue and Incr are constants (550, 50)
    REGU_RET        Retentive, BaseValue + Incr*ValueRet            BaseValue and Incr are constants (550, 50)
    REGU_OFF        0
-   Fll SoC:         Frequency:      Value in Hz
-   Fll Cluster:     Frequency:      Value in Hz
+   Fll SoC:        Frequency:      Value in Hz
+   Fll Cluster:    Frequency:      Value in Hz
 */
 typedef enum _pmu_fll_cluster_down {
   uPMU_FLL_FAST_WAKEUP=0,    /* Fll is kept active and ready to be used */
@@ -101,45 +101,61 @@ typedef enum _pmu_scu_seq {
   uPMU_SCU_SOC_HP         = 2,
   uPMU_SCU_SOC_LP         = 3,
   uPMU_SCU_SOC_CLUSTER_HP = 4,
-  uPMU_SCU_SOC_CLUSTER_LP = 5,
+  uPMU_SCU_SOC_CLUSTER_LP = 5
 } pmu_scu_seq_t;
 
+/*! @brief PMU wakeup boot state  */
 typedef enum _pmu_wakeup_state {    /* Enum encoding follows the definition of the boot_type field of PMU_RetentionStateT */
   uPMU_COLD_BOOT       = 0, /* SoC cold boot, from Flash usually */
   uPMU_DEEP_SLEEP_BOOT = 1, /* Reboot from deep sleep state, state has been lost, somehow equivalent to COLD_BOOT */
-  uPMU_RETENTIVE_BOOT  = 2, /* Reboot from Retentive state, state has been retained, should bypass flash reload */
+  uPMU_RETENTIVE_BOOT  = 2 /* Reboot from Retentive state, state has been retained, should bypass flash reload */
 } pmu_wakeup_state_t;
 
+/*! @brief PMU boot mode, from L2 or ROM  */
 typedef enum _pmu_boot_mode {
   uPMU_BOOT_FROM_ROM=0,
-  uPMU_BOOT_FROM_L2=1,
+  uPMU_BOOT_FROM_L2=1
 } pmu_boot_mode_t;
 
+/*! @brief PMU external wakeup mode  */
 typedef enum _pmu_wakeup_mode {
   uPMU_EXT_WAKEUP_RAISING_EDGE = 0,
   uPMU_EXT_WAKEUP_FALLING_EDGE = 1,
   uPMU_EXT_WAKEUP_HIGH = 2,
-  uPMU_EXT_WAKEUP_LOW = 3,
+  uPMU_EXT_WAKEUP_LOW = 3
 } pmu_wakeup_mode_t;
 
-typedef enum pmu_status {
+/*! @brief PMU switch state  */
+typedef enum pmu_switch_state {
+  uPMU_SWITCH_SLEEP = 0,
+  uPMU_SWITCH_DEEP_SLEEP = 1
+} pmu_switch_state_t;
+
+/*! @brief PMU switch state mode state  */
+typedef enum pmu_switch_mode {
+  uPMU_SWITCH_FAST = 0
+} pmu_switch_mode_t;
+
+/*! @brief PMU change status  */
+typedef enum pmu_change_status {
   uPMU_CHANGE_OK = 0,
   uPMU_CHANGE_ERROR = 1
-} pmu_status_t;
+} pmu_change_status_t;
 
 typedef enum _pmu_dcdc_hw_operatingpoint {
   uPMU_DCDC_Nominal   = 0,
   uPMU_DCDC_Medium    = 1,
   uPMU_DCDC_Low       = 2,
-  uPMU_DCDC_Retentive = 3,
+  uPMU_DCDC_Retentive = 3
 } pmu_dcdc_hw_operatingpoint_t;
 
-
+/*! @brief PMU cluster status  */
 typedef enum _pmu_cluster_state {
   uPMU_CLUSTER_OFF = 0,
   uPMU_CLUSTER_ON  = 1
 } pmu_cluster_state_t;
 
+/*! @brief PMU Regulator status  */
 typedef enum _pmu_regulator_state {
   uPMU_REGU_NV  = 0,
   uPMU_REGU_LV  = 1,
@@ -147,6 +163,7 @@ typedef enum _pmu_regulator_state {
   uPMU_REGU_OFF = 3
 } pmu_regulator_state_t;
 
+/*! @brief PMU system status  */
 typedef enum _pmu_system_state {
   uPMU_SOC_CLUSTER_HP = ((uPMU_REGU_NV<<1)  | uPMU_CLUSTER_ON),  /* 001 = 1 */
   uPMU_SOC_CLUSTER_LP = ((uPMU_REGU_LV<<1)  | uPMU_CLUSTER_ON),  /* 011 = 3 */
@@ -155,6 +172,15 @@ typedef enum _pmu_system_state {
   uPMU_RETENTIVE      = ((uPMU_REGU_RET<<1) | uPMU_CLUSTER_OFF), /* 100 = 4 */
   uPMU_DEEP_SLEEP     = ((uPMU_REGU_OFF<<1) | uPMU_CLUSTER_OFF)  /* 110 = 6 */
 } pmu_system_state_t;
+
+/*! @brief Configures the interrupt generation condition. */
+typedef enum _pmu_gpio_wakeup
+{
+    uGPIO_WakeUpRisingEdge     = 0x0U,  /*!< WakeUp on rising edge. */
+    uGPIO_WakeUpFallingEdge    = 0x1U,  /*!< WakeUp on falling edge. */
+    uGPIO_WakeUpHigh           = 0x2U,  /*!< WakeUp on high. */
+    uGPIO_WakeUpLow            = 0x3U,  /*!< WakeUp on low. */
+} pmu_gpio_wakeup_t;
 
 #define PMU_CLUSTER_STATE_MASK              (0x1U)
 #define PMU_CLUSTER_STATE_SHIFT             (0U)
@@ -190,8 +216,12 @@ void PMU_Init();
 /*!
  * @brief Set PUM voltage and check frequency at the same time .
  *
- * This function
- *
+ * @param voltage  PMU votage to set .
+ * @param frequency_check Check the relationship bwtween voltage and frequency.
+ * @retval Frequency check result
+ *        - -1   : Error, can not set voltage
+ *        - other: Voltage is set
+
  * @note .
  */
 int PMU_SetVoltage(uint32_t voltage, uint32_t frequency_check);
@@ -200,10 +230,52 @@ int PMU_SetVoltage(uint32_t voltage, uint32_t frequency_check);
  * @brief De-Initializes and shut down the PMU.
  *
  * This function
+ * @param retentive  PMU need to be retentive or not .
+ * @param wakeup_state  When in sleep or deep sleep mode, set the wakeup state.
  *
  * @note .
  */
 void PMU_DeInit(int retentive, pmu_system_state_t wakeup_state);
+
+/*!
+ * @brief Switch the chip to the specified power state.
+ *
+ * @param state  the state which the PMU switch to .
+ * @param mode   PMU change state mode.
+ *
+ * @return  0 if the operation is successful, -1 otherwise.
+ * @note .
+ */
+int PMU_StateSwitch(pmu_switch_state_t state, pmu_switch_mode_t mode);
+
+/*!
+ * @brief Get power state before wake-up
+ *
+ * This function
+ *
+ * @return the power state of the chip before the last wake-up.
+ * @note .
+ */
+pmu_wakeup_state_t PMU_WakeupState();
+
+/*!
+ * @brief Enable using external GPIO to wake-up PMU
+ *
+ * @param gpio_number  PMU external wakeup source GPIO number.
+ * @param type         PMU external GPIO wakeup type.
+ *
+ * @return  0 if the operation is successful, -1 otherwise.
+ * @note .
+ */
+int PMU_EnableGPIOWakeUp(int gpio_number, pmu_gpio_wakeup_t type);
+
+
+/*!
+ * @brief Disable using external GPIO to wake-up PMU
+ *
+ * @note .
+ */
+void PMU_DisableGPIOWakeUp();
 
 #ifdef FEATURE_CLUSTER
 /*!

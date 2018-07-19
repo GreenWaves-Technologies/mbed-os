@@ -66,6 +66,7 @@ typedef enum _port_mux
 {
     uPORT_MuxAlt0 = 0U,           /*!< Default */
     uPORT_MuxAlt1 = 1U,           /*!< Corresponding pin is configured as GPIO. */
+    uPORT_MuxGPIO = uPORT_MuxAlt1,/*!< Corresponding pin is configured as GPIO. */
     uPORT_MuxAlt2 = 2U,           /*!< Chip-specific */
     uPORT_MuxAlt3 = 3U,           /*!< Chip-specific */
 } port_mux_t;

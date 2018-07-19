@@ -156,7 +156,7 @@ static inline void SOC_EU_ClearCLMask(int clusterId, int evt) {
 
 
 static inline void SOC_EU_SetMask(uint32_t mask) {
-    SOCEU->EU_EVENT = mask;
+    SOCEU->EVENT = mask;
 }
 
 static inline void SOC_EU_Configure(int cluster, int event, int active) {

@@ -1917,13 +1917,7 @@ typedef struct {
  * @addtogroup PORT_Register_Masks GPIO Register Masks
  * @{
  */
-#define GPIO_NUM                32
-#define GPIO_EDGE_FALL           0
-#define GPIO_EDGE_RISE           1
-#define GPIO_EDGE_FALL_RISE      2 //raising then falling edge
-
-#define GPIO_IT_EN               1
-#define GPIO_IT_DIS              0
+#define GPIO_NUM                                 32
 
 #define PORT_PADCFG_PULL_EN_MASK                 (0x1U)
 #define PORT_PADCFG_PULL_EN_SHIFT                (0U)
@@ -2092,7 +2086,7 @@ typedef struct {
 
 /** SOCEU - Register Layout Typedef */
 typedef struct {
-  __IO  uint32_t EU_EVENT;                       /**< SOCEU event register, offset: 0x00 */
+  __IO  uint32_t EVENT;                          /**< SOCEU event register, offset: 0x00 */
   __IO  uint32_t FC_MASK_MSB;                    /**< SOCEU fc mask MSB register, offset: 0x04 */
   __IO  uint32_t FC_MASK_LSB;                    /**< SOCEU fc mask LSB register, offset: 0x08 */
   __IO  uint32_t CL_MASK_MSB;                    /**< SOCEU cluster mask MSB register, offset: 0x0C */

@@ -46,6 +46,13 @@
 #define GAP_GPIO_DRIVER_VERSION (MAKE_VERSION(1, 0, 0))
 /*@}*/
 
+/*! @brief GPIO state definition */
+typedef enum _gpio_pin_state
+{
+    uGPIO_LOW  = 0U,   /*!< Set current pin as 0 */
+    uGPIO_HIGH = 1U,  /*!< Set current pin as 1 */
+} gpio_pin_state_t;
+
 /*! @brief GPIO direction definition */
 typedef enum _gpio_pin_direction
 {
@@ -147,6 +154,27 @@ static inline void GPIO_WritePinOutput(GPIO_Type *base, uint32_t pin, uint8_t ou
     else
     {
         base->OUT |= (1U << pin);
+    }
+}
+
+/*!
+ * @brief Sets the output level of the multiple GPIO pins to the logic 1.
+ *
+ * @param base GPIO peripheral base pointer.
+ * @param pin  GPIO pin number
+ * @param direction GPIO pin direction
+ */
+static inline void GPIO_SetPinDirection(GPIO_Type *base, uint32_t pin, gpio_pin_direction_t direction)
+{
+    base->EN  |= (1U << pin);
+
+    switch (direction) {
+        case uGPIO_DigitalInput:
+            base->DIR &= ~(1U << pin);
+            break;
+        case uGPIO_DigitalOutput:
+            base->DIR |= (1U << pin);
+            break;
     }
 }
 

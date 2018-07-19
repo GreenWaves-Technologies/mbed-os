@@ -188,8 +188,7 @@ int SPI_Master_AutoPolling(SPIM_Type *base, spi_polling_config_t *conf)
     UDMA_GC->EVTIN |= UDMA_GC_EVTIN_CHOICE0( REF32K_CLK_RISE_EVENT );
 
     /* Enable SPI master end event mask */
-    SOC_EU_SetFCMask(UDMA_EVENT_SPIM0_EOT);
-    SOC_EU_SetFCMask(UDMA_EVENT_SPIM1_EOT);
+    SOC_EU_SetFCMask(UDMA_EVENT_SPIM0_EOT + SPI_GetInstance(base));
 
     /* Allow reference Clock propagating to UDMA */
     SOC_EU_SetPRMask( REF32K_CLK_RISE_EVENT );
@@ -225,9 +224,8 @@ int SPI_Master_AutoPolling(SPIM_Type *base, spi_polling_config_t *conf)
     /* Deset a reference event */
     UDMA_GC->EVTIN = 0;
 
-    /* Enable SPI master end event mask */
-    SOC_EU_ClearFCMask(UDMA_EVENT_SPIM0_EOT);
-    SOC_EU_ClearFCMask(UDMA_EVENT_SPIM1_EOT);
+    /* Disble SPI master end event mask */
+    SOC_EU_SetFCMask(UDMA_EVENT_SPIM0_EOT + SPI_GetInstance(base));
 
     return 0;
 }
