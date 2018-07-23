@@ -124,7 +124,7 @@ class GCC(mbedToolchain):
 
         if target.core == "IMXGAP8":
             self.ld = [join(tool_path, "riscv32-unknown-elf-gcc")] + self.flags['ld']
-            self.sys_libs = ["m", "c", "gcc", "nosys"]
+            self.sys_libs = ["stdc++", "m", "c", "gcc", "nosys"]
             self.preproc = [join(tool_path, "riscv32-unknown-elf-cpp"), "-E", "-P"]
 
             self.ar = join(tool_path, "riscv32-unknown-elf-ar")
