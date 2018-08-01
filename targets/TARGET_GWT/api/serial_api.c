@@ -220,7 +220,7 @@ void serial_putc(serial_t *obj, int c)
 
 int serial_readable(serial_t *obj)
 {
-    return UART_RXBusy(uart_addrs[obj->serial.index]);
+    return !UART_RXBusy(uart_addrs[obj->serial.index]);
 }
 
 int serial_writable(serial_t *obj)

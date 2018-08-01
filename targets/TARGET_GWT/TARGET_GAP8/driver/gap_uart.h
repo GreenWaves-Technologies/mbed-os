@@ -529,7 +529,9 @@ static inline  uint32_t UART_TXBusy(UART_Type *base) {
  * @param base UART peripheral base address.
  */
 static inline uint32_t UART_RXBusy(UART_Type *base) {
-    return ((base->STATUS & UART_STATUS_RX_BUSY_MASK) >> UART_STATUS_RX_BUSY_SHIFT);
+    /* Fix, Need to use UDMA register cfg_rx_en bit to determine busy or not */
+    UDMA_Type *udma_uart = (UDMA_Type *)base;
+    return ((udma_uart->RX_CFG & UDMA_CFG_EN_MASK) >> UDMA_CFG_EN_SHIFT);
 }
 
 /*!
