@@ -33,11 +33,6 @@
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-uint32_t fc_total_cycles = 0;
-
-#ifdef FEATURE_CLUSTER
-uint32_t cluster_total_cycles = 0;
-#endif
 
 /*!
  * @brief Initializes the performance counter.
@@ -67,7 +62,7 @@ static inline void PERFORMANCE_Config(performance_t *base, uint32_t mask)
 {
     base->events_mask = mask;
 
-    __PCER_Set(mask);
+    __PCER_Set(mask & ~(PERFORMANCE_USING_TIMER_MASK));
 }
 
 /*!
@@ -85,28 +80,26 @@ static inline void PERFORMANCE_Timer_Start(uint32_t timer)
 
 void PERFORMANCE_Start(performance_t *base, uint32_t mask)
 {
-    if (mask == PERFORMANCE_USING_TIMER_MASK) {
-        base->events_mask = mask;
+    /* If use timer counter for total cycles */
+    if (mask & PERFORMANCE_USING_TIMER_MASK) {
 
         #ifdef FEATURE_CLUSTER
-        cluster_total_cycles = 0;
         if( !__is_FC() )
             PERFORMANCE_Timer_Start(TIMER0_CLUSTER);
         else
         #endif
             PERFORMANCE_Timer_Start(TIMER1);
-        fc_total_cycles = 0;
-    } else {
-        PERFORMANCE_Init(base);
-
-        PERFORMANCE_Config(base, mask);
-
-        /* Reset all PCCR to 0 */
-        __PCCR31_Set(0);
-
-        /* Enable PCMR */
-        __PCMR_Set((1 << PCMR_GLBEN_Pos) | (1 << PCMR_SATU_Pos));
     }
+
+    PERFORMANCE_Init(base);
+
+    PERFORMANCE_Config(base, mask);
+
+    /* Reset all PCCR to 0 */
+    __PCCR31_Set(0);
+
+    /* Enable PCMR */
+    __PCMR_Set((1 << PCMR_GLBEN_Pos) | (1 << PCMR_SATU_Pos));
 }
 
 /*!
@@ -117,32 +110,36 @@ void PERFORMANCE_Start(performance_t *base, uint32_t mask)
  */
 static inline void PERFORMANCE_Save(performance_t *base)
 {
-    uint32_t mask = base->events_mask;
-
-    if (mask == PERFORMANCE_USING_TIMER_MASK) {
+    /* If use timer counter for total cycles */
+    if (base->events_mask & PERFORMANCE_USING_TIMER_MASK) {
         #ifdef FEATURE_CLUSTER
         if( !__is_FC() )
-            cluster_total_cycles += Timer_ReadCycle(TIMER0_CLUSTER);
+            base->count[PERFORMANCE_USING_TIMER_SHIFT] += Timer_ReadCycle(TIMER0_CLUSTER);
         else
         #endif
-            fc_total_cycles += Timer_ReadCycle(TIMER1);
-    } else {
+            base->count[PERFORMANCE_USING_TIMER_SHIFT] += Timer_ReadCycle(TIMER1);
 
-        while (mask)
-        {
-            int event = __FL1(mask);
+    }
 
-            mask &= ~(1 << event);
+    uint32_t mask = base->events_mask & ~(PERFORMANCE_USING_TIMER_MASK);
 
-            base->count[event] += __PCCRs_Get(event);
-        }
+    while (mask)
+    {
+        int event = __FL1(mask);
+
+        mask &= ~(1 << event);
+
+        base->count[event] += __PCCRs_Get(event);
     }
 }
 
 void PERFORMANCE_Stop(performance_t *base)
 {
-    if (base->events_mask == PERFORMANCE_USING_TIMER_MASK) {
-        PERFORMANCE_Save(base);
+    /* First save all value */
+    PERFORMANCE_Save(base);
+
+    /* If use timer counter for total cycles */
+    if (base->events_mask & PERFORMANCE_USING_TIMER_MASK) {
 
         /* Disable Timer */
         #ifdef FEATURE_CLUSTER
@@ -155,25 +152,13 @@ void PERFORMANCE_Stop(performance_t *base)
         {
             Timer_Disable(TIMER1);
         }
-    } else {
-
-        /* Disable PCMR */
-        __PCMR_Set(0);
-
-        PERFORMANCE_Save(base);
     }
+
+    /* Disable PCMR */
+    __PCMR_Set(0);
 }
 
 uint32_t PERFORMANCE_Get(performance_t *base, uint32_t event)
 {
-    if (base->events_mask == PERFORMANCE_USING_TIMER_MASK) {
-        #ifdef FEATURE_CLUSTER
-        if( !__is_FC() )
-            return cluster_total_cycles;
-        else
-        #endif
-            return fc_total_cycles;
-    }
-
     return base->count[event];
 }

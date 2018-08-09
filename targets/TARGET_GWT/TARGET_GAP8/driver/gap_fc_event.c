@@ -56,6 +56,8 @@ void FC_EventHandler()
         RTC_IRQHandler();
     } else if(event == GPIO_EVENT) {
         GPIO_IRQHandler();
+    } else if(PWM0_EVENT <= event && event <= PWM3_EVENT) {
+        PWM_IRQHandler(event);
     } else if(event <= PMU_DLC_EVENT_BRIDGE_SCU_OK) {
         PMU_IRQHandler(event);
     } else {

@@ -44,12 +44,24 @@ typedef enum {
     I2S_1 = 1,
 } I2SName;
 
-#define TPM_SHIFT   8
+#define PWM_SHIFT   8
 typedef enum {
-    PWM_0  = 0,
-    PWM_1  = 1,
-    PWM_2  = 2,
-    PWM_3  = 3,
+    PWM_1   = (0 << PWM_SHIFT) | (0),  // PWM0 CH0
+    PWM_2   = (0 << PWM_SHIFT) | (1),  // PWM0 CH1
+    PWM_3   = (0 << PWM_SHIFT) | (2),  // PWM0 CH2
+    PWM_4   = (0 << PWM_SHIFT) | (3),  // PWM0 CH3
+    PWM_5   = (1 << PWM_SHIFT) | (0),  // PWM1 CH0
+    PWM_6   = (1 << PWM_SHIFT) | (1),  // PWM1 CH1
+    PWM_7   = (1 << PWM_SHIFT) | (2),  // PWM1 CH2
+    PWM_8   = (1 << PWM_SHIFT) | (3),  // PWM1 CH3
+    PWM_9   = (2 << PWM_SHIFT) | (0),  // PWM2 CH0
+    PWM_10  = (2 << PWM_SHIFT) | (1),  // PWM2 CH1
+    PWM_11  = (2 << PWM_SHIFT) | (2),  // PWM2 CH2
+    PWM_12  = (2 << PWM_SHIFT) | (3),  // PWM2 CH3
+    PWM_13  = (3 << PWM_SHIFT) | (0),  // PWM3 CH0
+    PWM_14  = (3 << PWM_SHIFT) | (1),  // PWM3 CH1
+    PWM_15  = (3 << PWM_SHIFT) | (2),  // PWM3 CH2
+    PWM_16  = (3 << PWM_SHIFT) | (3),  // PWM3 CH3
 } PWMName;
 
 typedef enum {

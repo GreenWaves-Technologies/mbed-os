@@ -34,6 +34,7 @@
 #include "gap_udma.h"
 #include "gap_gpio.h"
 #include "gap_rtc.h"
+#include "gap_pwm.h"
 
 /*!
  * @addtogroup fc_event_handler

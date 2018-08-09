@@ -333,6 +333,28 @@ const PinMap PinMap_UART_RX[] = {
 
 /************PWM***************/
 const PinMap PinMap_PWM[] = {
+    {B11, PWM_1, 0},
+    {A13, PWM_2, 0},
+    {B12, PWM_3, 0},
+    {A14, PWM_4, 0},
+
+    {A43, PWM_5, 2},
+    {A13, PWM_5, 2},
+    {A37, PWM_6, 2},
+    {B39, PWM_7, 2},
+    {A42, PWM_8, 2},
+
+    {B38, PWM_9, 2},
+    {B12, PWM_9, 2},
+    {A41, PWM_10, 2},
+    {B37, PWM_11, 2},
+    {A40, PWM_12, 2},
+
+    {B36, PWM_13, 2},
+    {A14, PWM_13, 2},
+    {A38, PWM_14, 2},
+    {A36, PWM_15, 2},
+    {B34, PWM_16, 2},
 
     {NC   , NC    , 0}
 };

@@ -183,7 +183,7 @@ static inline void PORT_SetGroupPinMux(PORT_Type *base, uint32_t mux[])
     base->PADFUN[0] = mux[0];
     base->PADFUN[1] = mux[1];
     base->PADFUN[2] = mux[2];
-    base->PADFUN[3] = mux[2];
+    base->PADFUN[3] = mux[3];
 }
 
 

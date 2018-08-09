@@ -237,32 +237,32 @@ typedef enum {
     UART_TX = A7,
     UART_RX = B6,
 
-    // Timer0 Pins
-    TIMER0_CH0 = B11,
-    TIMER0_CH1 = A13,
-    TIMER0_CH2 = B12,
-    TIMER0_CH3 = A14,
+    // PWM0 Pins
+    PWM0_CH0 = B11,
+    PWM0_CH1 = A13,
+    PWM0_CH2 = B12,
+    PWM0_CH3 = A14,
 
-    // Timer1 Pins
-    TIMER1_CH0_A43 = A43,
-    TIMER1_CH0_A13 = A13,
-    TIMER1_CH1 = A37,
-    TIMER1_CH2 = B39,
-    TIMER1_CH3 = A42,
+    // PWM1 Pins
+    PWM1_CH0_A43 = A43,
+    PWM1_CH0_A13 = A13,
+    PWM1_CH1 = A37,
+    PWM1_CH2 = B39,
+    PWM1_CH3 = A42,
 
-    // Timer2 Pins
-    TIMER2_CH0_B38 = B38,
-    TIMER2_CH0_B12 = B12,
-    TIMER2_CH1 = A41,
-    TIMER2_CH2 = B37,
-    TIMER2_CH3 = A40,
+    // PWM2 Pins
+    PWM2_CH0_B38 = B38,
+    PWM2_CH0_B12 = B12,
+    PWM2_CH1 = A41,
+    PWM2_CH2 = B37,
+    PWM2_CH3 = A40,
 
-    // Timer3 Pins
-    TIMER3_CH0_B36 = B36,
-    TIMER3_CH0_A14 = A14,
-    TIMER3_CH1 = A38,
-    TIMER3_CH2 = A36,
-    TIMER3_CH3 = B34,
+    // PWM3 Pins
+    PWM3_CH0_B36 = B36,
+    PWM3_CH0_A14 = A14,
+    PWM3_CH1 = A38,
+    PWM3_CH2 = A36,
+    PWM3_CH3 = B34,
 
     // GPIO PortA
     GPIO_A0_A4  = (1 << GPIO_IS_SHIFT | 0 << GPIO_NUM_SHIFT | A4),

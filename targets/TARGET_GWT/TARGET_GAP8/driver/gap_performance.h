@@ -42,12 +42,13 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define  PERFORMANCE_USING_TIMER_MASK   0xFFFFFFFF
+#define PERFORMANCE_USING_TIMER_SHIFT            17U                                           /*!< PCER: Timer_CONT Position */
+#define PERFORMANCE_USING_TIMER_MASK             (0x1UL << PERFORMANCE_USING_TIMER_SHIFT)      /*!< PCER: Timer CONT Mask */
 
 /*! @brief performance transfer blocking or nonblocking hint */
 typedef struct performance_s {
     uint32_t events_mask;     /*!< Events mask */
-    uint32_t count[PCER_EVENTS_NUM];  /*!< Count value for all events */
+    uint32_t count[PCER_EVENTS_NUM + 1];  /*!< Count value for all events including one timer value */
 } performance_t;
 
 

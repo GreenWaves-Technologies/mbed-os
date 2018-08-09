@@ -41,68 +41,68 @@
  * Definitions
  ******************************************************************************/
 /* FC SOC domain events, all delegated by FC_SOC_EVENT_IRQn = 27 */
-#define    UDMA_EVENT_LVDS_RX            0
-#define    UDMA_EVENT_LVDS_TX            1
-#define    UDMA_EVENT_SPIM0_RX           2
-#define    UDMA_EVENT_SPIM0_TX           3
-#define    UDMA_EVENT_SPIM1_RX           4
-#define    UDMA_EVENT_SPIM1_TX           5
-#define    UDMA_EVENT_HYPERBUS_RX        6
-#define    UDMA_EVENT_HYPERBUS_TX        7
-#define    UDMA_EVENT_UART_RX            8
-#define    UDMA_EVENT_UART_TX            9
-#define    UDMA_EVENT_I2C0_RX            10
-#define    UDMA_EVENT_I2C0_TX            11
-#define    UDMA_EVENT_I2C1_RX            12
-#define    UDMA_EVENT_I2C1_TX            13
-#define    UDMA_EVENT_TCDM_RX            14
-#define    UDMA_EVENT_TCDM_TX            15
-#define    UDMA_EVENT_SAI_CH0            16
-#define    UDMA_EVENT_SAI_CH1            17
-#define    UDMA_EVENT_CPI_RX             18
-#define    UDMA_EVENT_RESERVED0          19
+#define    UDMA_EVENT_LVDS_RX              0
+#define    UDMA_EVENT_LVDS_TX              1
+#define    UDMA_EVENT_SPIM0_RX             2
+#define    UDMA_EVENT_SPIM0_TX             3
+#define    UDMA_EVENT_SPIM1_RX             4
+#define    UDMA_EVENT_SPIM1_TX             5
+#define    UDMA_EVENT_HYPERBUS_RX          6
+#define    UDMA_EVENT_HYPERBUS_TX          7
+#define    UDMA_EVENT_UART_RX              8
+#define    UDMA_EVENT_UART_TX              9
+#define    UDMA_EVENT_I2C0_RX              10
+#define    UDMA_EVENT_I2C0_TX              11
+#define    UDMA_EVENT_I2C1_RX              12
+#define    UDMA_EVENT_I2C1_TX              13
+#define    UDMA_EVENT_TCDM_RX              14
+#define    UDMA_EVENT_TCDM_TX              15
+#define    UDMA_EVENT_SAI_CH0              16
+#define    UDMA_EVENT_SAI_CH1              17
+#define    UDMA_EVENT_CPI_RX               18
+#define    UDMA_EVENT_RESERVED0            19
 
-#define    UDMA_EVENT_LVDS_GEN0          20
-#define    UDMA_EVENT_LVDS_GEN1          21
-#define    UDMA_EVENT_SPIM0_EOT          22
-#define    UDMA_EVENT_SPIM1_EOT          23
-#define    UDMA_EVENT_HYPERBUS_RESERVED  24
-#define    UDMA_EVENT_UART_RESERVED      25
-#define    UDMA_EVENT_I2C0_ERROR         26
-#define    UDMA_EVENT_I2C1_ERROR         27
-#define    UDMA_EVENT_I2S_RESERVED       28
-#define    UDMA_EVENT_CAM_RESERVED       29
-#define    UDMA_EVENT_RESERVED1          30
+#define    UDMA_EVENT_LVDS_GEN0            20
+#define    UDMA_EVENT_LVDS_GEN1            21
+#define    UDMA_EVENT_SPIM0_EOT            22
+#define    UDMA_EVENT_SPIM1_EOT            23
+#define    UDMA_EVENT_HYPERBUS_RESERVED    24
+#define    UDMA_EVENT_UART_RESERVED        25
+#define    UDMA_EVENT_I2C0_ERROR           26
+#define    UDMA_EVENT_I2C1_ERROR           27
+#define    UDMA_EVENT_I2S_RESERVED         28
+#define    UDMA_EVENT_CAM_RESERVED         29
+#define    UDMA_EVENT_RESERVED1            30
 
-#define    PMU_EVENT_CLUSTER_POWER_ON    31
-#define    PMU_EVENT_CLUSTER_RESERVED0   32
-#define    PMU_EVENT_CLUSTER_RESERVED1   33
-#define    PMU_EVENT_CLUSTER_RESERVED2   34
-#define    PMU_EVENT_CLUSTER_CLOCK_GATING   35
-#define    PMU_DLC_EVENT_BRIDGE_PICL_OK  36
-#define    PMU_DLC_EVENT_BRIDGE_SCU_OK   37
-#define    PMU_EVENTS_NUM                7
+#define    PMU_EVENT_CLUSTER_POWER_ON      31
+#define    PMU_EVENT_CLUSTER_RESERVED0     32
+#define    PMU_EVENT_CLUSTER_RESERVED1     33
+#define    PMU_EVENT_CLUSTER_RESERVED2     34
+#define    PMU_EVENT_CLUSTER_CLOCK_GATING  35
+#define    PMU_DLC_EVENT_BRIDGE_PICL_OK    36
+#define    PMU_DLC_EVENT_BRIDGE_SCU_OK     37
+#define    PMU_EVENTS_NUM                  7
 
-#define    ADV_TIMER0_EVENT              38
-#define    ADV_TIMER1_EVENT              39
-#define    ADV_TIMER2_EVENT              40
-#define    ADV_TIMER3_EVENT              41
-#define    GPIO_EVENT                    42              /**< GPIO group interrupt */
-#define    RTC_APB_EVENT                 43
-#define    RTC_EVENT                     44
-#define    EVENT_RESERVED0               45
-#define    EVENT_RESERVED1               46
-#define    EVENT_RESERVED2               47
+#define    PWM0_EVENT                      38
+#define    PWM1_EVENT                      39
+#define    PWM2_EVENT                      40
+#define    PWM3_EVENT                      41
+#define    GPIO_EVENT                      42              /**< GPIO group interrupt */
+#define    RTC_APB_EVENT                   43
+#define    RTC_EVENT                       44
+#define    EVENT_RESERVED0                 45
+#define    EVENT_RESERVED1                 46
+#define    EVENT_RESERVED2                 47
 
-#define    SOC_SW_EVENT0                 48              /**< GAP8 SOC SW Event0 */
-#define    SOC_SW_EVENT1                 49              /**< GAP8 SOC SW Event1 */
-#define    SOC_SW_EVENT2                 50              /**< GAP8 SOC SW Event2 */
-#define    SOC_SW_EVENT3                 51              /**< GAP8 SOC SW Event3 */
-#define    SOC_SW_EVENT4                 52              /**< GAP8 SOC SW Event4 */
-#define    SOC_SW_EVENT5                 53              /**< GAP8 SOC SW Event5 */
-#define    SOC_SW_EVENT6                 54              /**< GAP8 SOC SW Event6 */
-#define    SOC_SW_EVENT7                 55              /**< GAP8 SOC SW Event7 */
-#define    REF32K_CLK_RISE_EVENT         56              /**< GAP8 SOC EU SW Event Reference 32K Clock event */
+#define    SOC_SW_EVENT0                   48              /**< GAP8 SOC SW Event0 */
+#define    SOC_SW_EVENT1                   49              /**< GAP8 SOC SW Event1 */
+#define    SOC_SW_EVENT2                   50              /**< GAP8 SOC SW Event2 */
+#define    SOC_SW_EVENT3                   51              /**< GAP8 SOC SW Event3 */
+#define    SOC_SW_EVENT4                   52              /**< GAP8 SOC SW Event4 */
+#define    SOC_SW_EVENT5                   53              /**< GAP8 SOC SW Event5 */
+#define    SOC_SW_EVENT6                   54              /**< GAP8 SOC SW Event6 */
+#define    SOC_SW_EVENT7                   55              /**< GAP8 SOC SW Event7 */
+#define    REF32K_CLK_RISE_EVENT           56              /**< GAP8 SOC EU SW Event Reference 32K Clock event */
 
 /*******************************************************************************
  * APIs

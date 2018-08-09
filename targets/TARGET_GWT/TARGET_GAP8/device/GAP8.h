@@ -2010,6 +2010,64 @@ typedef struct {
  */ /* end of group IO_ISO_Access_Layer */
 
 
+/* ----------------------------------------------------------------------------
+   -- PWM CTRL Peripheral Access Layer
+   ---------------------------------------------------------------------------- */
+
+/*!
+ * @addtogroup PWM_CTRL_Peripheral_Access_Layer PWM_CTRL Peripheral Access Layer
+ * @{
+ */
+
+/** PWM - Register Layout Typedef */
+typedef struct {
+  __IO  uint32_t EVENT_CFG;       /**< PWM event configuration register, offset: 0x100 */
+  __IO  uint32_t CH_EN;           /**< PWM channel enable register, offset: 0x104 */
+} PWM_CTRL_Type;
+
+/* ----------------------------------------------------------------------------
+   -- PWM_CTRL Register Masks
+   ---------------------------------------------------------------------------- */
+
+/*!
+ * @addtogroup PWM_CTRL_Register_Masks PWM_CTRL Register Masks
+ * @{
+ */
+
+/* Register Access. */
+/* Set Event. */
+#define PWM_CTRL_EVENT_TIMER_CHAN_SET_MASK               ( 0xFFFFU )
+#define PWM_CTRL_EVENT_TIMER_CHAN_SET_SHIFT( x )         ( (uint32_t)(x) )
+#define PWM_CTRL_EVENT_TIMER_CHAN_SET( tim, chan, evt )  (((uint32_t)((uint32_t)((uint32_t)tim << 2 | (uint32_t)chan)) << PWM_CTRL_EVENT_TIMER_CHAN_SET_SHIFT( evt << 2 )) & PWM_CTRL_EVENT_TIMER_CHAN_SET_MASK)
+
+/* Enable Event. */
+#define PWM_CTRL_EVENT_TIMER_ENA_MASK                    ( 0xF0000U )
+#define PWM_CTRL_EVENT_TIMER_ENA_SHIFT                   ( 16 )
+#define PWM_CTRL_EVENT_TIMER_ENA( x )                    (((uint32_t)(((uint32_t)(x)) << PWM_CTRL_EVENT_TIMER_ENA_SHIFT)) & PWM_CTRL_EVENT_TIMER_ENA_MASK)
+
+/* Timer enable. */
+#define PWM_CTRL_CG_ENA_MASK                             ( 0xFU )
+#define PWM_CTRL_CG_ENA_SHIFT                            ( 0 )
+#define PWM_CTRL_CG_ENA( x )                             (((uint32_t)(((uint32_t)(x)) << PWM_CTRL_CG_ENA_SHIFT)) & PWM_CTRL_CG_ENA_MASK)
+
+/*!
+ * @}
+ */ /* end of group PWM_CTRL_Register_Masks */
+
+/* PWM_CTRL - Peripheral instance base addresses */
+/** Peripheral PWM_CTRL_CTRL base address */
+#define PWM_CTRL_BASE                                (SOC_PERI_BASE + 0x05100u)
+/** Peripheral PWM_CTRL_CTRL base pointer */
+#define PWM_CTRL                                     ((PWM_CTRL_Type *)PWM_CTRL_BASE)
+/** Array initializer of PWM_CTRL_CTRL base addresses */
+#define PWM_CTRL_BASE_ADDRS                          { PWM_CTRL_BASE }
+/** Array initializer of PWM_CTRL_CTRL base pointers */
+#define PWM_CTRL_BASE_PTRS                           { PWM_CTRL }
+
+/*!
+ * @}
+ */ /* end of group PWM_CTRL_Peripheral_Access_Layer */
+
 
 /* ----------------------------------------------------------------------------
    -- PWM Peripheral Access Layer
@@ -2024,24 +2082,10 @@ typedef struct {
 typedef struct {
   __O   uint32_t CMD;              /**< TIMER control register, offset: 0x00 */
   __IO  uint32_t CFG;              /**< TIMER configuration register, offset: 0x04 */
-  __IO  uint32_t TH;               /**< TIMER threshold register, offset: 0x04 */
-  __IO  uint32_t CH0_TH;           /**< TIMER Channle0 threshold register, offset: 0x04 */
-  __IO  uint32_t CH1_TH;           /**< TIMER Channle1 threshold register, offset: 0x04 */
-  __IO  uint32_t CH2_TH;           /**< TIMER Channle2 threshold register, offset: 0x04 */
-  __IO  uint32_t CH3_TH;           /**< TIMER Channle3 threshold register, offset: 0x04 */
-  __IO  uint32_t CH0_LUT;          /**< TIMER Channle0 LUT register, offset: 0x04 */
-  __IO  uint32_t CH1_LUT;          /**< TIMER Channle1 LUT register, offset: 0x04 */
-  __IO  uint32_t CH2_LUT;          /**< TIMER Channle2 LUT register, offset: 0x04 */
-  __IO  uint32_t CH3_LUT;          /**< TIMER Channle3 LUT register, offset: 0x04 */
-  __I   uint32_t COUNTER;          /**< TIMER Counter register, offset: 0x04 */
-
-} ADV_TIMER_Type;
-
-/** PWM - Register Layout Typedef */
-typedef struct {
-  ADV_TIMER_Type TIMERS[4];       /**< PWM advance timers , offset: 0x00 */
-  __IO  uint32_t EVENT_CFG;       /**< PWM event configuration register, offset: 0x100 */
-  __IO  uint32_t CH_EN;           /**< PWM channel enable register, offset: 0x104 */
+  __IO  uint32_t TH;               /**< TIMER threshold register, offset: 0x08 */
+  __IO  uint32_t CH_TH[4];         /**< TIMER Channles' threshold register, offset: 0x0c */
+  __IO  uint32_t CH_LUT[4];        /**< TIMER Channles' LUT register, offset: 0x1c */
+  __I   uint32_t COUNTER;          /**< TIMER Counter register, offset: 0x2c */
 } PWM_Type;
 
 /* ----------------------------------------------------------------------------
@@ -2052,7 +2096,51 @@ typedef struct {
  * @addtogroup PWM_Register_Masks PWM Register Masks
  * @{
  */
-/*  */
+
+/* Register Access. */
+/* Send command. */
+#define PWM_CMD_MASK                                ( 0x1FU )
+#define PWM_CMD_SHIFT                               ( 0 )
+#define PWM_CMD( x )                                (((uint32_t)(((uint32_t)(x)) << PWM_CMD_SHIFT)) & PWM_CMD_MASK)
+
+/* Timer config. */
+#define PWM_CONFIG_INPUT_SRC_MASK                   ( 0xFFU )
+#define PWM_CONFIG_INPUT_SRC_SHIFT                  ( 0 )
+#define PWM_CONFIG_INPUT_SRC( x )                   (((uint32_t)(((uint32_t)(x)) << PWM_CONFIG_INPUT_SRC_SHIFT)) & PWM_CONFIG_INPUT_SRC_MASK)
+
+#define PWM_CONFIG_INPUT_MODE_MASK                  ( 0x700U )
+#define PWM_CONFIG_INPUT_MODE_SHIFT                 ( 8 )
+#define PWM_CONFIG_INPUT_MODE( x )                  (((uint32_t)(((uint32_t)(x)) << PWM_CONFIG_INPUT_MODE_SHIFT)) & PWM_CONFIG_INPUT_MODE_MASK)
+
+#define PWM_CONFIG_CLKSEL_MASK                      ( 0x800U )
+#define PWM_CONFIG_CLKSEL_SHIFT                     ( 11 )
+#define PWM_CONFIG_CLKSEL( x )                      (((uint32_t)(((uint32_t)(x)) << PWM_CONFIG_CLKSEL_SHIFT)) & PWM_CONFIG_CLKSEL_MASK)
+
+#define PWM_CONFIG_UPDOWNSEL_MASK                   ( 0x1000U )
+#define PWM_CONFIG_UPDOWNSEL_SHIFT                  ( 12 )
+#define PWM_CONFIG_UPDOWNSEL( x )                   (((uint32_t)(((uint32_t)(x)) << PWM_CONFIG_UPDOWNSEL_SHIFT)) & PWM_CONFIG_UPDOWNSEL_MASK)
+
+#define PWM_CONFIG_PRESCALE_MASK                   ( 0xFF0000U )
+#define PWM_CONFIG_PRESCALE_SHIFT                  ( 16 )
+#define PWM_CONFIG_PRESCALE( x )                   (((uint32_t)(((uint32_t)(x)) << PWM_CONFIG_PRESCALE_SHIFT)) & PWM_CONFIG_PRESCALE_MASK)
+
+/* Channel config. */
+#define PWM_THRESHOLD_LOW_MASK                      ( 0xFFFFU )
+#define PWM_THRESHOLD_LOW_SHIFT                     ( 0 )
+#define PWM_THRESHOLD_LOW( x )                      (((uint32_t)(((uint32_t)(x)) << PWM_THRESHOLD_LOW_SHIFT)) & PWM_THRESHOLD_LOW_MASK)
+
+#define PWM_THRESHOLD_HIGH_MASK                     ( 0xFFFF0000U )
+#define PWM_THRESHOLD_HIGH_SHIFT                    ( 16 )
+#define PWM_THRESHOLD_HIGH( x )                     (((uint32_t)(((uint32_t)(x)) << PWM_THRESHOLD_HIGH_SHIFT)) & PWM_THRESHOLD_HIGH_MASK)
+
+/* Channel config. */
+#define PWM_CHANNEL_CONFIG_THRESHOLD_MASK           ( 0xFFFFU )
+#define PWM_CHANNEL_CONFIG_THRESHOLD_SHIFT          ( 0 )
+#define PWM_CHANNEL_CONFIG_THRESHOLD( x )           (((uint32_t)(((uint32_t)(x)) << PWM_CHANNEL_CONFIG_THRESHOLD_SHIFT)) & PWM_CHANNEL_CONFIG_THRESHOLD_MASK)
+
+#define PWM_CHANNEL_CONFIG_MODE_MASK                ( 0x70000U )
+#define PWM_CHANNEL_CONFIG_MODE_SHIFT               ( 16 )
+#define PWM_CHANNEL_CONFIG_MODE( x )                (((uint32_t)(((uint32_t)(x)) << PWM_CHANNEL_CONFIG_MODE_SHIFT)) & PWM_CHANNEL_CONFIG_MODE_MASK)
 
 /*!
  * @}
@@ -2061,13 +2149,25 @@ typedef struct {
 
 /* PWM - Peripheral instance base addresses */
 /** Peripheral PWM base address */
-#define PWM_BASE                               (SOC_PERI_BASE + 0x05000u)
+#define PWM0_BASE                               (SOC_PERI_BASE + 0x05000u)
 /** Peripheral PWM base pointer */
-#define PWM                                    ((PWM_Type *)PWM_BASE)
+#define PWM0                                    ((PWM_Type *)PWM0_BASE)
+/** Peripheral PWM base address */
+#define PWM1_BASE                               (PWM0_BASE + 0x40u)
+/** Peripheral PWM base pointer */
+#define PWM1                                    ((PWM_Type *)PWM1_BASE)
+/** Peripheral PWM base address */
+#define PWM2_BASE                               (PWM1_BASE + 0x40u)
+/** Peripheral PWM base pointer */
+#define PWM2                                    ((PWM_Type *)PWM2_BASE)
+/** Peripheral PWM base address */
+#define PWM3_BASE                               (PWM2_BASE + 0x40u)
+/** Peripheral PWM base pointer */
+#define PWM3                                    ((PWM_Type *)PWM3_BASE)
 /** Array initializer of PWM base addresses */
-#define PWM_BASE_ADDRS                         { PWM_BASE }
+#define PWM_BASE_ADDRS                          { PWM0_BASE, PWM1_BASE, PWM2_BASE, PWM3_BASE }
 /** Array initializer of PWM base pointers */
-#define PWM_BASE_PTRS                          { PWM }
+#define PWM_BASE_PTRS                           { PWM0, PWM1, PWM2, PWM3 }
 
 /*!
  * @}
