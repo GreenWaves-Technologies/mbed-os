@@ -2479,9 +2479,9 @@ typedef struct {
 #define RTC_ALARM_CTRL_ADDR                 0x18
 #define RTC_ALARM_TIME_ADDR                 0x1A
 #define RTC_ALARM_DATE_ADDR                 0x1B
-#define RTC_COUNTDOWN_CTRL_ADDR             0x20
-#define RTC_COUNTDOWN_INIT_ADDR             0x21
-#define RTC_COUNTDOWN_TIMER_ADDR            0x22
+#define RTC_TIMER_CTRL_ADDR                 0x20
+#define RTC_TIMER_INIT_ADDR                 0x21
+#define RTC_TIMER_VALUE_ADDR                0x22
 #define RTC_CLKIN_DIV_ADDR                  0x28
 #define RTC_REF_CLK_CONF_ADDR               0x2A
 #define RTC_TEST_ADDR                       0x30
@@ -2562,13 +2562,13 @@ typedef struct {
 #define RTC_ALARM_CTRL_CONFIG_SHIFT           (16U)
 #define RTC_ALARM_CTRL_CONFIG(x)              (((uint32_t)(((uint32_t)(x)) << RTC_ALARM_CTRL_CONFIG_SHIFT)) & RTC_ALARM_CTRL_CONFIG_MASK)
 
-/*! @name COUNTDOWN - RTC Count down register */
-#define RTC_COUNTDOWN_STANDBY_MASK            (0x1U)
-#define RTC_COUNTDOWN_STANDBY_SHIFT           (0U)
-#define RTC_COUNTDOWN_STANDBY(x)              (((uint32_t)(((uint32_t)(x))/* << RTC_COUNTDOWN_STANDBY_SHIFT*/)) & RTC_COUNTDOWN_STANDBY_MASK)
-#define RTC_COUNTDOWN_MODE_MASK               (0x10U)
-#define RTC_COUNTDOWN_MODE_SHIFT              (4U)
-#define RTC_COUNTDOWN_MODE(x)                 (((uint32_t)(((uint32_t)(x)) << RTC_COUNTDOWN_MODE_SHIFT)) & RTC_COUNTDOWN_MODE_MASK)
+/*! @name TIMER - RTC Count down register */
+#define RTC_TIMER_STANDBY_MASK                (0x1U)
+#define RTC_TIMER_STANDBY_SHIFT               (0U)
+#define RTC_TIMER_STANDBY(x)                  (((uint32_t)(((uint32_t)(x))/* << RTC_TIMER_STANDBY_SHIFT*/)) & RTC_TIMER_STANDBY_MASK)
+#define RTC_TIMER_MODE_MASK                   (0x10U)
+#define RTC_TIMER_MODE_SHIFT                  (4U)
+#define RTC_TIMER_MODE(x)                     (((uint32_t)(((uint32_t)(x)) << RTC_TIMER_MODE_SHIFT)) & RTC_TIMER_MODE_MASK)
 
 /*! @name CLKIN_DIV - RTC Clock in divider register */
 #define RTC_CLKIN_DIV_VAL_MASK                (0xFFFFU)

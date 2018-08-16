@@ -76,7 +76,7 @@ enum _rtc_status
 typedef enum {
   MODE_CALENDAR = 0,   /*!< Calendar mode.*/
   MODE_ALARM,          /*!< Alarm mode, work with calendar mode.*/
-  MODE_COUNTDOWN,      /*!< Count down mode.*/
+  MODE_TIMER,          /*!< Timer mode.*/
   MODE_CALIBR          /*!< RTC Calibration.*/
 } rtc_mode_t;
 
@@ -230,7 +230,7 @@ status_t RTC_SetAlarm(RTC_APB_Type *base, const rtc_datetime_t *alarmTime);
 void RTC_GetAlarm(RTC_APB_Type *base, rtc_datetime_t *datetime);
 
 /*!
- * @brief Sets the RTC Countedown time.
+ * @brief Sets the RTC timer counter value.
  *
  * The function checks whether the specified alarm time is greater than the present
  * time. If not, the function does not set the alarm and returns an error.
@@ -239,16 +239,16 @@ void RTC_GetAlarm(RTC_APB_Type *base, rtc_datetime_t *datetime);
  * @param count     The initial counter value.
  *
  */
-void RTC_SetCountDown(RTC_APB_Type *base, const uint32_t count);
+void RTC_SetTimer(RTC_APB_Type *base, const uint32_t count);
 
 /*!
- * @brief Returns the RTC Countedown time.
+ * @brief Returns the RTC timer.
  *
  * @param base     RTC peripheral base address
  *
  * @return Counter value
  */
-uint32_t RTC_GetCountDown(RTC_APB_Type *base);
+uint32_t RTC_GetTimer(RTC_APB_Type *base);
 
 /*! @}*/
 
@@ -367,19 +367,19 @@ void RTC_StartAlarm(RTC_APB_Type *base, rt_alarm_rpt_mode_t repeatmode);
 void RTC_StopAlarm(RTC_APB_Type *base);
 
 /*!
- * @brief Starts the RTC countdown time counter.
+ * @brief Starts the RTC time counter.
  *
  * @param base RTC peripheral base address
- * @param repeat_en RTC countdown timer repeat enable
+ * @param repeat_en RTC timer repeat enable
  */
-void RTC_StartCountDown(RTC_APB_Type *base, uint8_t repeat_en);
+void RTC_StartTimer(RTC_APB_Type *base, uint8_t repeat_en);
 
 /*!
- * @brief Stops the RTC countdown time counter.
+ * @brief Stops the RTC time counter.
  *
  * @param base RTC peripheral base address
  */
-void RTC_StopCountDown(RTC_APB_Type *base);
+void RTC_StopTimer(RTC_APB_Type *base);
 
 /*!
  * @brief RTC calibration.

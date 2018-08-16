@@ -426,40 +426,40 @@ void RTC_GetCalendar(RTC_APB_Type *base, rtc_datetime_t *calendar)
     RTC_ConvertBCDToDatetime(&calendar_bcd, calendar);
 }
 
-void RTC_StartCountDown(RTC_APB_Type *base, uint8_t repeat_en)
+void RTC_StartTimer(RTC_APB_Type *base, uint8_t repeat_en)
 {
-    uint32_t val = RTC_APB_REGRead(base, RTC_COUNTDOWN_CTRL_ADDR);
-    val &= (~RTC_COUNTDOWN_STANDBY_MASK);
-    val |= RTC_COUNTDOWN_STANDBY(0);
+    uint32_t val = RTC_APB_REGRead(base, RTC_TIMER_CTRL_ADDR);
+    val &= (~RTC_TIMER_STANDBY_MASK);
+    val |= RTC_TIMER_STANDBY(0);
 
-    val &= (~RTC_COUNTDOWN_MODE_MASK);
-    val |= RTC_COUNTDOWN_MODE(repeat_en);
+    val &= (~RTC_TIMER_MODE_MASK);
+    val |= RTC_TIMER_MODE(repeat_en);
 
-    RTC_APB_REGWrite(base, RTC_COUNTDOWN_CTRL_ADDR, val);
+    RTC_APB_REGWrite(base, RTC_TIMER_CTRL_ADDR, val);
 
     RTC_ClearStatusFlags(RTC_APB, uRTC_TimerFlag);
 }
 
-void RTC_StopCountDown(RTC_APB_Type *base)
+void RTC_StopTimer(RTC_APB_Type *base)
 {
-    uint32_t val = RTC_APB_REGRead(base, RTC_COUNTDOWN_CTRL_ADDR);
-    val &= (~RTC_COUNTDOWN_STANDBY_MASK);
-    val |= RTC_COUNTDOWN_STANDBY(1);
-    RTC_APB_REGWrite(base, RTC_COUNTDOWN_CTRL_ADDR, val);
+    uint32_t val = RTC_APB_REGRead(base, RTC_TIMER_CTRL_ADDR);
+    val &= (~RTC_TIMER_STANDBY_MASK);
+    val |= RTC_TIMER_STANDBY(1);
+    RTC_APB_REGWrite(base, RTC_TIMER_CTRL_ADDR, val);
 }
 
-void RTC_SetCountDown(RTC_APB_Type *base, const uint32_t count)
+void RTC_SetTimer(RTC_APB_Type *base, const uint32_t count)
 {
-    /* Set countdown timer inital value */
-    RTC_APB_REGWrite(base, RTC_COUNTDOWN_INIT_ADDR, count);
+    /* Set timer inital value */
+    RTC_APB_REGWrite(base, RTC_TIMER_INIT_ADDR, count);
 
-    /* Countedown timer IRQ enable */
+    /* Timer IRQ enable */
     RTC_EnableInterrupts(base, uRTC_TimerInterruptEnable);
 }
 
-uint32_t RTC_GetCountDown(RTC_APB_Type *base)
+uint32_t RTC_GetTimer(RTC_APB_Type *base)
 {
-    return RTC_APB_REGRead(base, RTC_COUNTDOWN_TIMER_ADDR);
+    return RTC_APB_REGRead(base, RTC_TIMER_VALUE_ADDR);
 }
 
 void RTC_Init(RTC_APB_Type *base, const rtc_config_t *Config)
