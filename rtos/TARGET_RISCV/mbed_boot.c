@@ -340,6 +340,12 @@ void mbed_start_main(void)
     _main_thread_attr.cb_mem = &_main_obj;
     _main_thread_attr.priority = osPriorityNormal;
     _main_thread_attr.name = "main_thread";
+    
+    /* Allow non-secure main thread to call secure functions */
+#if defined(DOMAIN_NS) && (DOMAIN_NS == 1U)
+    _main_thread_attr.tz_module = 1U;
+#endif
+
     osThreadId_t result = osThreadNew((osThreadFunc_t)pre_main, NULL, &_main_thread_attr);
     if ((void *)result == NULL) {
         #if(__RISCV_ARCH_GAP__ == 1U)
