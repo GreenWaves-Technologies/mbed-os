@@ -292,12 +292,11 @@ void UART_TransferCreateHandle(UART_Type *base,
 
     uint32_t instance;
 
-    /* Zero the handle. */
-    memset(handle, 0, sizeof(*handle));
-
     /* Set the TX/RX state. */
-    handle->rxState = uUART_RxIdle;
-    handle->txState = uUART_TxIdle;
+    if ((int*)userData)
+        handle->rxState = uUART_RxIdle;
+    else
+        handle->txState = uUART_TxIdle;
 
     /* Set the callback and user data. */
     handle->callback = callback;
@@ -318,6 +317,9 @@ void UART_TransferAbortSend(UART_Type *base, uart_handle_t *handle)
 
     handle->txDataSize = 0;
     handle->txState = uUART_TxIdle;
+
+    /* Abort from UDMA channel */
+    UDMA_AbortSend((UDMA_Type *)base);
 }
 
 void UART_TransferAbortReceive(UART_Type *base, uart_handle_t *handle)
@@ -326,6 +328,9 @@ void UART_TransferAbortReceive(UART_Type *base, uart_handle_t *handle)
 
     handle->rxDataSize = 0U;
     handle->rxState = uUART_RxIdle;
+
+    /* Abort from UDMA channel */
+    UDMA_AbortReceive((UDMA_Type *)base);
 }
 
 void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
@@ -346,7 +351,7 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
     }
 
     /* If all the data are red to memory, RX finished. */
-    if (handle->rxDataSize)
+    if (handle->rxDataSize && !UART_RXBusy(base))
     {
         handle->rxDataSize = 0;
         handle->rxState = uUART_RxIdle;
@@ -358,7 +363,7 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
     }
 
     /* If all the data are written to device, TX finished. */
-    if (handle->txDataSize)
+    if (handle->txDataSize && !UART_TXBusy(base))
     {
         handle->txDataSize = 0;
         handle->txState = uUART_TxIdle;
@@ -373,7 +378,7 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
 }
 
 #if defined(UART)
-void UART_RX_TX_DriverIRQHandler(void)
+void UART_DriverIRQHandler(void)
 {
     s_uartIsr(UART, s_uartHandle[0]);
 }

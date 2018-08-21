@@ -211,15 +211,36 @@ status_t UDMA_SendRequest(UDMA_Type *base, udma_req_t *req, UDMAHint hint);
 
 
 /*!
+ * @brief Abort a uDMA send transfer.
+ *
+ * This function will abort a UDMA transfer and delete the TX request from request pool
+ *
+ * @param base The UDMA channel base pointer.
+ * @note .
+ */
+status_t UDMA_AbortSend(UDMA_Type *base);
+
+/*!
+ * @brief Abort a uDMA receive transfer.
+ *
+ * This function will abort a UDMA transfer and delete the RX request from request pool
+ *
+ * @param base The UDMA channel base pointer.
+ * @note .
+ */
+status_t UDMA_AbortReceive(UDMA_Type *base);
+
+/*!
  * @brief UDMA channel event interrupt handler.
  *
  * This function check the finished channel index, if it has task, then finish the task.
  * then exeute next request.
  *
  * @param index The UDMA channel index.
+ * @param abort Indicate the abort of dedicate UDMA channel.
  * @note .
  */
-void UDMA_EventHandler(uint32_t index);
+void UDMA_EventHandler(uint32_t index, int abort);
 
 
 /*!

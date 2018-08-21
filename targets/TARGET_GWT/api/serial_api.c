@@ -302,7 +302,7 @@ int serial_tx_asynch(serial_t *obj, const void *tx, size_t tx_length, uint8_t tx
     serial_enable_event(obj, SERIAL_EVENT_TX_ALL, false);
     serial_enable_event(obj, event, true);
 
-    UART_TransferCreateHandle(uart_addrs[obj->serial.index], &obj->serial.uart_transfer_handle, (uart_transfer_callback_t)handler, NULL);
+    UART_TransferCreateHandle(uart_addrs[obj->serial.index], &obj->serial.uart_transfer_handle, (uart_transfer_callback_t)handler, (void *)0);
 
     obj->serial.txstate = uUART_TxBusy;
 
@@ -345,7 +345,7 @@ void serial_rx_asynch(serial_t *obj, void *rx, size_t rx_length, uint8_t rx_widt
     serial_enable_event(obj, SERIAL_EVENT_RX_ALL, false);
     serial_enable_event(obj, event, true);
 
-    UART_TransferCreateHandle(uart_addrs[obj->serial.index], &obj->serial.uart_transfer_handle, (uart_transfer_callback_t)handler, NULL);
+    UART_TransferCreateHandle(uart_addrs[obj->serial.index], &obj->serial.uart_transfer_handle, (uart_transfer_callback_t)handler, (void *)1);
 
     obj->serial.rxstate = uUART_RxBusy;
 

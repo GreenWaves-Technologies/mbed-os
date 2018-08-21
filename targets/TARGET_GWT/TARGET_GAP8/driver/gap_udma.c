@@ -393,7 +393,7 @@ extern void SAI_IRQHandler_CH0(void *handle);
 extern void SAI_IRQHandler_CH1(void *handle);
 
 __attribute__((section(".text")))
-void UDMA_EventHandler(uint32_t index)
+void UDMA_EventHandler(uint32_t index, int abort)
 {
     /* Auto polling return */
     if (index > UDMA_EVENT_RESERVED0)
@@ -474,24 +474,54 @@ void UDMA_EventHandler(uint32_t index)
         }
     }
 
-    /* Check Task or call back function */
-    if (first->info.ctrl != UDMA_CTRL_DUAL_RX) {
-        if (first->info.task)
-        {
-            if(index == UDMA_EVENT_UART_TX || index == UDMA_EVENT_UART_RX)
-                asm volatile ("jal UART_RX_TX_DriverIRQHandler");
-            if(index == UDMA_EVENT_SPIM0_TX || index == UDMA_EVENT_SPIM0_RX)
-                asm volatile ("jal SPI0_DriverIRQHandler");
-            if(index == UDMA_EVENT_SPIM1_TX || index == UDMA_EVENT_SPIM1_RX)
-                asm volatile ("jal SPI1_DriverIRQHandler");
-            if(index == UDMA_EVENT_HYPERBUS_TX || index == UDMA_EVENT_HYPERBUS_RX)
-                asm volatile ("jal HYPERBUS0_DriverIRQHandler");
-            if(index == UDMA_EVENT_SAI_CH0)
-                SAI_IRQHandler_CH0((void *)first->info.task);
-            if(index == UDMA_EVENT_SAI_CH1)
-                SAI_IRQHandler_CH1((void *)first->info.task);
+    if(!abort) {
+        /* Check Task or call back function */
+        if (first->info.ctrl != UDMA_CTRL_DUAL_RX) {
+            if (first->info.task)
+            {
+                if(index == UDMA_EVENT_UART_TX || index == UDMA_EVENT_UART_RX)
+                    asm volatile ("jal UART_DriverIRQHandler");
+                if(index == UDMA_EVENT_SPIM0_TX || index == UDMA_EVENT_SPIM0_RX)
+                    asm volatile ("jal SPI0_DriverIRQHandler");
+                if(index == UDMA_EVENT_SPIM1_TX || index == UDMA_EVENT_SPIM1_RX)
+                    asm volatile ("jal SPI1_DriverIRQHandler");
+                if(index == UDMA_EVENT_HYPERBUS_TX || index == UDMA_EVENT_HYPERBUS_RX)
+                    asm volatile ("jal HYPERBUS0_DriverIRQHandler");
+                if(index == UDMA_EVENT_SAI_CH0)
+                    SAI_IRQHandler_CH0((void *)first->info.task);
+                if(index == UDMA_EVENT_SAI_CH1)
+                    SAI_IRQHandler_CH1((void *)first->info.task);
+            }
         }
     }
+}
+
+status_t UDMA_AbortSend(UDMA_Type *base) {
+
+    /* Clear TX transfer */
+    base->TX_CFG |= UDMA_CFG_CLR(1);
+
+    /* Get abort channel */
+    uint32_t index = UDMA_GetInstance(base);
+
+    /* Release request pool */
+    UDMA_EventHandler((index << 1) + 1, 1);
+
+    return uStatus_Success;
+}
+
+status_t UDMA_AbortReceive(UDMA_Type *base) {
+
+    /* Clear RX transfer */
+    base->RX_CFG |= UDMA_CFG_CLR(1);
+
+    /* Get abort channel */
+    uint32_t index = UDMA_GetInstance(base);
+
+    /* Release request pool */
+    UDMA_EventHandler((index << 1), 1);
+
+    return uStatus_Success;
 }
 
 void UDMA_WaitRequestEnd(udma_req_t *req)

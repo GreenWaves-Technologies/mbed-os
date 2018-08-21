@@ -517,7 +517,9 @@ status_t UART_TransferReceiveNonBlocking(UART_Type *base,
  * @param base UART peripheral base address.
  */
 static inline  uint32_t UART_TXBusy(UART_Type *base) {
-    return (base->STATUS & UART_STATUS_TX_BUSY_MASK);
+    /* Fix, Need to use UDMA register cfg_rx_en bit to determine busy or not */
+    UDMA_Type *udma_uart = (UDMA_Type *)base;
+    return ((udma_uart->TX_CFG & UDMA_CFG_EN_MASK) >> UDMA_CFG_EN_SHIFT);
 }
 
 /*!
