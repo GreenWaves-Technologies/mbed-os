@@ -499,7 +499,7 @@ void UDMA_EventHandler(uint32_t index, int abort)
 status_t UDMA_AbortSend(UDMA_Type *base) {
 
     /* Clear TX transfer */
-    base->TX_CFG |= UDMA_CFG_CLR(1);
+    base->TX_CFG = UDMA_CFG_CLR(1);
 
     /* Get abort channel */
     uint32_t index = UDMA_GetInstance(base);
@@ -513,7 +513,7 @@ status_t UDMA_AbortSend(UDMA_Type *base) {
 status_t UDMA_AbortReceive(UDMA_Type *base) {
 
     /* Clear RX transfer */
-    base->RX_CFG |= UDMA_CFG_CLR(1);
+    base->RX_CFG = UDMA_CFG_CLR(1);
 
     /* Get abort channel */
     uint32_t index = UDMA_GetInstance(base);

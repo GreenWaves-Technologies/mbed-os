@@ -377,13 +377,12 @@ int serial_irq_handler_asynch(serial_t *obj)
 
     uint32_t status_flags = UART_GetStatusFlags(uart_addrs[obj->serial.index]);
 
-
-    if ((obj->serial.txstate != uUART_TxIdle)) {
+    if ((obj->serial.txstate != uUART_TxIdle) && !UART_TXBusy(uart_addrs[obj->serial.index])) {
         obj->serial.txstate = uUART_TxIdle;
         status |= SERIAL_EVENT_TX_COMPLETE;
     }
 
-    if ((obj->serial.rxstate != uUART_RxIdle)) {
+    if ((obj->serial.rxstate != uUART_RxIdle) && !UART_RXBusy(uart_addrs[obj->serial.index])) {
         obj->serial.rxstate = uUART_RxIdle;
         status |= SERIAL_EVENT_RX_COMPLETE;
     }
