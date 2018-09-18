@@ -294,3 +294,8 @@ void CPI_ReceptionHandleIRQ(CPI_Type *base, cpi_handle_t *handle)
     }
 }
 
+void CPI_DriverIRQHandler(void)
+{
+    assert(s_cpiHandle[0]);
+    s_cpiMasterIsr(CPI, (cpi_handle_t *)s_cpiHandle[0]);
+}

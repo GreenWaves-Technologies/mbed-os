@@ -180,19 +180,144 @@ struct _cpi_handle_t
 extern "C" {
 #endif /* __cplusplus */
 
+/*!
+ * @brief Initializes the CPI device.
+ * @param pclk      Pin PCLK
+ * @param hync      Pin HYNC
+ * @param vsync     Pin VSYNC
+ * @param data0     Pin DATA0
+ * @param data1     Pin DATA1
+ * @param data2     Pin DATA2
+ * @param data3     Pin DATA3
+ * @param data4     Pin DATA4
+ * @param data5     Pin DATA5
+ * @param data6     Pin DATA6
+ * @param data7     Pin DATA7
+ *
+ */
 void CPI_Init(CPI_Type *base, PinName pclk, PinName hync, PinName vsync, PinName data0, PinName data1, PinName data2, PinName data3, PinName data4, PinName data5, PinName data6, PinName data7);
+
+/*!
+ * @brief De-initializes the CPI peripheral, Clock Gating. Call this API to disable the CPI clock.
+ * @param base CPI peripheral address.
+ */
 void CPI_Deinit(CPI_Type *base);
-uint32_t CPI_GetInstance(CPI_Type *base);
+
+/*!
+ * @brief Sets the cpi_config_t structure to default values.
+ *
+ * The purpose of this API is to get the configuration structure initialized for the CPI_Init().
+ * Users may use the initialized structure unchanged in the CPI_Init() or modify the structure
+ * before calling the CPI_Init().
+ * Example:
+ * @code
+ *  cpi_config_t  masterConfig;
+ *  CPI_GetDefaultConfig(&masterConfig);
+ * @endcode
+ * @param masterConfig pointer to cpi_config_t structure
+ */
 void CPI_GetDefaultConfig(cpi_config_t *masterConfig);
+
+/*!
+ * @brief Configure CPI drop frame
+ *
+ * @param masterConfig pointer to cpi_config_t structure
+ * @param arg transfer dropframe argument
+ *
+ */
 void CPI_DropFrame(cpi_config_t *masterConfig, uint16_t arg);
+
+/*!
+ * @brief CPI normilization
+ *
+ * @param masterConfig pointer to cpi_config_t structure
+ * @param arg transfer Nomilization argument
+ *
+ */
 void CPI_Normalization(cpi_config_t *masterConfig, uint16_t arg);
+
+/*!
+ * @brief CPI Filter
+ *
+ * @param base CPI peripheral address.
+ * @param filter Pointer to image filter structure
+ *
+ */
 void CPI_Filter(CPI_Type *base, image_filter_t *filter);
+
+/*!
+ * @brief CPI Image Extract
+ *
+ * @param base CPI peripheral address.
+ * @param masterConfig pointer to cpi_config_t structure
+ * @param slicer Pointer to image slice structure
+ *
+ */
 void CPI_ImageExtract(CPI_Type *base, cpi_config_t *masterConfig, image_slice_t *slicer);
+
+/*!
+ * @brief CPI Enable
+ *
+ * @param base CPI peripheral address.
+ * @param masterConfig pointer to cpi_config_t structure
+ *
+ */
 void CPI_Enable(CPI_Type *base, cpi_config_t *masterConfig);
+
+/*!
+ * @brief CPI Disable
+ *
+ * @param base CPI peripheral address.
+ *
+ */
 void CPI_Disable(CPI_Type *base);
+
+/*!
+ * @brief Writes data into the data buffer master mode and waits till complete to return.
+ *
+ * In master mode, the 16-bit data is appended to the 16-bit command info. The command portion
+ *
+ * @param base CPI peripheral address.
+ * @param transfer Pointer to the cpi_transfer_t structure.
+ * @return status of status_t.
+ *
+ */
 status_t CPI_ReceptionBlocking(CPI_Type *base, cpi_transfer_t *transfer);
+
+/*!
+ * @brief CPI master transfer data using interrupts.
+ *
+ * This function transfers data using interrupts. This is a non-blocking function, which returns right away. When all
+ * data is transferred, the callback function is called.
+
+ * @param base CPI peripheral base address.
+ * @param handle Pointer to the cpi_handle_t structure which stores the transfer state.
+ * @param transfer Pointer to the cpi_transfer_t structure.
+ * @return status of status_t.
+ */
 status_t CPI_ReceptionNonBlocking(CPI_Type *base, cpi_handle_t *handle, cpi_transfer_t * transfer);
+
+/*!
+ * @brief Initializes the CPI master handle.
+ *
+ * This function initializes the CPI handle, which can be used for other CPI transactional APIs.  Usually, for a
+ * specified CPI instance,  call this API once to get the initialized handle.
+ *
+ * @param base CPI peripheral base address.
+ * @param handle CPI handle pointer to cpi_handle_t.
+ * @param callback CPI callback.
+ * @param userData Callback function parameter.
+ */
 void CPI_ReceptionCreateHandle(CPI_Type *base, cpi_handle_t *handle, cpi_transfer_callback_t callback, void *userData);
+
+/*!
+ * @brief CPI IRQ handler function.
+ *
+ * This function processes the CPI transmit and receive IRQ.
+
+ * @param base CPI peripheral base address.
+ * @param handle Pointer to the cpi_handle_t structure which stores the transfer state.
+ */
 void CPI_ReceptionHandleIRQ(CPI_Type *base, cpi_handle_t *handle);
 
 #if defined(__cplusplus)

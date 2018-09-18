@@ -487,6 +487,8 @@ void UDMA_EventHandler(uint32_t index, int abort)
                     asm volatile ("jal SPI1_DriverIRQHandler");
                 if(index == UDMA_EVENT_HYPERBUS_TX || index == UDMA_EVENT_HYPERBUS_RX)
                     asm volatile ("jal HYPERBUS0_DriverIRQHandler");
+                if(index == UDMA_EVENT_CPI_RX)
+                    asm volatile ("jal CPI_DriverIRQHandler");
                 if(index == UDMA_EVENT_SAI_CH0)
                     SAI_IRQHandler_CH0((void *)first->info.task);
                 if(index == UDMA_EVENT_SAI_CH1)
