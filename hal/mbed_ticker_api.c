@@ -74,6 +74,7 @@ static void initialize(const ticker_data_t *ticker)
     ticker->queue->max_delta = max_delta;
     ticker->queue->max_delta_us = max_delta_us;
     ticker->queue->present_time = 0;
+    ticker->queue->dispatching = false;
     ticker->queue->initialized = true;
 
     update_present_time(ticker);
@@ -242,6 +243,12 @@ int _ticker_match_interval_passed(timestamp_t prev_tick, timestamp_t cur_tick, t
 static void schedule_interrupt(const ticker_data_t *const ticker)
 {
     ticker_event_queue_t *queue = ticker->queue;
+    if (ticker->queue->dispatching) {
+        // Don't schedule the next interrupt until dispatching is
+        // finished. This prevents repeated calls to interface->set_interrupt
+        return;
+    }
+
     update_present_time(ticker);
 
     if (ticker->queue->head) {
@@ -293,6 +300,7 @@ void ticker_irq_handler(const ticker_data_t *const ticker)
     ticker->interface->clear_interrupt();
 
     /* Go through all the pending TimerEvents */
+    ticker->queue->dispatching = true;
     while (1) {
         if (ticker->queue->head == NULL) {
             break;
@@ -315,6 +323,7 @@ void ticker_irq_handler(const ticker_data_t *const ticker)
             break;
         }
     }
+    ticker->queue->dispatching = false;
 
     schedule_interrupt(ticker);
 
