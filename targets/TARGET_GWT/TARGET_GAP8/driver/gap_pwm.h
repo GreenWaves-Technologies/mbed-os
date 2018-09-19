@@ -262,7 +262,9 @@ void PWM_ClearOutputEvent(PWM_Type *base, pwm_channel_t channel, pwm_event_sel_t
 /*!
  * @brief PWM IRQ Handler Binding
  *
- * @param irq PWM IRQ handler function pointer to binding
+ * @param base    PWM instance.
+ * @param irq     PWM IRQ handler function pointer to binding
+ * @param arg     Argument of callbcak function
  */
 void PWM_IRQHandlerBind(PWM_Type *base, uint32_t irq, void *arg);
 
@@ -276,5 +278,7 @@ void PWM_IRQHandler(uint32_t evtSel);
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
+
+/* @} */
 
 #endif /*_GAP_PWM_H_*/

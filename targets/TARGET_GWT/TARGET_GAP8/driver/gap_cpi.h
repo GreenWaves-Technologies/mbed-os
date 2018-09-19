@@ -182,6 +182,7 @@ extern "C" {
 
 /*!
  * @brief Initializes the CPI device.
+ * @param base      CPI peripheral address.
  * @param pclk      Pin PCLK
  * @param hync      Pin HYNC
  * @param vsync     Pin VSYNC

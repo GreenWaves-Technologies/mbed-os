@@ -450,6 +450,7 @@ void UDMA_EventHandler(uint32_t index, int abort)
 
             channel->first = (void *)0;
             channel->last  = (void *)0;
+
         } else {
             /* Clean request next pointer */
             channel->first->next = (void *)0;

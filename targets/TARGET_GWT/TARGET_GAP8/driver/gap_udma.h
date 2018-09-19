@@ -65,10 +65,10 @@ typedef enum _UDMARequest{
 /*! @brief uDMA transfer control */
 typedef enum _UDMACtrl{
     UDMA_CTRL_NORMAL    = 0,   /*!< Channel Transfer without wait */
-    UDMA_CTRL_HYPERBUS  = 1,   /*!< Channel TX Transfer with wait */
-    UDMA_CTRL_TCDM      = 2,   /*!< Channel RX Transfer without wait */
+    UDMA_CTRL_HYPERBUS  = 1,   /*!< Channel special Transfer with wait */
+    UDMA_CTRL_TCDM      = 2,   /*!< Channel special Transfer without wait */
     UDMA_CTRL_DUAL_RX   = (1 << 4),  /*!< Channel RX Transfer without wait */
-    UDMA_CTRL_DUAL_TX   = (2 << 4),  /*!< Channel RX Transfer without wait */
+    UDMA_CTRL_DUAL_TX   = (2 << 4),  /*!< Channel TX Transfer without wait */
     UDMA_CTRL_HYPERBUS_CAN_ENQUEUE  = (3 << 4 | UDMA_CTRL_HYPERBUS),  /*!< Channel HYPERBUS enqueue check */
     UDMA_CTRL_HYPERBUS_CAN_NOT_ENQUEUE  = (4 << 4 | UDMA_CTRL_HYPERBUS),  /*!< Channel HYPERBUS enqueue check */
 } UDMACtrl;
