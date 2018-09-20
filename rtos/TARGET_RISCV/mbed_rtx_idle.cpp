@@ -72,7 +72,7 @@ void OS_Tick_Disable (void)
 /// Acknowledge System Timer IRQ.
 void OS_Tick_AcknowledgeIRQ (void)
 {
-    os_timer->schedule_tick();
+
 }
 
 /// Get System Timer count.
