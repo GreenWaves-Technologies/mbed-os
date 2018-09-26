@@ -16,7 +16,6 @@
  */
 
 #include "mbed.h"
-#include MBED_CONF_APP_HEADER_FILE
 #include "TCPSocket.h"
 #include "greentea-client/test_env.h"
 #include "unity/unity.h"
@@ -25,13 +24,13 @@
 
 using namespace utest::v1;
 
-namespace
-{
-    static const int SIGNAL_SIGIO = 0x1;
-    static const int SIGIO_TIMEOUT = 5000; //[ms]
+namespace {
+static const int SIGNAL_SIGIO = 0x1;
+static const int SIGIO_TIMEOUT = 5000; //[ms]
 }
 
-static void _sigio_handler(osThreadId id) {
+static void _sigio_handler(osThreadId id)
+{
     osSignalSet(id, SIGNAL_SIGIO);
 }
 
@@ -58,12 +57,12 @@ void TCPSOCKET_RECV_TIMEOUT()
         while (pkt_unrecvd) {
             timer.reset();
             timer.start();
-            recvd = sock.recv(&(buff[DATA_LEN-pkt_unrecvd]), pkt_unrecvd);
+            recvd = sock.recv(&(buff[DATA_LEN - pkt_unrecvd]), pkt_unrecvd);
             timer.stop();
 
             if (recvd == NSAPI_ERROR_WOULD_BLOCK) {
                 if (tc_exec_time.read() >= time_allotted ||
-                    (osSignalWait(SIGNAL_SIGIO, SIGIO_TIMEOUT).status == osEventTimeout)) {
+                        (osSignalWait(SIGNAL_SIGIO, SIGIO_TIMEOUT).status == osEventTimeout)) {
                     TEST_FAIL();
                     goto CLEANUP;
                 }

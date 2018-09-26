@@ -2,7 +2,7 @@
     "name": "lora",
     "config": {
         "phy": {
-            "help": "LoRa PHY region: EU868, AS923, AU915, CN470, CN779, EU433, IN865, KR920, US915, US915_HYBRID",
+            "help": "LoRa PHY region: EU868, AS923, AU915, CN470, CN779, EU433, IN865, KR920, US915",
             "value": "EU868"
         },
         "over-the-air-activation": {
@@ -57,6 +57,10 @@
             "help": "Enables/disables duty cycling. NOTE: Disable only for testing. Mandatory in many regions.",
             "value": true
         },
+        "duty-cycle-on-join": {
+            "help": "Enables/disables duty cycling for JOIN requests (disabling requires duty-cycle-on to be disabled). NOTE: Disable only for testing!",
+            "value": true
+        },
         "lbt-on": {
             "help": "Enables/disables LBT. NOTE: [This feature is not yet integrated].",
             "value": false
@@ -64,6 +68,26 @@
         "automatic-uplink-message": {
             "help": "Stack will automatically send an uplink message when lora server requires immediate response",
             "value": true
+        },
+        "max-sys-rx-error": {
+        	"help": "Maximum timing error of the receiver in ms. The receiver will turn on in [-RxError : + RxError]",
+        	"value": 10
+        },
+        "downlink-preamble-length": {
+        	"help": "Number of preamble symbols need to be captured (out of 8) for successful demodulation",
+        	"value": 5
+        },
+        "uplink-preamble-length": {
+        	"help": "Number of preamble symbols to transmit. Must be <= 8",
+        	"value": 8
+        },
+        "fsb-mask": {
+        	"help": "FSB mask for upstream [Only for US915 & AU915] Check lorawan/FSB_Usage.txt for more details",
+        	"value": "{0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0x00FF}"
+        },
+        "fsb-mask-china": {
+        	"help": "FSB mask for upstream [CN470 PHY] Check lorawan/FSB_Usage.txt for more details",
+        	"value": "{0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF}"
         }
     }
 }

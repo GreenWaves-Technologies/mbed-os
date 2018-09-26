@@ -843,10 +843,10 @@ EXCLUDE_PATTERNS       = */tools/* \
                          */cmsis/* \
                          */features/cryptocell/* \
                          */features/mbedtls/* \
-                         */features/storage/* \
+                         */features/storage/cfstore/* \
+                         */features/storage/FEATURE_STORAGE/* \
                          */features/unsupported/* \
-                         */features/FEATURE_LWIP/* \
-                         */features/FEATURE_UVISOR/* \
+                         */features/lwipstack/* \
                          */features/nanostack/sal-stack-nanostack/* \
                          */features/nanostack/coap-service/* \
                          */mbed-trace/* \
@@ -855,7 +855,10 @@ EXCLUDE_PATTERNS       = */tools/* \
                          */mbed-client-randlib/* \
                          */nanostack/sal-stack-nanostack-eventloop/* \
                          */ble/generic/* \
-                         */ble/pal/*
+                         */ble/pal/* \
+                         */components/802.15.4_RF/* \
+                         */components/wifi/* \
+                         */UNITTESTS/*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the
@@ -2093,6 +2096,7 @@ PREDEFINED             = DOXYGEN_ONLY            \
                          DEVICE_SPI              \
                          DEVICE_SPI_ASYNCH       \
                          DEVICE_SPISLAVE         \
+                         DEVICE_QSPI             \
                          DEVICE_STORAGE          \
                          "MBED_DEPRECATED_SINCE(d, m)=" \
                          "MBED_ENABLE_IF_CALLBACK_COMPATIBLE(F, M)=" \

@@ -16,7 +16,6 @@
  */
 
 #include "mbed.h"
-#include MBED_CONF_APP_HEADER_FILE
 #include "UDPSocket.h"
 #include "greentea-client/test_env.h"
 #include "unity/unity.h"
@@ -37,7 +36,7 @@ void UDPSOCKET_SENDTO_REPEAT()
     int sent;
     Timer timer;
     int i;
-    static const char tx_buffer[] = {'h','e','l','l','o'};
+    static const char tx_buffer[] = {'h', 'e', 'l', 'l', 'o'};
     bool oom_earlier = false; // 2 times in a row -> time to give up
     for (i = 0; i < 100; i++) {
         sent = sock.sendto(udp_addr, tx_buffer, sizeof(tx_buffer));

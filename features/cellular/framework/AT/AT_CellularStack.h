@@ -96,6 +96,7 @@ protected:
         bool started; // socket has been opened on modem stack
         bool tx_ready; // socket is ready for sending on modem stack
         bool rx_avail; // socket has data for reading on modem stack
+        nsapi_size_t pending_bytes; // The number of received bytes pending
     };
 
     /**
@@ -164,6 +165,10 @@ protected:
 
     // stack type from PDP context
     nsapi_ip_stack_t _stack_type;
+
+private:
+    // mutex for write/read to a _socket array, needed when multiple threads may open sockets simultaneously
+    PlatformMutex _socket_mutex;
 };
 
 } // namespace mbed

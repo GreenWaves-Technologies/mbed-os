@@ -52,10 +52,6 @@ SVC_ContextSave:
 
 
 SVC_ContextSwitch:
-        jal thread_switch_helper
-        la  t0, osRtxInfo+I_T_RUN_OFS      // Load address of osRtxInfo.run
-        lw  t1, (t0)                       // Load osRtxInfo.thread.run: curr & next
-        lw  t2, 4(t0)
         sw  t2, (t0)                       // osRtxInfo.thread.run: curr = next
 
 SVC_ContextRestore:

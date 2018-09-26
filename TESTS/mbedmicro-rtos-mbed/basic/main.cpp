@@ -24,7 +24,12 @@
 #endif
 
 #if !DEVICE_USTICKER
-  #error [NOT_SUPPORTED] test not supported
+#error [NOT_SUPPORTED] test not supported
+#endif
+
+//FastModels not support time drifting test
+#if defined(__ARM_FM)
+#error [NOT_SUPPORTED] test not supported
 #endif
 
 using utest::v1::Case;
@@ -100,7 +105,7 @@ void test(void)
     //get the results from host
     greentea_parse_kv(_key, _value, sizeof(_key), sizeof(_value));
 
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("pass", _key,"Host side script reported a fail...");
+    TEST_ASSERT_EQUAL_STRING_MESSAGE("pass", _key, "Host side script reported a fail...");
 }
 
 Case cases[] = {

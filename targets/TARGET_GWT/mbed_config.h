@@ -70,5 +70,5 @@
 
 // Macros
 #define UNITY_INCLUDE_CONFIG_H                                // defined by library:utest
-
+#define MBED_CONF_PLATFORM_ERROR_DECODE_HTTP_URL_STR  ""
 #endif

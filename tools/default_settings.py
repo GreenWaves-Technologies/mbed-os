@@ -14,6 +14,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+###
+# Modifications copyright (C) 2018 GreenWaves Technologies
+#
+# - Add GCC toolchain support for RISC-V GCC and target for GAP
+###
 
 from os.path import join, abspath, dirname
 
@@ -29,6 +34,9 @@ from os.path import join, abspath, dirname
 
 # GCC ARM
 #GCC_ARM_PATH = ""
+
+# GCC RISCV
+#GCC_RISCV_PATH = ""
 
 # GCC CodeRed
 #GCC_CR_PATH = "C:/code_red/RedSuite_4.2.0_349/redsuite/Tools/bin"

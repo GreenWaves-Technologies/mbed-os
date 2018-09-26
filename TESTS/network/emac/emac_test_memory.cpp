@@ -20,8 +20,6 @@
 #include "unity.h"
 #include "utest.h"
 
-#if MBED_CONF_APP_TEST_WIFI || MBED_CONF_APP_TEST_ETHERNET
-
 #include "emac_tests.h"
 #include "emac_util.h"
 #include "emac_ctp.h"
@@ -86,19 +84,19 @@ void test_emac_memory_cb(int opt)
                 break;
 
             case 6:
-                 printf("STEP 6: memory available\r\n\r\n");
-                 emac_if_set_output_memory(true);
-                 emac_if_set_input_memory(true);
-                 memory = true;
-                 break;
+                printf("STEP 6: memory available\r\n\r\n");
+                emac_if_set_output_memory(true);
+                emac_if_set_input_memory(true);
+                memory = true;
+                break;
 
             case 7:
-                 printf("STEP 7: memory available, alloc from heap\r\n\r\n");
-                 emac_if_set_output_memory(true);
-                 emac_if_set_input_memory(true);
-                 options |= CTP_OPT_HEAP;
-                 memory = true;
-                 break;
+                printf("STEP 7: memory available, alloc from heap\r\n\r\n");
+                emac_if_set_output_memory(true);
+                emac_if_set_input_memory(true);
+                options |= CTP_OPT_HEAP;
+                memory = true;
+                break;
 
             case 8:
                 // Test ended
@@ -121,7 +119,7 @@ void test_emac_memory_cb(int opt)
                     printf("too many retries\r\n\r\n");
                     SET_ERROR_FLAGS(TEST_FAILED);
                     END_TEST_LOOP;
-                // Otherwise continues test
+                    // Otherwise continues test
                 } else {
                     RESET_OUTGOING_MSG_DATA;
                     next_len = true;
@@ -163,5 +161,3 @@ void test_emac_memory()
     TEST_ASSERT_FALSE(ERROR_FLAGS);
     RESET_OUTGOING_MSG_DATA;
 }
-
-#endif

@@ -131,6 +131,10 @@ void us_ticker_disable_interrupt(void) {
 void us_ticker_clear_interrupt(void) {
     Timer_ClearInterrupt(TIMER0);
 }
+
+void us_ticker_free(void) {
+
+}
 #else
 
 extern uint32_t us_ticker_overflow_delta;
@@ -204,6 +208,10 @@ void us_ticker_disable_interrupt(void) {
 
 void us_ticker_clear_interrupt(void) {
     Timer_ClearInterrupt(TIMER1);
+}
+
+void us_ticker_free(void) {
+
 }
 
 #endif // #if MBED_CONF_RTOS_PRESENT

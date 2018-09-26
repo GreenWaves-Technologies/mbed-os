@@ -17,7 +17,6 @@
 
 #include "greentea-client/test_env.h"
 #include "mbed.h"
-#include MBED_CONF_APP_HEADER_FILE
 #include "tcp_tests.h"
 #include "TCPSocket.h"
 #include "unity/unity.h"
@@ -25,12 +24,11 @@
 
 using namespace utest::v1;
 
-namespace
-{
-    typedef struct TCPSocketItem {
-        TCPSocket *sock;
-        TCPSocketItem *next;
-    } SocketItem;
+namespace {
+typedef struct TCPSocketItem {
+    TCPSocket *sock;
+    TCPSocketItem *next;
+} SocketItem;
 }
 
 void TCPSOCKET_OPEN_LIMIT()
@@ -73,7 +71,7 @@ void TCPSOCKET_OPEN_LIMIT()
         }
 
         TCPSocketItem *tmp;
-        for(TCPSocketItem *it = socket_list_head; it;) {
+        for (TCPSocketItem *it = socket_list_head; it;) {
             ++open_sockets[i];
             tmp = it;
             it = it->next;

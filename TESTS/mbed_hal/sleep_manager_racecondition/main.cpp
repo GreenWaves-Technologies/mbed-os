@@ -23,7 +23,7 @@
 #endif
 
 #if !DEVICE_USTICKER
-  #error [NOT_SUPPORTED] test not supported
+#error [NOT_SUPPORTED] test not supported
 #endif
 
 using namespace utest::v1;
@@ -55,7 +55,7 @@ void sleep_manager_multithread_test()
         t2.join();
     }
 
-    bool deep_sleep_allowed = sleep_manager_can_deep_sleep();
+    bool deep_sleep_allowed = sleep_manager_can_deep_sleep_test_check();
     TEST_ASSERT_TRUE_MESSAGE(deep_sleep_allowed, "Deep sleep should be allowed");
 }
 
@@ -83,11 +83,11 @@ void sleep_manager_irq_test()
         timer.stop();
     }
 
-    bool deep_sleep_allowed = sleep_manager_can_deep_sleep();
+    bool deep_sleep_allowed = sleep_manager_can_deep_sleep_test_check();
     TEST_ASSERT_TRUE_MESSAGE(deep_sleep_allowed, "Deep sleep should be allowed");
 }
 
-utest::v1::status_t greentea_test_setup(const size_t number_of_cases) 
+utest::v1::status_t greentea_test_setup(const size_t number_of_cases)
 {
     GREENTEA_SETUP(30, "default_auto");
     return greentea_test_setup_handler(number_of_cases);
@@ -100,6 +100,7 @@ Case cases[] = {
 
 Specification specification(greentea_test_setup, cases, greentea_test_teardown_handler);
 
-int main() {
+int main()
+{
     Harness::run(specification);
 }

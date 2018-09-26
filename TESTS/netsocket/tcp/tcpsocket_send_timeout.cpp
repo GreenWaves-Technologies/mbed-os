@@ -16,7 +16,6 @@
  */
 
 #include "mbed.h"
-#include MBED_CONF_APP_HEADER_FILE
 #include "TCPSocket.h"
 #include "greentea-client/test_env.h"
 #include "unity/unity.h"
@@ -35,14 +34,14 @@ void TCPSOCKET_SEND_TIMEOUT()
 
     int err;
     Timer timer;
-    static const char tx_buffer[] = {'h','e','l','l','o'};
+    static const char tx_buffer[] = {'h', 'e', 'l', 'l', 'o'};
     for (int i = 0; i < 10; i++) {
         timer.reset();
         timer.start();
         err = sock.send(tx_buffer, sizeof(tx_buffer));
         timer.stop();
         if ((err == sizeof(tx_buffer)) &&
-            (timer.read_ms() <= 800)) {
+                (timer.read_ms() <= 800)) {
             continue;
         }
         TEST_FAIL();

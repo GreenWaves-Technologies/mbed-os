@@ -47,3 +47,24 @@ nsapi_error_t QUECTEL_BC95_CellularSIM::get_sim_state(SimState &state)
     return _at.unlock_return_error();
 }
 
+// According to BC95_AT_Commands_Manual_V1.9
+nsapi_error_t QUECTEL_BC95_CellularSIM::get_iccid(char *buf, size_t buf_size)
+{
+    _at.lock();
+    _at.cmd_start("AT+NCCID?");
+    _at.cmd_stop();
+    _at.resp_start("+NCCID:");
+    _at.read_string(buf, buf_size);
+    _at.resp_stop();
+    return _at.unlock_return_error();
+}
+
+nsapi_error_t QUECTEL_BC95_CellularSIM::change_pin(const char *sim_pin, const char *new_pin)
+{
+    return NSAPI_ERROR_UNSUPPORTED;
+}
+
+nsapi_error_t QUECTEL_BC95_CellularSIM::set_pin_query(const char *sim_pin, bool query_pin)
+{
+    return NSAPI_ERROR_UNSUPPORTED;
+}

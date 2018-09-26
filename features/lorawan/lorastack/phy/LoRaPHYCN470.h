@@ -53,8 +53,12 @@ class LoRaPHYCN470 : public LoRaPHY {
 
 public:
 
-    LoRaPHYCN470(LoRaWANTimeHandler &lora_time);
+    LoRaPHYCN470();
     virtual ~LoRaPHYCN470();
+
+    virtual lorawan_status_t set_next_channel(channel_selection_params_t *params,
+                                      uint8_t *channel, lorawan_time_t *time,
+                                      lorawan_time_t *aggregate_timeoff);
 
     virtual bool rx_config(rx_config_params_t* config);
 

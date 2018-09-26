@@ -100,7 +100,7 @@ void mbed_error_vfprintf(const char *format, va_list arg)
         char stdio_out_prev = '\0';
         for (int i = 0; i < size; i++) {
             if (buffer[i] == '\n' && stdio_out_prev != '\r') {
-                 serial_putc(&stdio_uart, '\r');
+                serial_putc(&stdio_uart, '\r');
             }
             serial_putc(&stdio_uart, buffer[i]);
             stdio_out_prev = buffer[i];

@@ -37,6 +37,9 @@ static uint8_t app_stack_heap[MBED_CONF_MBED_MESH_API_HEAP_SIZE + 1];
 static uint8_t *app_stack_heap;
 #endif
 static bool mesh_initialized = false;
+#ifdef MBED_CONF_MBED_MESH_API_HEAP_STAT_INFO_DEFINITION
+MBED_CONF_MBED_MESH_API_HEAP_STAT_INFO_DEFINITION;
+#endif
 
 /*
  * Heap error handler, called when heap problem is detected.
@@ -55,7 +58,7 @@ void mesh_system_init(void)
         MBED_ASSERT(app_stack_heap);
 #endif
         ns_hal_init(app_stack_heap, MBED_CONF_MBED_MESH_API_HEAP_SIZE,
-                    mesh_system_heap_error_handler, NULL);
+                    mesh_system_heap_error_handler, MBED_CONF_MBED_MESH_API_HEAP_STAT_INFO);
         eventOS_scheduler_mutex_wait();
         net_init_core();
         eventOS_scheduler_mutex_release();

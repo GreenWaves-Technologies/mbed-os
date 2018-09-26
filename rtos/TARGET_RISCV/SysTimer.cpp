@@ -23,7 +23,7 @@
  Modifications copyright (C) 2018 GreenWaves Technologies
 
  - Change #include "rtos/TARGET_CORTEX/SysTimer.h" inside DEVICE_LOWPOWERTIMER macro
- - Add SysTimer.h including support for GAP architecture 
+ - Add SysTimer.h including support for GAP architecture
  */
 #if DEVICE_LPTICKER
 
@@ -55,6 +55,10 @@ extern "C" {
  * @return Free IRQ number that can be used
  */
 extern "C" IRQn_Type mbed_get_m0_tick_irqn(void);
+#endif
+
+#if defined(TARGET_CORTEX_A)
+extern "C" IRQn_ID_t mbed_get_a9_tick_irqn(void);
 #endif
 
 namespace rtos {

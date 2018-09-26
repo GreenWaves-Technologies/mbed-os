@@ -62,10 +62,6 @@
 #define OS_STACK_WATERMARK          1
 #endif
 
-/* Run threads unprivileged when uVisor is enabled. */
-#if defined(FEATURE_UVISOR) && defined(TARGET_UVISOR_SUPPORTED)
-# define OS_PRIVILEGE_MODE           0
-#endif
 
 #define OS_IDLE_THREAD_TZ_MOD_ID     1
 #define OS_TIMER_THREAD_TZ_MOD_ID    1
@@ -74,6 +70,8 @@
 // Don't adopt default multi-thread support for ARM/ARMC6 toolchains from RTX code base.
 // Provide Mbed-specific instead.
 #define RTX_NO_MULTITHREAD_CLIB
+// LIBSPACE default value set for ARMCC
+#define OS_THREAD_LIBSPACE_NUM      4
 
 #define OS_IDLE_THREAD_NAME         "idle_thread"
 #define OS_TIMER_THREAD_NAME        "timer_thread"
@@ -99,7 +97,7 @@
 #define EVR_RTX_MEMORY_BLOCK_ALLOC_DISABLE
 #define EVR_RTX_MEMORY_BLOCK_FREE_DISABLE
 #define EVR_RTX_KERNEL_INITIALIZE_DISABLE
-#define EVR_RTX_KERNEL_INITIALIZE_COMPLETED_DISABLE
+#define EVR_RTX_KERNEL_INITIALIZED_DISABLE
 #define EVR_RTX_KERNEL_GET_INFO_DISABLE
 #define EVR_RTX_KERNEL_INFO_RETRIEVED_DISABLE
 #define EVR_RTX_KERNEL_GET_STATE_DISABLE

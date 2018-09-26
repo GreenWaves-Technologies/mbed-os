@@ -32,7 +32,7 @@ import threading
 import ctypes
 import functools
 from colorama import Fore, Back, Style
-from prettytable import PrettyTable
+from prettytable import PrettyTable, HEADER
 from copy import copy, deepcopy
 
 from time import sleep, time
@@ -40,7 +40,7 @@ try:
     from Queue import Queue, Empty
 except ImportError:
     from queue import Queue, Empty
-from os.path import join, exists, basename, relpath
+from os.path import join, exists, basename, relpath, isdir, isfile
 from threading import Thread, Lock
 from multiprocessing import Pool, cpu_count
 from subprocess import Popen, PIPE
@@ -55,6 +55,7 @@ from tools.utils import NotSupportedException
 from tools.utils import construct_enum
 from tools.memap import MemapParser
 from tools.targets import TARGET_MAP, Target
+from tools.config import Config
 import tools.test_configs as TestConfig
 from tools.test_db import BaseDBAccess
 from tools.build_api import build_project, build_mbed_libs, build_lib
@@ -65,8 +66,8 @@ from tools.build_api import prep_properties
 from tools.build_api import create_result
 from tools.build_api import add_result_to_report
 from tools.build_api import prepare_toolchain
-from tools.build_api import scan_resources
 from tools.build_api import get_config
+from tools.resources import Resources, MbedIgnoreSet, IGNORE_FILENAME
 from tools.libraries import LIBRARIES, LIBRARY_MAP
 from tools.options import extract_profile
 from tools.toolchains import TOOLCHAIN_PATHS
@@ -765,7 +766,7 @@ class SingleTestRunner(object):
                     result_dict[test[TEST_INDEX]][test[TOOLCHAIN_INDEX]] = test[RESULT_INDEX]
 
             pt_cols = ["Target", "Test ID", "Test Description"] + unique_target_toolchains
-            pt = PrettyTable(pt_cols)
+            pt = PrettyTable(pt_cols, junction_char="|", hrules=HEADER)
             for col in pt_cols:
                 pt.align[col] = "l"
             pt.padding_width = 1 # One space between column edges and contents (default)
@@ -793,7 +794,7 @@ class SingleTestRunner(object):
         result = "Test summary:\n"
         # Pretty table package is used to print results
         pt = PrettyTable(["Result", "Target", "Toolchain", "Test ID", "Test Description",
-                          "Elapsed Time (sec)", "Timeout (sec)", "Loops"])
+                          "Elapsed Time (sec)", "Timeout (sec)", "Loops"], junction_char="|", hrules=HEADER)
         pt.align["Result"] = "l" # Left align
         pt.align["Target"] = "l" # Left align
         pt.align["Toolchain"] = "l" # Left align
@@ -1327,7 +1328,7 @@ def print_muts_configuration_from_json(json_data, join_delim=", ", platform_filt
 
     # Prepare pretty table object to display all MUTs
     pt_cols = ["index"] + muts_info_cols
-    pt = PrettyTable(pt_cols)
+    pt = PrettyTable(pt_cols, junction_char="|", hrules=HEADER)
     for col in pt_cols:
         pt.align[col] = "l"
 
@@ -1365,7 +1366,7 @@ def print_test_configuration_from_json(json_data, join_delim=", "):
 
     # Prepare pretty table object to display test specification
     pt_cols = ["mcu"] + sorted(toolchains_info_cols)
-    pt = PrettyTable(pt_cols)
+    pt = PrettyTable(pt_cols, junction_char="|", hrules=HEADER)
     for col in pt_cols:
         pt.align[col] = "l"
 
@@ -1454,7 +1455,7 @@ def get_avail_tests_summary_table(cols=None, result_summary=True, join_delim=','
                        'duration'] if cols is None else cols
 
     # All tests status table print
-    pt = PrettyTable(test_properties)
+    pt = PrettyTable(test_properties, junction_char="|", hrules=HEADER)
     for col in test_properties:
         pt.align[col] = "l"
     pt.align['duration'] = "r"
@@ -1494,7 +1495,7 @@ def get_avail_tests_summary_table(cols=None, result_summary=True, join_delim=','
     if result_summary and not platform_filter:
         # Automation result summary
         test_id_cols = ['automated', 'all', 'percent [%]', 'progress']
-        pt = PrettyTable(test_id_cols)
+        pt = PrettyTable(test_id_cols, junction_char="|", hrules=HEADER)
         pt.align['automated'] = "r"
         pt.align['all'] = "r"
         pt.align['percent [%]'] = "r"
@@ -1508,7 +1509,7 @@ def get_avail_tests_summary_table(cols=None, result_summary=True, join_delim=','
 
         # Test automation coverage table print
         test_id_cols = ['id', 'automated', 'all', 'percent [%]', 'progress']
-        pt = PrettyTable(test_id_cols)
+        pt = PrettyTable(test_id_cols, junction_char="|", hrules=HEADER)
         pt.align['id'] = "l"
         pt.align['automated'] = "r"
         pt.align['all'] = "r"
@@ -2065,13 +2066,15 @@ def get_test_config(config_name, target_name):
     # Otherwise find the path to configuration file based on mbed OS interface
     return TestConfig.get_config_path(config_name, target_name)
 
-def find_tests(base_dir, target_name, toolchain_name, app_config=None):
+
+def find_tests(base_dir, target_name, toolchain_name, icetea, greentea, app_config=None):
     """ Finds all tests in a directory recursively
-    base_dir: path to the directory to scan for tests (ex. 'path/to/project')
-    target_name: name of the target to use for scanning (ex. 'K64F')
-    toolchain_name: name of the toolchain to use for scanning (ex. 'GCC_ARM')
-    options: Compile options to pass to the toolchain (ex. ['debug-info'])
-    app_config - location of a chosen mbed_app.json file
+    :param base_dir: path to the directory to scan for tests (ex. 'path/to/project')
+    :param target_name: name of the target to use for scanning (ex. 'K64F')
+    :param toolchain_name: name of the toolchain to use for scanning (ex. 'GCC_ARM')
+    :param icetea: icetea enabled
+    :param greentea: greentea enabled
+    :param app_config - location of a chosen mbed_app.json file
 
     returns a dictionary where keys are the test name, and the values are
     lists of paths needed to biuld the test.
@@ -2082,52 +2085,62 @@ def find_tests(base_dir, target_name, toolchain_name, app_config=None):
     # List of common folders: (predicate function, path) tuple
     commons = []
 
-    # Prepare the toolchain
-    toolchain = prepare_toolchain([base_dir], None, target_name, toolchain_name,
-                                  app_config=app_config)
+    config = Config(target_name, base_dir, app_config)
 
     # Scan the directory for paths to probe for 'TESTS' folders
-    base_resources = scan_resources([base_dir], toolchain)
+    base_resources = Resources(MockNotifier(), collect_ignores=True)
+    base_resources.scan_with_config(base_dir, config)
 
-    dirs = base_resources.inc_dirs
-    for directory in dirs:
-        subdirs = os.listdir(directory)
+    if greentea:
+        dirs = [d for d in base_resources.ignored_dirs if basename(d) == 'TESTS']
+        ignoreset = MbedIgnoreSet()
 
-        # If the directory contains a subdirectory called 'TESTS', scan it for test cases
-        if 'TESTS' in subdirs:
-            walk_base_dir = join(directory, 'TESTS')
-            test_resources = toolchain.scan_resources(walk_base_dir, base_path=base_dir)
-
-            # Loop through all subdirectories
-            for d in test_resources.inc_dirs:
-
-                # If the test case folder is not called 'host_tests' or 'COMMON' and it is
-                # located two folders down from the main 'TESTS' folder (ex. TESTS/testgroup/testcase)
-                # then add it to the tests
-                relative_path = relpath(d, walk_base_dir)
-                relative_path_parts = os.path.normpath(relative_path).split(os.sep)
-                if len(relative_path_parts) == 2:
-                    test_group_directory_path, test_case_directory = os.path.split(d)
-                    test_group_directory = os.path.basename(test_group_directory_path)
-
-                    # Check to make sure discoverd folder is not in a host test directory or common directory
+        for directory in dirs:
+            ignorefile = join(directory, IGNORE_FILENAME)
+            if isfile(ignorefile):
+                ignoreset.add_mbedignore(directory, ignorefile)
+            for test_group_directory in os.listdir(directory):
+                grp_dir = join(directory, test_group_directory)
+                if not isdir(grp_dir) or ignoreset.is_ignored(grp_dir):
+                    continue
+                grpignorefile = join(grp_dir, IGNORE_FILENAME)
+                if isfile(grpignorefile):
+                    ignoreset.add_mbedignore(grp_dir, grpignorefile)
+                for test_case_directory in os.listdir(grp_dir):
+                    d = join(directory, test_group_directory, test_case_directory)
+                    if not isdir(d) or ignoreset.is_ignored(d):
+                        continue
                     special_dirs = ['host_tests', 'COMMON']
                     if test_group_directory not in special_dirs and test_case_directory not in special_dirs:
                         test_name = test_path_to_name(d, base_dir)
-                        tests[(test_name, walk_base_dir, test_group_directory, test_case_directory)] = [d]
-
-                # Also find any COMMON paths, we'll add these later once we find all the base tests
-                if 'COMMON' in relative_path_parts:
-                    if relative_path_parts[0] != 'COMMON':
+                        tests[(test_name, directory, test_group_directory, test_case_directory)] = [d]
+                    if test_case_directory == 'COMMON':
                         def predicate(base_pred, group_pred, name_base_group_case):
                             (name, base, group, case) = name_base_group_case
                             return base == base_pred and group == group_pred
-                        commons.append((functools.partial(predicate, walk_base_dir, relative_path_parts[0]), d))
-                    else:
-                        def predicate(base_pred, name_base_group_case):
-                            (name, base, group, case) = name_base_group_case
-                            return base == base_pred
-                        commons.append((functools.partial(predicate, walk_base_dir), d))
+
+                        commons.append((functools.partial(predicate, directory, test_group_directory), d))
+                if test_group_directory == 'COMMON':
+                    def predicate(base_pred, name_base_group_case):
+                        (name, base, group, case) = name_base_group_case
+                        return base == base_pred
+
+                    commons.append((functools.partial(predicate, directory), grp_dir))
+
+    if icetea:
+        dirs = [d for d in base_resources.ignored_dirs if basename(d) == 'TEST_APPS']
+        for directory in dirs:
+            if not isdir(directory):
+                continue
+            for subdir in os.listdir(directory):
+                d = join(directory, subdir)
+                if not isdir(d):
+                    continue
+                if 'device' == subdir:
+                    for test_dir in os.listdir(d):
+                        test_dir_path = join(d, test_dir)
+                        test_name = test_path_to_name(test_dir_path, base_dir)
+                        tests[(test_name, directory, subdir, test_dir)] = [test_dir_path]
 
     # Apply common directories
     for pred, path in commons:
@@ -2137,6 +2150,7 @@ def find_tests(base_dir, target_name, toolchain_name, app_config=None):
 
     # Drop identity besides name
     return {name: paths for (name, _, _, _), paths in six.iteritems(tests)}
+
 
 def print_tests(tests, format="list", sort=True):
     """Given a dictionary of tests (as returned from "find_tests"), print them
@@ -2192,7 +2206,7 @@ def build_test_worker(*args, **kwargs):
     del kwargs['toolchain_paths']
 
     try:
-        bin_file = build_project(*args, **kwargs)
+        bin_file, _ = build_project(*args, **kwargs)
         ret['result'] = True
         ret['bin_file'] = bin_file
         ret['kwargs'] = kwargs
@@ -2230,7 +2244,7 @@ def build_tests(tests, base_source_paths, build_path, target, toolchain_name,
     else:
         target_name = target
         target = TARGET_MAP[target_name]
-    cfg, _, _ = get_config(base_source_paths, target_name, toolchain_name, app_config=app_config)
+    cfg, _, _ = get_config(base_source_paths, target, app_config=app_config)
 
     baud_rate = 9600
     if 'platform.stdio-baud-rate' in cfg:
@@ -2242,7 +2256,8 @@ def build_tests(tests, base_source_paths, build_path, target, toolchain_name,
         "base_path": base_path,
         "baud_rate": baud_rate,
         "binary_type": "bootable",
-        "tests": {}
+        "tests": {},
+        "test_apps": {}
     }
 
     result = True
@@ -2321,7 +2336,8 @@ def build_tests(tests, base_source_paths, build_path, target, toolchain_name,
                             'bin_file' in worker_result):
                             bin_file = norm_relative_path(worker_result['bin_file'], execution_directory)
 
-                            test_build['tests'][worker_result['kwargs']['project_id']] = {
+                            test_key = 'test_apps' if 'test_apps-' in worker_result['kwargs']['project_id'] else 'tests'
+                            test_build[test_key][worker_result['kwargs']['project_id']] = {
                                 "binaries": [
                                     {
                                         "path": bin_file

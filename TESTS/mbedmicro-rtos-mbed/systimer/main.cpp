@@ -53,12 +53,12 @@ private:
 
 public:
     SysTimerTest() :
-            SysTimer(), _sem(0, 1)
+        SysTimer(), _sem(0, 1)
     {
     }
 
     SysTimerTest(const ticker_data_t *data) :
-            SysTimer(data), _sem(0, 1)
+        SysTimer(data), _sem(0, 1)
     {
     }
 
@@ -99,6 +99,10 @@ void mock_ticker_fire_interrupt()
 {
 }
 
+void mock_ticker_free()
+{
+}
+
 const ticker_info_t *mock_ticker_get_info()
 {
     static const ticker_info_t mock_ticker_info = {
@@ -115,6 +119,7 @@ ticker_interface_t mock_ticker_interface = {
     .clear_interrupt = mock_ticker_clear_interrupt,
     .set_interrupt = mock_ticker_set_interrupt,
     .fire_interrupt = mock_ticker_fire_interrupt,
+    .free = mock_ticker_free,
     .get_info = mock_ticker_get_info,
 };
 
@@ -308,7 +313,7 @@ void test_deepsleep(void)
 
     lptimer.start();
     st.schedule_tick(TEST_TICKS);
-    TEST_ASSERT_TRUE_MESSAGE(sleep_manager_can_deep_sleep(), "Deep sleep should be allowed");
+    TEST_ASSERT_TRUE_MESSAGE(sleep_manager_can_deep_sleep_test_check(), "Deep sleep should be allowed");
     while (st.sem_wait(0) != 1) {
         sleep();
     }

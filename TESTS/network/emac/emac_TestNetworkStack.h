@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-#if MBED_CONF_APP_TEST_WIFI || MBED_CONF_APP_TEST_ETHERNET
-
 #ifndef EMAC_TEST_NETWORK_STACK_H
 #define EMAC_TEST_NETWORK_STACK_H
 
@@ -56,7 +54,7 @@ public:
                                       const char *netmask, const char *gw,
                                       nsapi_ip_stack_t stack = DEFAULT_STACK,
                                       bool blocking = true
-                                      );
+                                     );
 
         /** Disconnect interface from the network
          *
@@ -90,7 +88,6 @@ public:
 
         /** Copies IP address of the network interface to user supplied buffer
          *
-         * @param    emac       EMAC HAL implementation for this network interface
          * @param    buf        buffer to which IP address will be copied as "W:X:Y:Z"
          * @param    buflen     size of supplied buffer
          * @return              Pointer to a buffer, or NULL if the buffer is too small
@@ -148,7 +145,7 @@ public:
      *  @return         0 on success, negative error code on failure
      */
     virtual nsapi_error_t gethostbyname(const char *host,
-            SocketAddress *address, nsapi_version_t version = NSAPI_UNSPEC);
+                                        SocketAddress *address, nsapi_version_t version = NSAPI_UNSPEC);
 
     /** Add a domain name server to list of servers to query
      *
@@ -236,7 +233,7 @@ protected:
      *  @return         0 on success, negative error code on failure
      */
     virtual nsapi_error_t socket_accept(nsapi_socket_t server,
-                                        nsapi_socket_t *handle, SocketAddress *address=0);
+                                        nsapi_socket_t *handle, SocketAddress *address = 0);
 
     /** Send data over a TCP socket
      *
@@ -392,5 +389,3 @@ private:
 };
 
 #endif /* EMAC_TEST_NETWORK_STACK_H */
-
-#endif

@@ -20,10 +20,21 @@
 #include "ticker_api_tests.h"
 #include "hal/us_ticker_api.h"
 #include "hal/lp_ticker_api.h"
+#include "hal/mbed_lp_ticker_wrapper.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "os_tick.h"
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #if !DEVICE_USTICKER
 #error [NOT_SUPPORTED] test not supported
 #endif
+
+#define US_PER_S 1000000
 
 #define FORCE_OVERFLOW_TEST (false)
 #define TICKER_INT_VAL 500
@@ -35,10 +46,11 @@
 #define US_TICKER_OVERFLOW_DELTA2   60
 
 #define TICKER_100_TICKS 100
+#define TICKER_500_TICKS 500
 
 #define MAX_FUNC_EXEC_TIME_US 30
 #define DELTA_FUNC_EXEC_TIME_US 5
-#define NUM_OF_CALLS 1000
+#define NUM_OF_CALLS 100
 
 #define NUM_OF_CYCLES 100000
 
@@ -48,7 +60,7 @@
 using namespace utest::v1;
 
 volatile int intFlag = 0;
-const ticker_interface_t* intf;
+const ticker_interface_t *intf;
 ticker_irq_handler_type prev_irq_handler;
 /* Some targets might fail overflow test uncertainly due to getting trapped in busy
  * intf->read() loop. In the loop, some ticker values wouldn't get caught in time
@@ -56,7 +68,7 @@ ticker_irq_handler_type prev_irq_handler;
  * 1. Lower CPU clock
  * 2. Compiled code with worse performance
  * 3. Interrupt at that time
- * 
+ *
  * We fix it by checking small ticker value range rather than one exact ticker point
  * in near overflow check.
  */
@@ -70,7 +82,7 @@ uint32_t count_ticks(uint32_t cycles, uint32_t step)
 {
     register uint32_t reg_cycles = cycles;
 
-    const ticker_info_t* p_ticker_info = intf->get_info();
+    const ticker_info_t *p_ticker_info = intf->get_info();
     const uint32_t max_count = ((1 << p_ticker_info->bits) - 1);
 
     core_util_critical_section_enter();
@@ -109,7 +121,7 @@ void overflow_protect()
     }
 
     const uint32_t ticks_now = intf->read();
-    const ticker_info_t* p_ticker_info = intf->get_info();
+    const ticker_info_t *p_ticker_info = intf->get_info();
 
     const uint32_t max_count = ((1 << p_ticker_info->bits) - 1);
 
@@ -120,7 +132,7 @@ void overflow_protect()
     while (intf->read() > ticks_now);
 }
 
-void ticker_event_handler_stub(const ticker_data_t * const ticker)
+void ticker_event_handler_stub(const ticker_data_t *const ticker)
 {
     if (ticker == get_us_ticker_data()) {
         us_ticker_clear_interrupt();
@@ -131,7 +143,7 @@ void ticker_event_handler_stub(const ticker_data_t * const ticker)
     }
 
     /* Indicate that ISR has been executed in interrupt context. */
-    if (IsIrqMode()) {
+    if (core_util_is_isr_active()) {
         intFlag++;
     }
 }
@@ -139,6 +151,19 @@ void ticker_event_handler_stub(const ticker_data_t * const ticker)
 void wait_cycles(volatile unsigned int cycles)
 {
     while (cycles--);
+}
+
+/* Auxiliary function to determine how long ticker function are executed.
+ * This function returns number of us between <start_ticks> and <stop_ticks>
+ * taking into account counter roll-over, counter size and frequency.
+ */
+uint32_t diff_us(uint32_t start_ticks, uint32_t stop_ticks, const ticker_info_t *info)
+{
+    uint32_t counter_mask = ((1 << info->bits) - 1);
+
+    uint32_t diff_ticks = ((stop_ticks - start_ticks) & counter_mask);
+
+    return (uint32_t)((uint64_t) diff_ticks * US_PER_S / info->frequency);
 }
 
 /* Test that ticker_init can be called multiple times and
@@ -177,7 +202,7 @@ void ticker_init_test()
 /* Test that ticker frequency is non-zero and counter is at least 8 bits */
 void ticker_info_test(void)
 {
-    const ticker_info_t* p_ticker_info = intf->get_info();
+    const ticker_info_t *p_ticker_info = intf->get_info();
 
     TEST_ASSERT(p_ticker_info->frequency != 0);
     TEST_ASSERT(p_ticker_info->bits >= 8);
@@ -289,7 +314,7 @@ void ticker_fire_now_test(void)
 /* Test that the ticker correctly handles overflow. */
 void ticker_overflow_test(void)
 {
-    const ticker_info_t* p_ticker_info = intf->get_info();
+    const ticker_info_t *p_ticker_info = intf->get_info();
 
     /* We need to check how long it will take to overflow.
      * We will perform this test only if this time is no longer than 30 sec.
@@ -307,7 +332,7 @@ void ticker_overflow_test(void)
 
     /* Wait for max count. */
     while (intf->read() >= (max_count - ticker_overflow_delta2) &&
-        intf->read() <= (max_count - ticker_overflow_delta1)) {
+            intf->read() <= (max_count - ticker_overflow_delta1)) {
         /* Just wait. */
     }
 
@@ -344,7 +369,7 @@ void ticker_overflow_test(void)
 /* Test that the ticker increments by one on each tick. */
 void ticker_increment_test(void)
 {
-    const ticker_info_t* p_ticker_info = intf->get_info();
+    const ticker_info_t *p_ticker_info = intf->get_info();
 
     /* Perform test based on ticker speed. */
     if (p_ticker_info->frequency <= 250000) {    // low frequency tickers
@@ -384,7 +409,7 @@ void ticker_increment_test(void)
             } else {
                 /* Check if we got 1 tick diff. */
                 if (next_tick_count - base_tick_count == 1 ||
-                    base_tick_count - next_tick_count == 1) {
+                        base_tick_count - next_tick_count == 1) {
                     break;
                 }
 
@@ -411,69 +436,76 @@ void ticker_increment_test(void)
 /* Test that common ticker functions complete with the required amount of time. */
 void ticker_speed_test(void)
 {
-    Timer timer;
     int counter = NUM_OF_CALLS;
+    uint32_t start;
+    uint32_t stop;
+
+    const ticker_info_t *us_ticker_info = get_us_ticker_data()->interface->get_info();
 
     /* ---- Test ticker_read function. ---- */
-    timer.reset();
-    timer.start();
+    start = us_ticker_read();
     while (counter--) {
         intf->read();
     }
-    timer.stop();
+    stop = us_ticker_read();
 
-    TEST_ASSERT(timer.read_us() < (NUM_OF_CALLS * (MAX_FUNC_EXEC_TIME_US + DELTA_FUNC_EXEC_TIME_US)));
+    TEST_ASSERT(diff_us(start, stop, us_ticker_info) < (NUM_OF_CALLS * (MAX_FUNC_EXEC_TIME_US + DELTA_FUNC_EXEC_TIME_US)));
 
     /* ---- Test ticker_clear_interrupt function. ---- */
     counter = NUM_OF_CALLS;
-    timer.reset();
-    timer.start();
+    start = us_ticker_read();
     while (counter--) {
         intf->clear_interrupt();
     }
-    timer.stop();
+    stop = us_ticker_read();
 
-    TEST_ASSERT(timer.read_us() < (NUM_OF_CALLS * (MAX_FUNC_EXEC_TIME_US + DELTA_FUNC_EXEC_TIME_US)));
+    TEST_ASSERT(diff_us(start, stop, us_ticker_info) < (NUM_OF_CALLS * (MAX_FUNC_EXEC_TIME_US + DELTA_FUNC_EXEC_TIME_US)));
 
     /* ---- Test ticker_set_interrupt function. ---- */
     counter = NUM_OF_CALLS;
-    timer.reset();
-    timer.start();
+    start = us_ticker_read();
     while (counter--) {
         intf->set_interrupt(0);
     }
-    timer.stop();
+    stop = us_ticker_read();
 
-    TEST_ASSERT(timer.read_us() < (NUM_OF_CALLS * (MAX_FUNC_EXEC_TIME_US + DELTA_FUNC_EXEC_TIME_US)));
+    TEST_ASSERT(diff_us(start, stop, us_ticker_info) < (NUM_OF_CALLS * (MAX_FUNC_EXEC_TIME_US + DELTA_FUNC_EXEC_TIME_US)));
 
     /* ---- Test fire_interrupt function. ---- */
     counter = NUM_OF_CALLS;
-    timer.reset();
-    timer.start();
+    start = us_ticker_read();
     while (counter--) {
         intf->fire_interrupt();
     }
-    timer.stop();
+    stop = us_ticker_read();
 
-    TEST_ASSERT(timer.read_us() < (NUM_OF_CALLS * (MAX_FUNC_EXEC_TIME_US + DELTA_FUNC_EXEC_TIME_US)));
+    TEST_ASSERT(diff_us(start, stop, us_ticker_info) < (NUM_OF_CALLS * (MAX_FUNC_EXEC_TIME_US + DELTA_FUNC_EXEC_TIME_US)));
 
     /* ---- Test disable_interrupt function. ---- */
     counter = NUM_OF_CALLS;
-    timer.reset();
-    timer.start();
+    start = us_ticker_read();
     while (counter--) {
         intf->disable_interrupt();
     }
-    timer.stop();
+    stop = us_ticker_read();
 
-    TEST_ASSERT(timer.read_us() < (NUM_OF_CALLS * (MAX_FUNC_EXEC_TIME_US + DELTA_FUNC_EXEC_TIME_US)));
+    TEST_ASSERT(diff_us(start, stop, us_ticker_info) < (NUM_OF_CALLS * (MAX_FUNC_EXEC_TIME_US + DELTA_FUNC_EXEC_TIME_US)));
+
 }
 
 utest::v1::status_t us_ticker_setup(const Case *const source, const size_t index_of_case)
 {
     intf = get_us_ticker_data()->interface;
 
-    OS_Tick_Disable();
+    /* OS, common ticker and low power ticker wrapper
+     * may make use of us ticker so suspend them for this test */
+    osKernelSuspend();
+#if DEVICE_LPTICKER && (LPTICKER_DELAY_TICKS > 0)
+    /* Suspend the lp ticker wrapper since it makes use of the us ticker */
+    ticker_suspend(get_lp_ticker_data());
+    lp_ticker_wrapper_suspend();
+#endif
+    ticker_suspend(get_us_ticker_data());
 
     intf->init();
 
@@ -485,14 +517,19 @@ utest::v1::status_t us_ticker_setup(const Case *const source, const size_t index
     return greentea_case_setup_handler(source, index_of_case);
 }
 
-utest::v1::status_t us_ticker_teardown(const Case * const source, const size_t passed, const size_t failed,
-        const failure_t reason)
+utest::v1::status_t us_ticker_teardown(const Case *const source, const size_t passed, const size_t failed,
+                                       const failure_t reason)
 {
     set_us_ticker_irq_handler(prev_irq_handler);
 
     prev_irq_handler = NULL;
 
-    OS_Tick_Enable();
+    ticker_resume(get_us_ticker_data());
+#if DEVICE_LPTICKER && (LPTICKER_DELAY_TICKS > 0)
+    lp_ticker_wrapper_resume();
+    ticker_resume(get_lp_ticker_data());
+#endif
+    osKernelResume(0);
 
     return greentea_case_teardown_handler(source, passed, failed, reason);
 }
@@ -502,7 +539,9 @@ utest::v1::status_t lp_ticker_setup(const Case *const source, const size_t index
 {
     intf = get_lp_ticker_data()->interface;
 
-    OS_Tick_Disable();
+    /* OS and common ticker may make use of lp ticker so suspend them for this test */
+    osKernelSuspend();
+    ticker_suspend(get_lp_ticker_data());
 
     intf->init();
 
@@ -514,14 +553,15 @@ utest::v1::status_t lp_ticker_setup(const Case *const source, const size_t index
     return greentea_case_setup_handler(source, index_of_case);
 }
 
-utest::v1::status_t lp_ticker_teardown(const Case * const source, const size_t passed, const size_t failed,
-        const failure_t reason)
+utest::v1::status_t lp_ticker_teardown(const Case *const source, const size_t passed, const size_t failed,
+                                       const failure_t reason)
 {
     set_lp_ticker_irq_handler(prev_irq_handler);
 
     prev_irq_handler = NULL;
 
-    OS_Tick_Enable();
+    ticker_resume(get_lp_ticker_data());
+    osKernelResume(0);
 
     return greentea_case_teardown_handler(source, passed, failed, reason);
 }

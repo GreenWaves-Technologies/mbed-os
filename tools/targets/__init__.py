@@ -17,7 +17,7 @@ limitations under the License.
 ###
 # Modifications copyright (C) 2018 GreenWaves Technologies
 #
-# - Add IMXGAP8 support in CORE_LABELS
+# - Add RISC-V CORE target support for GAP
 ###
 from __future__ import print_function
 
@@ -35,7 +35,7 @@ from tools.paths import TOOLS_BOOTLOADERS
 from tools.utils import json_file_to_dict
 
 __all__ = ["target", "TARGETS", "TARGET_MAP", "TARGET_NAMES", "CORE_LABELS",
-           "HookError", "generate_py_target", "Target",
+           "CORE_ARCH", "HookError", "generate_py_target", "Target",
            "CUMULATIVE_ATTRIBUTES", "get_resolution_order"]
 
 CORE_LABELS = {
@@ -54,6 +54,23 @@ CORE_LABELS = {
     "Cortex-M33": ["M33", "CORTEX_M", "LIKE_CORTEX_M33", "CORTEX"],
     "Cortex-M33-NS": ["M33", "M33_NS", "CORTEX_M", "LIKE_CORTEX_M33", "CORTEX"],
     "IMXGAP8": ["GAP", "RISCV_32", "RTOS_GAP", "RISCV"]
+}
+
+CORE_ARCH = {
+    "Cortex-M0": 6,
+    "Cortex-M0+": 6,
+    "Cortex-M1": 6,
+    "Cortex-M3": 7,
+    "Cortex-M4": 7,
+    "Cortex-M4F": 7,
+    "Cortex-M7": 7,
+    "Cortex-M7F": 7,
+    "Cortex-M7FD": 7,
+    "Cortex-A9": 7,
+    "Cortex-M23": 8,
+    "Cortex-M23-NS": 8,
+    "Cortex-M33": 8,
+    "Cortex-M33-NS": 8,
 }
 
 ################################################################################
@@ -80,7 +97,7 @@ def cached(func):
 
 # Cumulative attributes can have values appended to them, so they
 # need to be computed differently than regular attributes
-CUMULATIVE_ATTRIBUTES = ['extra_labels', 'macros', 'device_has', 'features']
+CUMULATIVE_ATTRIBUTES = ['extra_labels', 'macros', 'device_has', 'features', 'components']
 
 
 def get_resolution_order(json_data, target_name, order, level=0):
@@ -211,8 +228,7 @@ class Target(namedtuple("Target", "name json_data resolution_order resolution_or
                 def_idx = idx
                 break
         else:
-            raise AttributeError("Attribute '%s' not found in target '%s'"
-                                 % (attrname, self.name))
+            return []
         # Get the starting value of the attribute
         starting_value = (tdata[self.resolution_order[def_idx][0]][attrname]
                           or [])[:]
@@ -519,13 +535,11 @@ class MCU_NRF51Code(object):
             t_self.notify.debug("Merge SoftDevice file %s"
                                 % softdevice_and_offset_entry['name'])
             sdh = IntelHex(sdf)
-            sdh.start_addr = None
             binh.merge(sdh)
 
         if t_self.target.MERGE_BOOTLOADER is True and blf is not None:
             t_self.notify.debug("Merge BootLoader file %s" % blf)
             blh = IntelHex(blf)
-            blh.start_addr = None
             binh.merge(blh)
 
         with open(binf.replace(".bin", ".hex"), "w") as fileout:

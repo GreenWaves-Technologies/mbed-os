@@ -21,11 +21,6 @@
  */
 #ifndef KERNEL_H
 #define KERNEL_H
-/*
- Modifications copyright (C) 2018 GreenWaves Technologies
-
- - Add #include "cmsis_os2.h"
- */
 
 #include <stdint.h>
 #include "cmsis_os2.h"
@@ -48,6 +43,20 @@ namespace Kernel {
      @note You cannot call this function from ISR context.
  */
 uint64_t get_ms_count();
+
+/** Attach a function to be called by the RTOS idle task
+  @param   fptr  pointer to the function to be called
+
+  @note You may call this function from ISR context.
+*/
+void attach_idle_hook(void (*fptr)(void));
+
+/** Attach a function to be called when a task is killed
+  @param   fptr  pointer to the function to be called
+
+  @note You may call this function from ISR context.
+*/
+void attach_thread_terminate_hook(void (*fptr)(osThreadId_t id));
 
 } // namespace Kernel
 
