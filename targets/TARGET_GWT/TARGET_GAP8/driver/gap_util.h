@@ -119,7 +119,7 @@ extern "C" {
  * @param bitfield Destination
  * @param mask     Source
  */
-__STATIC_INLINE void _bitfield_mask_copy(uint32_t *bitfield, uint32_t mask)
+static inline void _bitfield_mask_copy(uint32_t *bitfield, uint32_t mask)
 {
   *bitfield = mask;
 }
@@ -130,7 +130,7 @@ __STATIC_INLINE void _bitfield_mask_copy(uint32_t *bitfield, uint32_t mask)
  * @param bitfield Destination
  * @param nbBits   Number of bits
  */
-__STATIC_INLINE void _bitfield_mask_init(uint32_t *bitfield, int nbBits)
+static inline void _bitfield_mask_init(uint32_t *bitfield, int nbBits)
 {
   if (nbBits == 32) *bitfield = 0xffffffff;
   else *bitfield = (1 << nbBits) - 1;
@@ -141,7 +141,7 @@ __STATIC_INLINE void _bitfield_mask_init(uint32_t *bitfield, int nbBits)
  *
  * @param bitfield Destination
  */
-__STATIC_INLINE void _bitfield_clear(uint32_t *bitfield)
+static inline void _bitfield_clear(uint32_t *bitfield)
 {
   *bitfield = 0;
 }
@@ -151,7 +151,7 @@ __STATIC_INLINE void _bitfield_clear(uint32_t *bitfield)
  *
  * @param bitfield Destination
  */
-__STATIC_INLINE int _bitfield_get(uint32_t bitfield)
+static inline int _bitfield_get(uint32_t bitfield)
 {
   int result = __builtin_pulp_ff1(bitfield);
   if (result == 32) return -1;
@@ -163,7 +163,7 @@ __STATIC_INLINE int _bitfield_get(uint32_t bitfield)
  *
  * @param bitfield Destination
  */
-__STATIC_INLINE int _bitfield_alloc(uint32_t *bitfield)
+static inline int _bitfield_alloc(uint32_t *bitfield)
 {
   int bit = _bitfield_get(*bitfield);
   if (bit == -1) return -1;
@@ -180,7 +180,7 @@ __STATIC_INLINE int _bitfield_alloc(uint32_t *bitfield)
  * @param bitfield Destination
  * @param id       event number
  */
-__STATIC_INLINE int _bitfield_reserve(uint32_t *bitfield, int id)
+static inline int _bitfield_reserve(uint32_t *bitfield, int id)
 {
   if (!(*bitfield & (1<<id))) {
     return -1;
@@ -196,7 +196,7 @@ __STATIC_INLINE int _bitfield_reserve(uint32_t *bitfield, int id)
  * @param bitfield Destination
  * @param id       event number
  */
-__STATIC_INLINE void _bitfield_free(uint32_t *bitfield, int id)
+static inline void _bitfield_free(uint32_t *bitfield, int id)
 {
   *bitfield |= 1 << id;
 }

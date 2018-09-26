@@ -85,8 +85,6 @@ void FLL_Init(fll_type_t which_fll, uint32_t ret_state);
  */
 void FLL_DeInit(fll_type_t which_fll);
 
-
-
 /*!
  * @brief Clean all FLL configuration.
  *

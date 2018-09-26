@@ -68,63 +68,63 @@ extern "C" {
  * bits[19:10] sets the medium interval default  50 cycles
  * bits[29:20] sets the long interval   default 400 cycles
  */
-  __STATIC_INLINE void EFUSE_ConfigTimings(uint32_t timervalues) {
+  static inline void EFUSE_ConfigTimings(uint32_t timervalues) {
     EFUSE_CTRL->CFG = timervalues;
   }
 
-  __STATIC_INLINE void EFUSE_StartRead() {
+  static inline void EFUSE_StartRead() {
     EFUSE_CTRL->CMD = EFUSE_CTRL_CMD_READ;
   }
 
-  __STATIC_INLINE void EFUSE_StartProgram() {
+  static inline void EFUSE_StartProgram() {
     EFUSE_CTRL->CMD = EFUSE_CTRL_CMD_WRITE;
   }
 
-  __STATIC_INLINE void EFUSE_Sleep() {
+  static inline void EFUSE_Sleep() {
     EFUSE_CTRL->CMD = EFUSE_CTRL_CMD_SLEEP;
   }
 
-  __STATIC_INLINE uint8_t EFUSE_GetInfo() {
+  static inline uint8_t EFUSE_GetInfo() {
     return (uint8_t) EFUSE_REGS->INFO;
   }
 
-  __STATIC_INLINE uint8_t EFUSE_GetInfo2() {
+  static inline uint8_t EFUSE_GetInfo2() {
     return (uint8_t) EFUSE_REGS->INFO2;
   }
 
-  __STATIC_INLINE uint8_t EFUSE_GetPlatform(uint8_t infoValue) {
+  static inline uint8_t EFUSE_GetPlatform(uint8_t infoValue) {
     return ((infoValue & EFUSE_INFO_PLT_MASK) /*>> EFUSE_INFO_PLT_SHIFT*/);
   }
 
-  __STATIC_INLINE uint8_t EFUSE_GetBootmode(uint8_t infoValue) {
+  static inline uint8_t EFUSE_GetBootmode(uint8_t infoValue) {
     return ((infoValue & EFUSE_INFO_BOOT_MASK) >> EFUSE_INFO_BOOT_SHIFT);
   }
 
-  __STATIC_INLINE uint8_t EFUSE_GetEncrypted(uint8_t infoValue) {
+  static inline uint8_t EFUSE_GetEncrypted(uint8_t infoValue) {
     return ((infoValue & EFUSE_INFO_ENCRYPTED_MASK) >> EFUSE_INFO_ENCRYPTED_SHIFT);
   }
 
-  __STATIC_INLINE uint8_t EFUSE_GetAESKey(int word) {
+  static inline uint8_t EFUSE_GetAESKey(int word) {
     return (uint8_t) EFUSE_REGS->AES_KEY[word];
   }
 
-  __STATIC_INLINE uint8_t EFUSE_GetAESIv(int word) {
+  static inline uint8_t EFUSE_GetAESIv(int word) {
     return (uint8_t) EFUSE_REGS->AES_IV[word];
   }
 
-  __STATIC_INLINE uint8_t EFUSE_wait_GetXtal(uint8_t infoValue) {
+  static inline uint8_t EFUSE_wait_GetXtal(uint8_t infoValue) {
     return ((infoValue & EFUSE_INFO_WAIT_XTAL_MASK) >> EFUSE_INFO_WAIT_XTAL_SHIFT);
   }
 
-  __STATIC_INLINE uint8_t EFUSE_wait_GetXtalDelta() {
+  static inline uint8_t EFUSE_wait_GetXtalDelta() {
     return ((uint8_t) EFUSE_REGS->WAIT_XTAL_DELTA_LSB) | (((uint8_t) EFUSE_REGS->WAIT_XTAL_DELTA_LSB) << 8);
   }
 
-  __STATIC_INLINE uint8_t EFUSE_wait_GetXtalMin() {
+  static inline uint8_t EFUSE_wait_GetXtalMin() {
     return (uint8_t) EFUSE_REGS->WAIT_XTAL_MIN;
   }
 
-  __STATIC_INLINE uint8_t EFUSE_GetWaitXtalMax() {
+  static inline uint8_t EFUSE_GetWaitXtalMax() {
     return (uint8_t) EFUSE_REGS->WAIT_XTAL_MAX;
   }
 /* @} */

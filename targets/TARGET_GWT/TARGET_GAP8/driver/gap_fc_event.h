@@ -56,7 +56,7 @@ extern "C" {
 /*!
  * @brief FC event handler.
  *
- * This function pop a event and judge which kind of handler the event should use.
+ * This function pop a event and deal with the handle according to event number.
  *
  * @note .
  */

@@ -53,7 +53,7 @@
   \param offset The offset in the event unit where to load from. Depending on this offset, this will trigger different behaviors (barrier, wait, wait&clear, etc).
   \return       The loaded value, after the core has been waken-up. This value depends on the feature which is accessed.
   */
-__STATIC_INLINE uint32_t EVT_Read32(uint32_t base, uint32_t offset)
+static inline uint32_t EVT_Read32(uint32_t base, uint32_t offset)
 {
   uint32_t value;
   value = __builtin_pulp_event_unit_read((int *)base, offset);
@@ -66,7 +66,7 @@ __STATIC_INLINE uint32_t EVT_Read32(uint32_t base, uint32_t offset)
   while its bit is already at 1, the event is somehow lost as the bit stays at 1. Thus events should be used as Linux signals.
   \return       The content of the status register.
   */
-__STATIC_INLINE uint32_t EU_EVT_Status()
+static inline uint32_t EU_EVT_Status()
 {
   return EU_CORE_DEMUX->BUFFER;
 }
@@ -77,7 +77,7 @@ __STATIC_INLINE uint32_t EU_EVT_Status()
   after a core wake-up as the core has been waken-up due to one of them.
   \return       The content of the status register ANDed with the event mask register.
   */
-__STATIC_INLINE uint32_t EU_EVT_StatusMasked()
+static inline uint32_t EU_EVT_StatusMasked()
 {
   return EU_CORE_DEMUX->BUFFER_MASKED;
 }
@@ -86,7 +86,7 @@ __STATIC_INLINE uint32_t EU_EVT_StatusMasked()
   This allows clearing events after they have been received so that they do not prevent the core from sleeping anymore.
   \param evtMask Bits to be cleared. 1 means the bit must be cleared, 0 it should remain the same.
   */
-__STATIC_INLINE void EU_EVT_Clr(uint32_t evtMask)
+static inline void EU_EVT_Clr(uint32_t evtMask)
 {
   EU_CORE_DEMUX->BUFFER_CLEAR = evtMask;
 }
@@ -98,7 +98,7 @@ __STATIC_INLINE void EU_EVT_Clr(uint32_t evtMask)
   register is modified (usually the bit is cleared using eu_evt_clr)
   \param evtMask Value to write to the event mask. There is 1 bit per event, 1 means it can wake-up the core, 0 it cannot
   */
-__STATIC_INLINE void EU_EVT_Mask(uint32_t evtMask)
+static inline void EU_EVT_Mask(uint32_t evtMask)
 {
   EU_CORE_DEMUX->MASK = evtMask;
 }
@@ -108,7 +108,7 @@ __STATIC_INLINE void EU_EVT_Mask(uint32_t evtMask)
   This is useful when the mask must be updated before waiting for a specific event without modifying the other events (this saves a few instructions)
   \param evtMask Bit mask used to update the event mask. There is 1 bit per event, 1 means the corresponding bit is set in the event mask.
   */
-__STATIC_INLINE void EU_EVT_MaskSet(uint32_t evtMask)
+static inline void EU_EVT_MaskSet(uint32_t evtMask)
 {
   EU_CORE_DEMUX->MASK_OR = evtMask;
 }
@@ -117,7 +117,7 @@ __STATIC_INLINE void EU_EVT_MaskSet(uint32_t evtMask)
   This is the opposite of eu_evt_maskSet. For each bit at 1 in the new value, the corresponding bit is set to 0 in the event mask and the others remain the same.
   \param evtMask Bit mask used to update the event mask. There is 1 bit per event, 1 means the corresponding bit is cleared in the event mask.
   */
-__STATIC_INLINE void EU_EVT_MaskClr(uint32_t evtMask)
+static inline void EU_EVT_MaskClr(uint32_t evtMask)
 {
   EU_CORE_DEMUX->MASK_AND = evtMask;
 }
@@ -126,7 +126,7 @@ __STATIC_INLINE void EU_EVT_MaskClr(uint32_t evtMask)
   The core goes to sleep until there is one bit at 1 in both the event status register and the event mask register. If it is already the case, when this function is called,
   the core does not go to sleep and this function returns immediately.
   */
-__STATIC_INLINE uint32_t EU_EVT_Wait()
+static inline uint32_t EU_EVT_Wait()
 {
   return EVT_Read32((uint32_t)&EU_CORE_DEMUX->EVENT_WAIT, 0);
 }
@@ -135,7 +135,7 @@ __STATIC_INLINE uint32_t EU_EVT_Wait()
   This is similar to eu_evt_wait but when the core is waken-up, the active events are cleared in the status register. An event is active if its bit is at 1 in both
   the event status register and the event mask register.
   */
-__STATIC_INLINE uint32_t EU_EVT_WaitAndClr()
+static inline uint32_t EU_EVT_WaitAndClr()
 {
   return EVT_Read32((uint32_t)&EU_CORE_DEMUX->EVENT_WAIT_CLEAR, 0);
 }
@@ -146,7 +146,7 @@ __STATIC_INLINE uint32_t EU_EVT_WaitAndClr()
   Not that this function is using 3 instructions instead of 1 for most of other primitives, as it needs 2 instruction to set and clear the mask.
   \param evtMask Event mask used for activating and deactivating events. Each bit to 1 means the corresponding event is activated before sleeping and deactivated after.
   */
-__STATIC_INLINE uint32_t EU_EVT_MaskWaitAndClr(uint32_t evtMask)
+static inline uint32_t EU_EVT_MaskWaitAndClr(uint32_t evtMask)
 {
   EU_EVT_MaskSet(evtMask);
   uint32_t result = EU_EVT_WaitAndClr();
@@ -154,7 +154,7 @@ __STATIC_INLINE uint32_t EU_EVT_MaskWaitAndClr(uint32_t evtMask)
   return result;
 }
 
-__STATIC_INLINE uint32_t EU_FC_EVT_MaskWaitAndClr(uint32_t evtMask)
+static inline uint32_t EU_FC_EVT_MaskWaitAndClr(uint32_t evtMask)
 {
   EU_EVT_MaskSet(evtMask);
   uint32_t result;
@@ -175,42 +175,42 @@ __STATIC_INLINE uint32_t EU_FC_EVT_MaskWaitAndClr(uint32_t evtMask)
  */
 /**@{*/
 
-__STATIC_INLINE uint32_t EU_EVT_StatusIrqMasked()
+static inline uint32_t EU_EVT_StatusIrqMasked()
 {
   return EU_CORE_DEMUX->BUFFER_IRQ_MASKED;
 }
 
-__STATIC_INLINE void EU_IRQ_Mask(uint32_t irqMask)
+static inline void EU_IRQ_Mask(uint32_t irqMask)
 {
   EU_CORE_DEMUX->MASK_IRQ = irqMask;
 }
 
-__STATIC_INLINE void EU_IRQ_SecMask(uint32_t irqMask)
+static inline void EU_IRQ_SecMask(uint32_t irqMask)
 {
   EU_CORE_DEMUX->MASK_SEC_IRQ = irqMask;
 }
 
-__STATIC_INLINE void EU_IRQ_MaskSet(uint32_t irqMask)
+static inline void EU_IRQ_MaskSet(uint32_t irqMask)
 {
   EU_CORE_DEMUX->MASK_IRQ_OR = irqMask;
 }
 
-__STATIC_INLINE void EU_IRQ_MaskClr(uint32_t irqMask)
+static inline void EU_IRQ_MaskClr(uint32_t irqMask)
 {
   EU_CORE_DEMUX->MASK_IRQ_AND = irqMask;
 }
 
-__STATIC_INLINE void EU_IRQ_SecMaskSet(uint32_t irqMask)
+static inline void EU_IRQ_SecMaskSet(uint32_t irqMask)
 {
   EU_SEC_DEMUX->MASK_OR = irqMask;
 }
 
-__STATIC_INLINE void EU_IRQ_SecMaskClr(uint32_t irqMask)
+static inline void EU_IRQ_SecMaskClr(uint32_t irqMask)
 {
   EU_SEC_DEMUX->MASK_AND = irqMask;
 }
 
-__STATIC_INLINE uint32_t EU_IRQ_Status()
+static inline uint32_t EU_IRQ_Status()
 {
   return EU_CORE_DEMUX->BUFFER_IRQ_MASKED;
 }
@@ -224,18 +224,18 @@ __STATIC_INLINE uint32_t EU_IRQ_Status()
 /**@{*/
 
 #ifdef FEATURE_CLUSTER
-__STATIC_INLINE void EU_CLUSTER_EVT_TrigSet(int event_num, uint32_t value)
+static inline void EU_CLUSTER_EVT_TrigSet(int event_num, uint32_t value)
 {
   CLUSTER_EU_SW_EVENTS->TRIGGER_SET[event_num] = value;
 }
 #endif
 
-__STATIC_INLINE void EU_FC_EVT_TrigSet(int event_num, uint32_t value)
+static inline void EU_FC_EVT_TrigSet(int event_num, uint32_t value)
 {
   FC_EU_SW_EVENTS->TRIGGER_SET[event_num] = value;
 }
 
-__STATIC_INLINE void EU_FC_EVT_DemuxTrigSet(int event_num, uint32_t value)
+static inline void EU_FC_EVT_DemuxTrigSet(int event_num, uint32_t value)
 {
   EU_SW_EVENTS_DEMUX->TRIGGER_SET[event_num] = value;
 }
@@ -254,18 +254,18 @@ __STATIC_INLINE void EU_FC_EVT_DemuxTrigSet(int event_num, uint32_t value)
 // All-in-one barrier: Trigger barrier notif, wait for barrier and clear the event
 // This also return the pending active events.
 // Barrier event must be active for this to work
-__STATIC_INLINE uint32_t EU_BarrierTriggerWaitClear()
+static inline uint32_t EU_BarrierTriggerWaitClear()
 {
     return EVT_Read32((uint32_t)&EU_BARRIER_DEMUX->TRIGGER_WAIT_CLEAR, 0);
 }
 
-__STATIC_INLINE void EU_BarrierSetup(uint32_t coreMask)
+static inline void EU_BarrierSetup(uint32_t coreMask)
 {
     EU_BARRIER_DEMUX->TRIGGER_MASK = coreMask;
     EU_BARRIER_DEMUX->TARGET_MASK = coreMask;
 }
 
-__STATIC_INLINE void EU_BarrierTrigger(uint32_t mask)
+static inline void EU_BarrierTrigger(uint32_t mask)
 {
     EU_BARRIER_DEMUX->TRIGGER = mask;
 }
@@ -277,22 +277,22 @@ __STATIC_INLINE void EU_BarrierTrigger(uint32_t mask)
  */
 /**@{*/
 
-__STATIC_INLINE uint32_t EU_SOC_EventsPop()
+static inline uint32_t EU_SOC_EventsPop()
 {
   return EU_SOC_EVENTS->CURRENT_EVENT;
 }
 
-__STATIC_INLINE uint32_t FC_EU_SOC_EventsPop()
+static inline uint32_t FC_EU_SOC_EventsPop()
 {
   return EU_SOC_EVENTS->CURRENT_EVENT;
 }
 
-__STATIC_INLINE int32_t EU_SOC_EventsIsValid(uint32_t word)
+static inline int32_t EU_SOC_EventsIsValid(uint32_t word)
 {
   return ((word & EU_CURRENT_VALID_BIT_MASK) >> EU_CURRENT_VALID_BIT_SHIFT);
 }
 
-__STATIC_INLINE uint32_t EU_SOC_EventsGetEvent(uint32_t word)
+static inline uint32_t EU_SOC_EventsGetEvent(uint32_t word)
 {
   return word & EU_CURRENT_SOC_EVENT_MASK;
 }
@@ -304,19 +304,19 @@ __STATIC_INLINE uint32_t EU_SOC_EventsGetEvent(uint32_t word)
  *  Functions for managing, locking and unlocking hardware mutexes
  */
 /**@{*/
-__STATIC_INLINE void EU_MutexLock(uint32_t mutexID)
+static inline void EU_MutexLock(uint32_t mutexID)
 {
   EVT_Read32((uint32_t)&EU_MUTEX_DEMUX->MUTEX[mutexID], 0);
 }
 
-__STATIC_INLINE void EU_MutexUnlock(uint32_t mutexID)
+static inline void EU_MutexUnlock(uint32_t mutexID)
 {
   __asm__ __volatile__ ("" : : : "memory");
   EU_MUTEX_DEMUX->MUTEX[mutexID] = 0;
   __asm__ __volatile__ ("" : : : "memory");
 }
 
-__STATIC_INLINE void EU_MutexInit(uint32_t mutexID)
+static inline void EU_MutexInit(uint32_t mutexID)
 {
     EU_MUTEX_DEMUX->MUTEX[mutexID] = 0;
 }
@@ -330,22 +330,22 @@ __STATIC_INLINE void EU_MutexInit(uint32_t mutexID)
  */
 /**@{*/
 
-__STATIC_INLINE uint32_t EU_DispatchPop()
+static inline uint32_t EU_DispatchPop()
 {
   return EVT_Read32((uint32_t)&EU_DISPATCH_DEMUX->FIFO_ACCESS, 0);
 }
 
-__STATIC_INLINE void EU_DispatchPush(uint32_t value)
+static inline void EU_DispatchPush(uint32_t value)
 {
   EU_DISPATCH_DEMUX->FIFO_ACCESS = value;
 }
 
-__STATIC_INLINE void EU_Dispatch_TeamConfig(uint32_t value)
+static inline void EU_Dispatch_TeamConfig(uint32_t value)
 {
   EU_DISPATCH_DEMUX->TEAM_CONFIG = value;
 }
 
-__STATIC_INLINE uint32_t EU_Dispatch_ReadTeamConfig()
+static inline uint32_t EU_Dispatch_ReadTeamConfig()
 {
   return EU_DISPATCH_DEMUX->TEAM_CONFIG;
 }
@@ -359,52 +359,52 @@ __STATIC_INLINE uint32_t EU_Dispatch_ReadTeamConfig()
  */
 /**@{*/
 
-__STATIC_INLINE uint32_t EU_LoopAddr(uint32_t id)
+static inline uint32_t EU_LoopAddr(uint32_t id)
 {
   return CORE_EU_LOOP_DEMUX_BASE;
 }
 
-__STATIC_INLINE uint32_t EU_LoopGetChunk()
+static inline uint32_t EU_LoopGetChunk()
 {
   return EU_LOOP_DEMUX->CHUNK;
 }
 
-__STATIC_INLINE uint32_t EU_LoopGetStart()
+static inline uint32_t EU_LoopGetStart()
 {
   return EU_LOOP_DEMUX->START;
 }
 
-__STATIC_INLINE uint32_t EU_LoopGetState()
+static inline uint32_t EU_LoopGetState()
 {
   return EU_LOOP_DEMUX->STATE;
 }
 
-__STATIC_INLINE void EU_LoopSetStart(uint32_t value)
+static inline void EU_LoopSetStart(uint32_t value)
 {
   EU_LOOP_DEMUX->START = value;
 }
 
-__STATIC_INLINE void EU_LoopSetEnd(uint32_t value)
+static inline void EU_LoopSetEnd(uint32_t value)
 {
   EU_LOOP_DEMUX->END = value;
 }
 
-__STATIC_INLINE void EU_LoopSetIncr(uint32_t value)
+static inline void EU_LoopSetIncr(uint32_t value)
 {
   EU_LOOP_DEMUX->INCR = value;
 }
 
-__STATIC_INLINE void EU_Loop_SetChunk(uint32_t value)
+static inline void EU_Loop_SetChunk(uint32_t value)
 {
   EU_LOOP_DEMUX->CHUNK = value;
 }
 
-__STATIC_INLINE void EU_Loop_InitEpoch(uint32_t coreSet)
+static inline void EU_Loop_InitEpoch(uint32_t coreSet)
 {
   EU_LOOP_DEMUX->EPOCH = coreSet;
 }
 
-__STATIC_INLINE uint32_t EU_LoopGetSingle()
+static inline uint32_t EU_LoopGetSingle()
 {
   return EU_LOOP_DEMUX->SINGLE;
 }
@@ -413,7 +413,7 @@ __STATIC_INLINE uint32_t EU_LoopGetSingle()
 
 //!@}
 
-__STATIC_INLINE uint32_t EU_EVT_GetClusterBase(uint32_t coreId)
+static inline uint32_t EU_EVT_GetClusterBase(uint32_t coreId)
 {
   return EU_EVT_GETCLUSTERBASE(coreId);
 }

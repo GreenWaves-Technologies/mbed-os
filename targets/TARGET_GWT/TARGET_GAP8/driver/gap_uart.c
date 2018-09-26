@@ -248,7 +248,7 @@ status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, co
 }
 
 
-status_t UART_TransferReceiveNonBlocking(UART_Type *base, uart_handle_t *handle, const uint8_t *rx, size_t rx_length, size_t *receivedBytes)
+status_t UART_TransferReceiveNonBlocking(UART_Type *base, uart_handle_t *handle, const uint8_t *rx, size_t rx_length)
 {
     assert(handle);
     assert(rx);

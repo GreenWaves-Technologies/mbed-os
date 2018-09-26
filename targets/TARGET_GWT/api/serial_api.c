@@ -350,7 +350,7 @@ void serial_rx_asynch(serial_t *obj, void *rx, size_t rx_length, uint8_t rx_widt
     obj->serial.rxstate = uUART_RxBusy;
 
     /* Start the transfer */
-    UART_TransferReceiveNonBlocking(uart_addrs[obj->serial.index], &obj->serial.uart_transfer_handle, (const uint8_t *)rx, rx_length, NULL);
+    UART_TransferReceiveNonBlocking(uart_addrs[obj->serial.index], &obj->serial.uart_transfer_handle, (const uint8_t *)rx, rx_length);
 }
 
 uint8_t serial_tx_active(serial_t *obj)

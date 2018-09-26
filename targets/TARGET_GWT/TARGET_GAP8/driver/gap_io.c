@@ -62,7 +62,7 @@ static void _io_unlock(int irq) {
 int putchar(int c);
 
 __attribute__((always_inline))
-__STATIC_INLINE char __svcPutChar (char c) {
+static inline char __svcPutChar (char c) {
   SVC_ArgR(0,c);
   SVC_ArgF(putchar);
   SVC_Call0(SVC_In1, SVC_Out1, SVC_CL1);

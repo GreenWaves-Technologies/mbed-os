@@ -162,48 +162,6 @@ void CPI_GetDefaultConfig(cpi_config_t *masterConfig)
 /* masterConfig->wordWidth = */
 }
 
-void CPI_DropFrame(cpi_config_t *masterConfig, uint16_t arg)
-{
-    masterConfig->frameDrop_en = 1;
-    masterConfig->frameDrop_value = arg;
-}
-
-void CPI_Normalization(cpi_config_t *masterConfig, uint16_t arg)
-{
-    masterConfig->shift = arg;
-}
-
-void CPI_Filter(CPI_Type *base, image_filter_t *filter)
-{
-    base->CFG_FILTER = (CPI_CFG_FILTER_R_COEFF(filter->r_coeff)|
-                        CPI_CFG_FILTER_G_COEFF(filter->g_coeff)|
-                        CPI_CFG_FILTER_B_COEFF(filter->b_coeff));
-}
-
-void CPI_ImageExtract(CPI_Type *base, cpi_config_t *masterConfig, image_slice_t *slicer)
-{
-    base->CFG_LL = (CPI_CFG_LL_FRAMESLICE_LLX(slicer->slice_ll.x ) | CPI_CFG_LL_FRAMESLICE_LLY(slicer->slice_ll.y ));
-    base->CFG_UR = (CPI_CFG_UR_FRAMESLICE_URX((slicer->slice_ur.x-1) ) | CPI_CFG_UR_FRAMESLICE_URY((slicer->slice_ll.y-1) ));
-    masterConfig->slice_en = 1;
-}
-
-void CPI_Enable(CPI_Type *base, cpi_config_t *masterConfig)
-{
-    base->CFG_SIZE = CPI_CFG_SIZE(masterConfig->row_len);
-    base->CFG_GLOB = ( CPI_CFG_GLOB_FRAMEDROP_EN(masterConfig->frameDrop_en)          |
-                       CPI_CFG_GLOB_FRAMEDROP_VAL(masterConfig->frameDrop_value) |
-                       CPI_CFG_GLOB_FRAMESLICE_EN(masterConfig->slice_en)             |
-                       CPI_CFG_GLOB_FORMAT(masterConfig->format)                      |
-                       CPI_CFG_GLOB_SHIFT(masterConfig->shift)                        |
-                       CPI_CFG_GLOB_EN(1)
-            );
-}
-
-void CPI_Disable(CPI_Type *base)
-{
-    base->CFG_GLOB &= ~(CPI_CFG_GLOB_EN(0));
-}
-
 static status_t CPI_ReceptionStart(CPI_Type *base, cpi_transfer_t *transfer, const int hint) {
     cpi_req_t *RX = UDMA_FindAvailableRequest();
 

@@ -115,7 +115,7 @@ typedef struct _debug_struct {
 
 extern debug_struct_t HAL_DEBUG_STRUCT_NAME;
 
-__STATIC_INLINE debug_struct_t* DEBUG_GetDebugStruct()
+static inline debug_struct_t* DEBUG_GetDebugStruct()
 {
 #ifdef GAP_USE_DEBUG_STRUCT
   return &HAL_DEBUG_STRUCT_NAME;
@@ -171,15 +171,15 @@ static inline void BRIDGE_write(bridge_req_t *req, int file, void* ptr, int len)
   req->write.len = len;
 }
 
-__STATIC_INLINE void DEBUG_FlushPrintf(debug_struct_t *debugStruct) {
+static inline void DEBUG_FlushPrintf(debug_struct_t *debugStruct) {
   while(*(volatile uint32_t *)&debugStruct->putcharPending);
 }
 
-__STATIC_INLINE void DEBUG_Exit(debug_struct_t *debugStruct, int status) {
+static inline void DEBUG_Exit(debug_struct_t *debugStruct, int status) {
   *(volatile uint32_t *)&debugStruct->exitStatus = 0x80000000 | status;
 }
 
-__STATIC_INLINE void DEBUG_Putchar(debug_struct_t *debugStruct, char c) {
+static inline void DEBUG_Putchar(debug_struct_t *debugStruct, char c) {
   DEBUG_FlushPrintf(debugStruct);
   *(volatile uint8_t *)&(debugStruct->putcharBuffer[debugStruct->putcharCurrent++]) = c;
   if (*(volatile uint32_t *)&debugStruct->putcharCurrent == PRINTF_BUF_SIZE || c == '\n') {
@@ -188,13 +188,13 @@ __STATIC_INLINE void DEBUG_Putchar(debug_struct_t *debugStruct, char c) {
   }
 }
 
-__STATIC_INLINE void DEBUG_Step(debug_struct_t *debugStruct, uint32_t value) {
+static inline void DEBUG_Step(debug_struct_t *debugStruct, uint32_t value) {
   *(volatile uint32_t *)&debugStruct->debugStep = value;
   *(volatile uint32_t *)&debugStruct->debugStepPending = 1;
   while (*(volatile uint32_t *)&debugStruct->debugStepPending);
 }
 
-__STATIC_INLINE void DEBUG_Reset(debug_struct_t *debugStruct) {
+static inline void DEBUG_Reset(debug_struct_t *debugStruct) {
   *(volatile uint32_t *)&debugStruct->exitStatus = 0x80000000 | 0x40000000;
 }
 

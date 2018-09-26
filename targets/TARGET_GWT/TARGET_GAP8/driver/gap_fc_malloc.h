@@ -70,21 +70,45 @@ extern "C" {
 /*!
  * @brief Initializes the fc malloc.
  *
- * @note .
+ * @note This is will bind the FC heap start and stop address to the inner stucture malloc_t __fc_malloc,
+ *        It will record the allocation information of FC heap
  */
 void FC_MallocInit();
 
+/*!
+ * @brief Initializes the fc malloc.
+ *
+ * @note Allocate the memory according to the size and return the address pointer.
+ *
+ * @param size Memory allocation size.
+ *
+ * @return memory address pointer.
+ *
+ */
 void *FC_Malloc(int size);
 
+
+/*!
+ * @brief Allocate the fc heap memory with aligned size.
+ *
+ * @param size  Memory allocation size.
+ * @param align Memory allocation align size.
+ *
+ * @return memory address pointer.
+ *
+ */
 void *FC_MallocAlign(int size, int align);
 
 /*!
  * @brief Free the fc malloc.
  *
- * @note .
+ * @note Free the memory pointed by the _chunk
+ *
+ * @param _chunk Address of memory need to free.
+ * @param size  Size of memory need to free.
+ *
  */
 void FC_MallocFree(void *_chunk, int size);
-
 
 /* @} */
 

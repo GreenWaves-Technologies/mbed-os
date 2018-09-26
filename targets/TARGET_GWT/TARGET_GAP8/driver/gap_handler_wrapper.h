@@ -46,7 +46,7 @@
 /* Machine mode IRQ handler wrapper */
 #define Handler_Wrapper(f)                                                     \
 __attribute__((section(".text")))                                              \
-__STATIC_INLINE void __handler_wrapper_##f (void) {                            \
+static inline void __handler_wrapper_##f (void) {                            \
     asm volatile( "addi sp, sp, -18*4\n\t"                                     \
                   "sw   ra, 15*4(sp)\n\t"                                      \
                   "jal  Exception_handler\n\t");                               \
@@ -57,7 +57,7 @@ __STATIC_INLINE void __handler_wrapper_##f (void) {                            \
 /* Machine mode IRQ handler wrapper light version */
 #define Handler_Wrapper_Light(f)                                    \
 __attribute__((section(".text")))                                   \
-__STATIC_INLINE void __handler_wrapper_light_##f (void) {           \
+static inline void __handler_wrapper_light_##f (void) {           \
     asm volatile( "addi sp, sp, -11*4\n\t"                          \
                   "sw    ra,  32(sp)\n\t"                           \
                   "sw    a0,  28(sp)\n\t"                           \

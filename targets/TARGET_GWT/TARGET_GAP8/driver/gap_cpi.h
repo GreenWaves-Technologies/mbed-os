@@ -156,8 +156,10 @@ typedef struct _cpi_transfer
 /*! @brief CPI transfer request type definition.*/
 #define  cpi_req_t udma_req_t
 
-/*! @brief CPI handle typedef. */
-typedef struct _cpi_handle_t cpi_handle_t;
+/*!
+ * @brief Forward declaration of the _cpi_handle typedefs.
+ */
+typedef struct _cpi_handle cpi_handle_t;
 
 /*! @brief CPI transfer callback typedef. */
 typedef void (*cpi_transfer_callback_t)(CPI_Type *base,
@@ -165,7 +167,7 @@ typedef void (*cpi_transfer_callback_t)(CPI_Type *base,
                                         status_t status,
                                         void *userData);
 
-struct _cpi_handle_t
+struct _cpi_handle
 {
     status_t state;
     cpi_transfer_callback_t callback;
@@ -181,7 +183,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 /*!
- * @brief Initializes the CPI device.
+ * @brief Initializes the CPI device, including pin mapping.
  * @param base      CPI peripheral address.
  * @param pclk      Pin PCLK
  * @param hync      Pin HYNC
@@ -226,7 +228,10 @@ void CPI_GetDefaultConfig(cpi_config_t *masterConfig);
  * @param arg transfer dropframe argument
  *
  */
-void CPI_DropFrame(cpi_config_t *masterConfig, uint16_t arg);
+static inline void CPI_DropFrame(cpi_config_t *masterConfig, uint16_t arg) {
+    masterConfig->frameDrop_en = 1;
+    masterConfig->frameDrop_value = arg;
+}
 
 /*!
  * @brief CPI normilization
@@ -235,7 +240,9 @@ void CPI_DropFrame(cpi_config_t *masterConfig, uint16_t arg);
  * @param arg transfer Nomilization argument
  *
  */
-void CPI_Normalization(cpi_config_t *masterConfig, uint16_t arg);
+static inline void CPI_Normalization(cpi_config_t *masterConfig, uint16_t arg) {
+    masterConfig->shift = arg;
+}
 
 /*!
  * @brief CPI Filter
@@ -244,7 +251,11 @@ void CPI_Normalization(cpi_config_t *masterConfig, uint16_t arg);
  * @param filter Pointer to image filter structure
  *
  */
-void CPI_Filter(CPI_Type *base, image_filter_t *filter);
+static inline void CPI_Filter(CPI_Type *base, image_filter_t *filter) {
+    base->CFG_FILTER = (CPI_CFG_FILTER_R_COEFF(filter->r_coeff)|
+                        CPI_CFG_FILTER_G_COEFF(filter->g_coeff)|
+                        CPI_CFG_FILTER_B_COEFF(filter->b_coeff));
+}
 
 /*!
  * @brief CPI Image Extract
@@ -254,7 +265,12 @@ void CPI_Filter(CPI_Type *base, image_filter_t *filter);
  * @param slicer Pointer to image slice structure
  *
  */
-void CPI_ImageExtract(CPI_Type *base, cpi_config_t *masterConfig, image_slice_t *slicer);
+static inline void CPI_ImageExtract(CPI_Type *base, cpi_config_t *masterConfig, image_slice_t *slicer) {
+    base->CFG_LL = (CPI_CFG_LL_FRAMESLICE_LLX(slicer->slice_ll.x ) | CPI_CFG_LL_FRAMESLICE_LLY(slicer->slice_ll.y ));
+    base->CFG_UR = (CPI_CFG_UR_FRAMESLICE_URX((slicer->slice_ur.x-1) ) | CPI_CFG_UR_FRAMESLICE_URY((slicer->slice_ll.y-1) ));
+
+    masterConfig->slice_en = 1;
+}
 
 /*!
  * @brief CPI Enable
@@ -263,7 +279,15 @@ void CPI_ImageExtract(CPI_Type *base, cpi_config_t *masterConfig, image_slice_t 
  * @param masterConfig pointer to cpi_config_t structure
  *
  */
-void CPI_Enable(CPI_Type *base, cpi_config_t *masterConfig);
+static inline void CPI_Enable(CPI_Type *base, cpi_config_t *masterConfig) {
+    base->CFG_SIZE = CPI_CFG_SIZE(masterConfig->row_len);
+    base->CFG_GLOB = ( CPI_CFG_GLOB_FRAMEDROP_EN(masterConfig->frameDrop_en)     |
+                       CPI_CFG_GLOB_FRAMEDROP_VAL(masterConfig->frameDrop_value) |
+                       CPI_CFG_GLOB_FRAMESLICE_EN(masterConfig->slice_en)        |
+                       CPI_CFG_GLOB_FORMAT(masterConfig->format)                 |
+                       CPI_CFG_GLOB_SHIFT(masterConfig->shift)                   |
+                       CPI_CFG_GLOB_EN(1));
+}
 
 /*!
  * @brief CPI Disable
@@ -271,7 +295,9 @@ void CPI_Enable(CPI_Type *base, cpi_config_t *masterConfig);
  * @param base CPI peripheral address.
  *
  */
-void CPI_Disable(CPI_Type *base);
+static inline void CPI_Disable(CPI_Type *base) {
+    base->CFG_GLOB &= ~(CPI_CFG_GLOB_EN(0));
+}
 
 /*!
  * @brief Writes data into the data buffer master mode and waits till complete to return.
@@ -330,5 +356,3 @@ void CPI_ReceptionHandleIRQ(CPI_Type *base, cpi_handle_t *handle);
  */
 
 #endif
-
-
