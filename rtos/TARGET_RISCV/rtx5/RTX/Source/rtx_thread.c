@@ -170,7 +170,7 @@ void osRtxThreadListPut (os_object_t *object, os_thread_t *thread) {
 
 /// Get a Thread with Highest Priority from specified Object list and remove it.
 /// \param[in]  object          generic object.
-/// \return thread object. 
+/// \return thread object.
 os_thread_t *osRtxThreadListGet (os_object_t *object) {
   os_thread_t *thread;
 
@@ -819,19 +819,19 @@ static osThreadId_t svcRtxThreadNew (osThreadFunc_t func, void *argument, const 
     #else
     for (n = 0U; n != 13U; n++) {
     #endif
-      ptr[n] = 0U;                      // R4..R11, R0..R3, R12
+      *ptr++ = 0U;                      // R4..R11, R0..R3, R12
     }
-    ptr[13] = (uint32_t)osThreadExit;   // LR/RA
-    ptr[14] = (uint32_t)func;           // PC
+    *ptr++ = (uint32_t)osThreadExit;   // LR/RA
+    *ptr++ = (uint32_t)func;           // PC
     #if   (__RISCV_ARCH_GAP__   == 1U)
-    ptr[15] = MSTATUS_INITIAL_VALUE;     // U/Mstatus
-    ptr[12] = (uint32_t)argument;        // a0
+    *ptr++   = MSTATUS_INITIAL_VALUE;     // U/Mstatus
+    *(ptr-18) = (uint32_t)argument;       // a0
     #else
-    ptr[15] = xPSR_InitVal(
+    *ptr++ = xPSR_InitVal(
                 (bool_t)((osRtxConfig.flags & osRtxConfigPrivilegedMode) != 0U),
                 (bool_t)(((uint32_t)func & 1U) != 0U)
               );                        // xPSR
-    ptr[8]  = (uint32_t)argument;       // R0
+    *(ptr-8)  = (uint32_t)argument;       // R0
     #endif
 
     // Register post ISR processing function
@@ -841,7 +841,7 @@ static osThreadId_t svcRtxThreadNew (osThreadFunc_t func, void *argument, const 
   } else {
     EvrRtxThreadError(NULL, (int32_t)osErrorNoMemory);
   }
-  
+
   if (thread != NULL) {
     osRtxThreadDispatch(thread);
   }

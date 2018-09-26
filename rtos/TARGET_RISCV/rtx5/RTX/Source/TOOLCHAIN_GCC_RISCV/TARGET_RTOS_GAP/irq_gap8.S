@@ -5,10 +5,6 @@
 .section .text
 
   .global Ecall_Handler
-#ifndef MBED_CONF_RTOS_PRESENT
-Ecall_Handler:
-        mret
-#else
 Ecall_Handler:
         addi sp, sp, -18*4
         sw   ra,  15*4(sp)                   // Save ra here
@@ -22,9 +18,9 @@ Ecall_Handler:
 
   .global SVC_Context
 SVC_Context:
-        la  t2, osRtxInfo+I_T_RUN_OFS     // Load address of osRtxInfo.run
-        lw  t1, (t2)                      // Load osRtxInfo.thread.run: curr & next
-        lw  t2, 4(t2)
+        la  t0, osRtxInfo+I_T_RUN_OFS     // Load address of osRtxInfo.run
+        lw  t1, (t0)                      // Load osRtxInfo.thread.run: curr & next
+        lw  t2, 4(t0)
         beq t1, t2, SVC_Exit
         beq t1, x0, SVC_ContextSwitch
                                           // Check if thread switch is required
@@ -109,7 +105,6 @@ SVC_Exit:
         addi  sp, sp, 18*4
         sw    sp, %tiny(userStack)(x0)   // Return from User mode
         mret
-#endif
 
        .global Exception_handler
 Exception_handler:                       // exception handler should called for each exception and interruption

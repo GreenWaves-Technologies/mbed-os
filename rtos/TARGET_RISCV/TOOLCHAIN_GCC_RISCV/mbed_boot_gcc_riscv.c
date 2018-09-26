@@ -42,6 +42,7 @@ extern void __libc_init_array (void);
  *
  * Override gcc boot hook software_init_hook to run code before main.
  */
+#if defined(MBED_CONF_RTOS_PRESENT)
 void software_init_hook(void)
 {
     unsigned char *free_start = HEAP_START;
@@ -66,6 +67,7 @@ void software_init_hook(void)
     mbed_init();
     mbed_rtos_start();
 }
+#endif
 
 void mbed_toolchain_init()
 {
@@ -86,7 +88,7 @@ void mbed_toolchain_init()
 }
 
 extern int __real_main(void);
-int __wrap_main(void) {
+WEAK int __wrap_main(void) {
     /* For backwards compatibility */
     return __real_main();
 }

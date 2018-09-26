@@ -31,6 +31,7 @@
 #include "platform/NonCopyable.h"
 #include "rtos/Semaphore.h"
 #include "rtos/Mutex.h"
+#include "rtos/Kernel.h"
 
 namespace rtos {
 /** \addtogroup rtos */

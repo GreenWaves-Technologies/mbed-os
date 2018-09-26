@@ -348,7 +348,16 @@ static void delay_loop(uint32_t count)
 #else // GCC
 static void delay_loop(uint32_t count)
 {
-#ifdef __GCC_ARM
+#ifdef __riscv
+    __asm volatile(
+    "loop: \n"
+    " addi %0, %0, -1 \n"
+    " bnez %0, loop\n"
+    : "+r" (count)
+    :
+    : "cc"
+  );
+#else
     __asm__ volatile (
     "%=:\n\t"
 #if defined(__thumb__) && !defined(__thumb2__)
@@ -358,15 +367,6 @@ static void delay_loop(uint32_t count)
 #endif
     "BCS  %=b\n\t"
     : "+l" (count)
-    :
-    : "cc"
-  );
-#elif defined __GCC_RISCV
-    __asm volatile(
-    "loop: \n"
-    " addi %0, %0, #-1 \n"
-    " bnez loop\n"
-    : "+r" (count)
     :
     : "cc"
   );
