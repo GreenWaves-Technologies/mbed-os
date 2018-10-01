@@ -190,14 +190,14 @@ int spi_master_read(spi_t *obj, int cmd)
 
     int index = 0;
 
-    s_command_sequence[index++] = SPIM_CMD_RX_DATA(32, master_config.qpi, 0);
+    s_command_sequence[index++] = SPIM_CMD_RX_DATA(spi_obj->bits, master_config.qpi, 0);
 
     /* Blocking transfer */
     SPI_MasterTransferBlocking(spi_address[spi_obj->instance],
                                (uint32_t* )s_command_sequence,
                                (index * sizeof(uint32_t)),
                                (uint8_t *)&spi_reg_value,
-                               4,
+                               (spi_obj->bits >> 3),
                                32);
 
     if(spi_obj->bits == 8)
