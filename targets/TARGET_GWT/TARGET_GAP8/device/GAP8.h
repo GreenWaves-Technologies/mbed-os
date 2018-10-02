@@ -968,7 +968,7 @@ typedef struct {
 
 #define SPIM_CMD_RPT_END()                 ( SPIM_CMD(SPIM_CMD_RPT_END_ID) )
 
-#define SPIM_CMD_FUL(bits,byte_align)      ( SPIM_CMD(SPIM_CMD_RPT_END_ID) \
+#define SPIM_CMD_FUL(bits,byte_align)      ( SPIM_CMD(SPIM_CMD_FUL_ID) \
                                            | SPIM_CMD_FULL_SIZE_CMD((bits - 1 )) \
                                            | SPIM_CMD_FULL_BYTE_ALIGN_CMD(byte_align) )
 

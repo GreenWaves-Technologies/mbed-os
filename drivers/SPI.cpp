@@ -125,15 +125,6 @@ int SPI::udma_cs(int status)
     return ret;
 }
 
-int SPI::read()
-{
-    lock();
-    _acquire();
-    int ret = spi_master_read(&_spi, 0x00);
-    unlock();
-    return ret;
-}
-
 void SPI::udma_qspi(int status)
 {
     lock();

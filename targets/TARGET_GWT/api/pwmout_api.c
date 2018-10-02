@@ -47,7 +47,7 @@ void pwmout_init(pwmout_t* obj, PinName pin)
         .dutyCyclePercent = 50
     };
 
-    pwm_clock_src = uPWM_REF_32K;
+    pwm_clock_src = pwmInfo.clksel;
 
     // default to 20ms: standard for servos, and fine for e.g. brightness control
     PWM_SetupPwm(pwm_addrs[instance], &config, 1, 50, pwm_clock_src);
@@ -139,9 +139,9 @@ void pwmout_period_us(pwmout_t* obj, int us)
         /* Low 16 bits default set 0, to have maximum 0xFFFF counter */
         if (pwm_clock_src == uPWM_REF_32K) {
             /* Can not create resolution < 30 us */
-            base->TH = PWM_THRESHOLD_HIGH((int)((float)us * 0.032768f) - 1) | PWM_THRESHOLD_LOW(1);
+            base->TH = PWM_THRESHOLD_HIGH((int)((float)us * 0.032768f) + 1) | PWM_THRESHOLD_LOW(1);
         } else {
-            base->TH = PWM_THRESHOLD_HIGH((int)((float)us * (float)SystemCoreClock / 1000000.0f)) | PWM_THRESHOLD_LOW(1);
+            base->TH = PWM_THRESHOLD_HIGH((int)((float)us * (float)SystemCoreClock / 1000000.0f) + 1) | PWM_THRESHOLD_LOW(1);
         }
     }
 

@@ -148,22 +148,6 @@ int spi_master_qspi(spi_t *obj, spi_qpi_t qpi)
     return 0;
 }
 
-int spi_master_write(spi_t *obj, int value)
-{
-    struct spi_s *spi_obj = SPI_S(obj);
-
-    int index = 0;
-
-    s_command_sequence[index++] = SPIM_CMD_SEND_CMD(value, 8, master_config.qpi);
-
-    /* Blocking transfer */
-    SPI_MasterTransferBlocking(spi_address[spi_obj->instance],
-                               (uint32_t* )s_command_sequence,
-                               (index * sizeof(uint32_t)),
-                               NULL, 0, 32);
-    return 0;
-}
-
 int spi_master_cs(spi_t *obj, int status)
 {
     struct spi_s *spi_obj = SPI_S(obj);
@@ -184,13 +168,14 @@ int spi_master_cs(spi_t *obj, int status)
     return 0;
 }
 
-int spi_master_read(spi_t *obj, int cmd)
+int spi_master_write(spi_t *obj, int value)
 {
     struct spi_s *spi_obj = SPI_S(obj);
 
     int index = 0;
 
-    s_command_sequence[index++] = SPIM_CMD_RX_DATA(spi_obj->bits, master_config.qpi, 0);
+    s_command_sequence[index++] = SPIM_CMD_FUL(spi_obj->bits, 0);
+    s_command_sequence[index++] = value;
 
     /* Blocking transfer */
     SPI_MasterTransferBlocking(spi_address[spi_obj->instance],
@@ -232,8 +217,7 @@ int spi_master_block_write(spi_t *obj, const char *tx_buffer, int tx_length,
     for (int i = 0; i < total; i++) {
         char out = (i < tx_length) ? tx_buffer[i] : write_fill;
         spi_master_cs(obj, 0);
-        spi_master_write(obj, out);
-        char in = spi_master_read(obj, 0);
+        char in = spi_master_write(obj, out);
         spi_master_cs(obj, 1);
 
         if (i < rx_length) {

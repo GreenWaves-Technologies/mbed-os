@@ -135,16 +135,6 @@ public:
      */
     virtual int udma_cs(int status);
 
-    /** Write to the SPI Slave and return the response
-     *
-     *  Here we use explicit transfer, so write just write something to SPI slave
-     *  without return. But read means read a response after write a command.
-     *
-     *  @returns
-     *    Response from the SPI slave
-     */
-    virtual int read();
-
     /** Control spi master QSPI
      *
      *  Here we use udma to transfer data, so we can set to use qspi or not.
