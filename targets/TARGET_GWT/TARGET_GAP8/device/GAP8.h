@@ -791,7 +791,7 @@ typedef struct {
 #define SPIM_CMD_EOT_ID               9
 #define SPIM_CMD_RPT_END_ID          10
 #define SPIM_CMD_RX_CHECK_ID         11
-#define SPIM_CMD_FUL_ID              12
+#define SPIM_CMD_DUPLEX_ID           12
 
 #define SPIM_CMD_MASK                 (0xF0000000U)
 #define SPIM_CMD_SHIFT                (28U)
@@ -968,7 +968,7 @@ typedef struct {
 
 #define SPIM_CMD_RPT_END()                 ( SPIM_CMD(SPIM_CMD_RPT_END_ID) )
 
-#define SPIM_CMD_FUL(bits,byte_align)      ( SPIM_CMD(SPIM_CMD_FUL_ID) \
+#define SPIM_CMD_DUPLEX(bits,byte_align)   ( SPIM_CMD(SPIM_CMD_DUPLEX_ID) \
                                            | SPIM_CMD_FULL_SIZE_CMD((bits - 1 )) \
                                            | SPIM_CMD_FULL_BYTE_ALIGN_CMD(byte_align) )
 
@@ -997,6 +997,8 @@ typedef struct {
 #define SPIM_BASE_ADDRS                           { SPIM0_BASE, SPIM1_BASE }
 /** Array initializer of SPIM peripheral base pointers */
 #define SPIM_BASE_PTRS                            { SPIM0, SPIM1 }
+/** Array initializer of SPIM peripheral base pointers */
+#define QSPIM_BASE_PTRS                           { SPIM0 }
 /** Interrupt vectors for the SPIM peripheral type */
 #define SPIM_RX_IRQS                              { SPIM0_RX_IRQn, SPIM1_RX_IRQn }
 #define SPIM_TX_IRQS                              { SPIM0_TX_IRQn, SPIM1_TX_IRQn }

@@ -122,6 +122,8 @@ void spi_frequency(spi_t *obj, int hz)
 
     /* Configuration only clock frequence */
     master_config.clkDiv = clk_div;
+    master_config.baudRate = hz;
+
     SPI_MasterFrequencyConfig(spi_address[spi_obj->instance],  &master_config);
 }
 
@@ -174,7 +176,7 @@ int spi_master_write(spi_t *obj, int value)
 
     int index = 0;
 
-    s_command_sequence[index++] = SPIM_CMD_FUL(spi_obj->bits, 0);
+    s_command_sequence[index++] = SPIM_CMD_DUPLEX(spi_obj->bits, 0);
     s_command_sequence[index++] = value;
 
     /* Blocking transfer */
