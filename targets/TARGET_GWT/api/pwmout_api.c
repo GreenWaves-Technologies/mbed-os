@@ -22,7 +22,6 @@
 #include "pinmap.h"
 #include "PeripheralPins.h"
 
-static pwm_clk_src_t pwm_clock_src;
 /* Array of PWM peripheral base address. */
 static PWM_Type *const pwm_addrs[] = PWM_BASE_PTRS;
 
@@ -38,6 +37,9 @@ void pwmout_init(pwmout_t* obj, PinName pin)
     pwm_config_t pwmInfo;
 
     PWM_GetDefaultConfig(&pwmInfo);
+    /* Start from 1 while register starts from 0 !*/
+    obj->prescale    = 1;
+    pwmInfo.prescale = 0;
 
     /* Initialize PWM module */
     PWM_Init(pwm_addrs[instance], &pwmInfo);
@@ -47,10 +49,10 @@ void pwmout_init(pwmout_t* obj, PinName pin)
         .dutyCyclePercent = 50
     };
 
-    pwm_clock_src = pwmInfo.clksel;
+    obj->clock_src = pwmInfo.clksel;
 
     // default to 20ms: standard for servos, and fine for e.g. brightness control
-    PWM_SetupPwm(pwm_addrs[instance], &config, 1, 50, pwm_clock_src);
+    PWM_SetupPwm(pwm_addrs[instance], &config, 1, 50, obj->clock_src);
 
     PWM_StartTimer(pwm_addrs[instance]);
 
@@ -131,15 +133,40 @@ void pwmout_period_us(pwmout_t* obj, int us)
     /* Maximum period is 2 second - FIX by timer chain */
     if(us == 0 ) {
         base->TH = 0;
-    } else if (us > 2000000) {
+    } else if (us > 512000000) {
+        /* min_hz = 1 / 512, max_hz = (SystemCoreClock / 2) */
         return;
     } else {
+        /* Get percent */
         dc = pwmout_read(obj);
 
+        /* If too small, use SystemCoreClock */
+        if (us < 1000) {
+            obj->clock_src = uPWM_FLL;
+
+            int cfg = base->CFG;
+
+            cfg &= ~PWM_CONFIG_CLKSEL_MASK;
+            cfg |= PWM_CONFIG_CLKSEL(obj->clock_src);
+            base->CFG = cfg;
+        } else if (us >= 2000000) {
+            int prescale;
+
+            /* Config prescale if it is too large */
+            prescale = (us / 2000000) + 1;
+            int cfg = base->CFG;
+            cfg &= ~PWM_CONFIG_PRESCALE_MASK;
+            /* Start from 1 while register starts from 0 !*/
+            cfg |= PWM_CONFIG_PRESCALE(prescale - 1);
+            base->CFG = cfg;
+
+            obj->prescale = prescale;
+        }
+
         /* Low 16 bits default set 0, to have maximum 0xFFFF counter */
-        if (pwm_clock_src == uPWM_REF_32K) {
+        if (obj->clock_src == uPWM_REF_32K) {
             /* Can not create resolution < 30 us */
-            base->TH = PWM_THRESHOLD_HIGH((int)((float)us * 0.032768f) + 1) | PWM_THRESHOLD_LOW(1);
+            base->TH = PWM_THRESHOLD_HIGH(((int)((float)us * 0.032768f) / obj->prescale) + 1) | PWM_THRESHOLD_LOW(1);
         } else {
             base->TH = PWM_THRESHOLD_HIGH((int)((float)us * (float)SystemCoreClock / 1000000.0f) + 1) | PWM_THRESHOLD_LOW(1);
         }
@@ -169,10 +196,11 @@ void pwmout_pulsewidth_us(pwmout_t* obj, int us)
     uint16_t ch_th = 0;
 
     /* Low 16 bits default set 0, to have maximum 0xFFFF counter */
-    if (pwm_clock_src == uPWM_REF_32K) {
+    if (obj->clock_src == uPWM_REF_32K) {
         /* Can not create resolution < 30 us */
-        ch_th = (int)((float)us * 0.032768f);
+        ch_th = (int)((float)us * 0.032768f) / obj->prescale;
     } else {
+        /* Can create resolution us */
         ch_th = (int)((float)us * (float)SystemCoreClock / 1000000.0f);
     }
 
