@@ -57,6 +57,8 @@ struct port_s {
 
 struct pwmout_s {
     PWMName pwm_name;
+    uint8_t prescale;
+    uint8_t clock_src;
 };
 
 struct serial_s {
@@ -90,6 +92,10 @@ struct hyperbus_s {
     uint32_t hyperbusDmaMasterTx;
 #endif
 };
+
+#if DEVICE_QSPI
+#define qspi_s spi_s
+#endif
 
 #include "gpio_object.h"
 

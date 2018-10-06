@@ -49,21 +49,12 @@ void spis_init(spi_t *obj, PinName mosi, PinName miso, PinName sclk, PinName sse
  */
 int spi_master_cs(spi_t *obj, int status);
 
-/** Read a byte in master mode
- *
- * @param[in] obj   The SPI peripheral to use for sending
- * @param[in] cmd   The SPI send command to read
- * @return Returns the value received
- */
-int spi_master_read(spi_t *obj, int cmd);
-
 /** Specify I/O width of SPI transaction (Quad SPI or not)
  *
  * @param[in] obj   The SPI peripheral to use for sending
  * @param[in] qpi   Choose Quad SPI or normal SPI
  */
 int spi_master_qspi(spi_t *obj, spi_qpi_t qpi);
-
 
 /** SPI auto polling
  *
