@@ -2615,13 +2615,25 @@ typedef struct {
 
 /** EFUSE_CTRL - Register Layout Typedef */
 typedef struct {
-  __IO  uint32_t CMD;                       /**< EFUSE_Control register, offset: 0x00 */
-  __IO  uint32_t CFG;                       /**< EFUSE_Control register, offset: 0x04 */
+  __O  uint32_t CMD;                       /**< EFUSE_Control register, offset: 0x00 */
+  __O  uint32_t CFG;                       /**< EFUSE_Control register, offset: 0x04 */
 } EFUSE_CTRL_Type;
 
 /* ----------------------------------------------------------------------------
    -- EFUSE_CTRL Register Masks
    ---------------------------------------------------------------------------- */
+/*! @name CFG - EFUSE control configure register */
+#define EFUSE_CTRL_SHORT_MASK                           (0x3FFU)
+#define EFUSE_CTRL_SHORT_SHIFT                          (0U)
+#define EFUSE_CTRL_SHORT(x)                             (((uint32_t)(((uint32_t)(x)) /* << EFUSE_CTRL_SHORT_SHIFT */)) & EFUSE_CTRL_SHORT_MASK)
+
+#define EFUSE_CTRL_MEDIUM_MASK                          (0xFFC00U)
+#define EFUSE_CTRL_MEDIUM_SHIFT                         (10U)
+#define EFUSE_CTRL_MEDIUM(x)                            (((uint32_t)(((uint32_t)(x)) << EFUSE_CTRL_MEDIUM_SHIFT)) & EFUSE_CTRL_MEDIUM_MASK)
+
+#define EFUSE_CTRL_LONG_MASK                            (0x3FF00000U)
+#define EFUSE_CTRL_LONG_SHIFT                           (20U)
+#define EFUSE_CTRL_LONG(x)                              (((uint32_t)(((uint32_t)(x)) << EFUSE_CTRL_LONG_SHIFT)) & EFUSE_CTRL_LONG_MASK)
 
 /*!
  * @addtogroup EFUSE_CTRL_Register_Masks EFUSE_CTRL Register Masks
@@ -2670,6 +2682,12 @@ typedef struct {
   __IO  uint32_t WAIT_XTAL_DELTA_MSB;     /**< EFUSE_WAIT_XTAL_DELTA_MSB register, offset: 0x06C */
   __IO  uint32_t WAIT_XTAL_MIN;           /**< EFUSE_WAIT_XTAL_MIN registers, offset: 0x070 */
   __IO  uint32_t WAIT_XTAL_MAX;           /**< EFUSE_WAIT_XTAL_MAX registers, offset: 0x074 */
+  __IO  uint32_t HYPER_RDS_DELAY;         /**< EFUSE_WAIT_XTAL_MAX registers, offset: 0x078 */
+  __IO  uint32_t FLL_FREQ;                /**< EFUSE_FLL_FREQ registers, offset: 0x07C */
+  __IO  uint32_t FLL_TOLERANCE;           /**< EFUSE_FLL_TOLERANCE registers, offset: 0x080 */
+  __IO  uint32_t FLL_ASSERT_CYCLE;        /**< EFUSE_FLL_ASSERT_CYCLE registers, offset: 0x084 */
+  __IO  uint32_t _reserved[6];            /**< EFUSE_reserved registers, offset: 0x088 */
+  __IO  uint32_t USER_REG[88];            /**< EFUSE_USER_REG, offset: 0x0A0 */
 } EFUSE_REGS_Type;
 
 /* ----------------------------------------------------------------------------
@@ -2683,7 +2701,7 @@ typedef struct {
 /*! @name INFO - EFUSE information register */
 #define EFUSE_INFO_PLT_MASK                           (0x07U)
 #define EFUSE_INFO_PLT_SHIFT                          (0U)
-#define EFUSE_INFO_PLT(x)                             (((uint32_t)(((uint32_t)(x)) << EFUSE_INFO_PLT_SHIFT)) & EFUSE_INFO_PLT_MASK)
+#define EFUSE_INFO_PLT(x)                             (((uint32_t)(((uint32_t)(x)) /* << EFUSE_INFO_PLT_SHIFT */)) & EFUSE_INFO_PLT_MASK)
 
 #define EFUSE_INFO_BOOT_MASK                          (0x38U)
 #define EFUSE_INFO_BOOT_SHIFT                         (3U)

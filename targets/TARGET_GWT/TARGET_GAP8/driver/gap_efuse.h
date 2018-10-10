@@ -49,6 +49,8 @@
 #define GAP_EFUSE_BOOT_SPIM     6
 #define GAP_EFUSE_BOOT_SPIM_QPI 7
 
+#define GAP_EFUSE_MAX_USER_BYTE_NUM  88
+
 /*!
  * @addtogroup efuse
  * @{
@@ -61,6 +63,11 @@
 extern "C" {
 #endif /* __cplusplus */
 
+
+/*!
+ * @name Efuse read and program control.
+ * @{
+ */
 
 /*
  *sets the values for the 3 diffrent timing intervals that are used by the IP
@@ -88,6 +95,14 @@ static inline void EFUSE_Sleep()
     EFUSE_CTRL->CMD = EFUSE_CTRL_CMD_SLEEP;
 }
 
+/* @} */
+
+
+/*!
+ * @name Efuse register set and get.
+ * @{
+ */
+
 static inline void EFUSE_SetInfo(uint8_t value)
 {
     for (int i = 0; i < 8; i++)
@@ -104,6 +119,79 @@ static inline void EFUSE_SetInfo2(uint8_t value)
     {
         if(value & 0x1)
             EFUSE_REGS->INFO2 = i;
+        value >>= 1;
+    }
+}
+
+static inline void EFUSE_SetUserByte(uint8_t num, uint8_t value)
+{
+    if(num >= GAP_EFUSE_MAX_USER_BYTE_NUM)
+        return;
+
+    for (int i = 0; i < 8; i++)
+    {
+        if(value & 0x1)
+            EFUSE_REGS->USER_REG[num] = i;
+        value >>= 1;
+    }
+}
+
+static inline void EFUSE_SetAESKey(uint8_t num, uint8_t value)
+{
+    for (int i = 0; i < 8; i++)
+    {
+        if(value & 0x1)
+            EFUSE_REGS->AES_KEY[num] = i;
+        value >>= 1;
+    }
+}
+
+static inline void EFUSE_SetAESIv(uint8_t num, uint8_t value)
+{
+    for (int i = 0; i < 8; i++)
+    {
+        if(value & 0x1)
+            EFUSE_REGS->AES_IV[num] = i;
+        value >>= 1;
+    }
+}
+
+static inline void EFUSE_SetWaitXtalDelta(uint16_t value)
+{
+    uint8_t value_low  = value & 0xFF;
+    uint8_t value_high = value >> 8;
+
+    for (int i = 0; i < 8; i++)
+    {
+        if(value_low & 0x1)
+            EFUSE_REGS->WAIT_XTAL_DELTA_LSB = i;
+        value_low >>= 1;
+    }
+
+    for (int i = 0; i < 8; i++)
+    {
+        if(value_high & 0x1)
+            EFUSE_REGS->WAIT_XTAL_DELTA_MSB = i;
+        value_high >>= 1;
+    }
+}
+
+static inline void EFUSE_SetWaitXtalMin(uint8_t value)
+{
+    for (int i = 0; i < 8; i++)
+    {
+        if(value & 0x1)
+            EFUSE_REGS->WAIT_XTAL_MIN = i;
+        value >>= 1;
+    }
+}
+
+static inline void EFUSE_SetWaitXtalMax(uint8_t value)
+{
+    for (int i = 0; i < 8; i++)
+    {
+        if(value & 0x1)
+            EFUSE_REGS->WAIT_XTAL_MAX = i;
         value >>= 1;
     }
 }
@@ -143,17 +231,17 @@ static inline uint8_t EFUSE_GetAESIv(int word)
     return (uint8_t) EFUSE_REGS->AES_IV[word];
 }
 
-static inline uint8_t EFUSE_wait_GetXtal(uint8_t infoValue)
+static inline uint8_t EFUSE_GetWaitXtal(uint8_t infoValue)
 {
     return ((infoValue & EFUSE_INFO_WAIT_XTAL_MASK) >> EFUSE_INFO_WAIT_XTAL_SHIFT);
 }
 
-static inline uint8_t EFUSE_wait_GetXtalDelta()
+static inline uint16_t EFUSE_GetWaitXtalDelta()
 {
-    return ((uint8_t) EFUSE_REGS->WAIT_XTAL_DELTA_LSB) | (((uint8_t) EFUSE_REGS->WAIT_XTAL_DELTA_MSB) << 8);
+    return ((uint16_t) EFUSE_REGS->WAIT_XTAL_DELTA_LSB) | (((uint16_t) EFUSE_REGS->WAIT_XTAL_DELTA_MSB) << 8);
 }
 
-static inline uint8_t EFUSE_wait_GetXtalMin()
+static inline uint8_t EFUSE_GetWaitXtalMin()
 {
     return (uint8_t) EFUSE_REGS->WAIT_XTAL_MIN;
 }
@@ -162,6 +250,16 @@ static inline uint8_t EFUSE_GetWaitXtalMax()
 {
     return (uint8_t) EFUSE_REGS->WAIT_XTAL_MAX;
 }
+
+static inline uint8_t EFUSE_GetUserByte(uint8_t num)
+{
+    if(num >= GAP_EFUSE_MAX_USER_BYTE_NUM)
+        return 0;
+
+    return (uint8_t) EFUSE_REGS->USER_REG[num];
+}
+/* @} */
+
 /* @} */
 
 #if defined(__cplusplus)
