@@ -32,14 +32,15 @@
 #include <time.h>
 
 /*******************************************************************************
- * Definitions
+ * Variables, macros, structures,... definition
  ******************************************************************************/
-#define SECONDS_IN_A_DAY (86400U)
-#define SECONDS_IN_A_HOUR (3600U)
+
+#define SECONDS_IN_A_DAY    (86400U)
+#define SECONDS_IN_A_HOUR   (3600U)
 #define SECONDS_IN_A_MINUTE (60U)
-#define DAYS_IN_A_YEAR (365U)
-#define YEAR_RANGE_START (2001U)
-#define YEAR_RANGE_END (2099U)
+#define DAYS_IN_A_YEAR      (365U)
+#define YEAR_RANGE_START    (2000U)
+#define YEAR_RANGE_END      (2099U)
 
 /*Year or Hour*/
 #define YH_BCD_HIGH_BYTE_MASK        (0xF00000)
@@ -74,24 +75,14 @@
 #define DS_BCD_LOW_BYTE(x)           (((uint32_t)(((uint32_t)(x)) << DS_BCD_LOW_BYTE_SHIFT)) & DS_BCD_LOW_BYTE_MASK)
 #define DS_BCD_LOW_BYTE_READ(x)      (((uint32_t)(((uint32_t)(x)) & DS_BCD_LOW_BYTE_MASK)) >> DS_BCD_LOW_BYTE_SHIFT)
 
-/*******************************************************************************
- * Prototypes
- ******************************************************************************/
+static uint8_t rtc_apb_pending;
+static uint8_t rtc_is_init = 0;
+static rtc_handle_t rtc_irq_handler;
 
 /*******************************************************************************
- * Variables
+ * Function definition
  ******************************************************************************/
-uint8_t rtc_apb_pending;
-uint8_t rtc_is_init = 0;
 
-/*! @brief RTC IRQ handler typedef. */
-typedef void (*rtc_irq_handler_t)();
-
-static rtc_irq_handler_t rtc_irq_handler;
-
-/*******************************************************************************
- * Code
- ******************************************************************************/
 static void RTC_ConvertDatetimeToBCD(const rtc_datetime_t *datetime, rtc_datetime_bcd_t *datetime_bcd)
 {
     /* Y:M:D */
@@ -162,7 +153,7 @@ static bool RTC_CheckDatetimeFormat(const rtc_datetime_t *datetime)
     uint8_t daysPerMonth[] = {0U, 31U, 28U, 31U, 30U, 31U, 30U, 31U, 31U, 30U, 31U, 30U, 31U};
 
     /* Check year, month, hour, minute, seconds */
-    if ((datetime->year < YEAR_RANGE_START) || (datetime->year > YEAR_RANGE_END) || (datetime->month > 12U) ||
+    if ((datetime->year <= YEAR_RANGE_START) || (datetime->year > YEAR_RANGE_END) || (datetime->month > 12U) ||
         (datetime->month < 1U) || (datetime->hour >= 24U) || (datetime->minute >= 60U) || (datetime->second >= 60U))
     {
         /* If not correct then error*/
@@ -217,52 +208,46 @@ uint32_t RTC_ConvertDatetimeToSeconds(const rtc_datetime_t *datetime)
  * @name RTC Register indirect Access
  * @{
  */
-static void RTC_APB_WAIT(){
-    while(*(volatile uint8_t *)&rtc_apb_pending) {
+static void RTC_APB_WAIT(void)
+{
+    while (*(volatile uint8_t *)&rtc_apb_pending)
+    {
         EU_EVT_MaskWaitAndClr(1<<FC_SW_NOTIF_EVENT);
     }
 }
 
-static uint32_t RTC_APB_REGRead(RTC_APB_Type *base, uint8_t addr){
+static uint32_t RTC_APB_REGRead(RTC_APB_Type *base, uint8_t addr)
+{
     base->REQUEST = RTC_APB_REQUEST_ACCESS_ADDR(addr) | RTC_APB_REQUEST_ACCESS_RW(0);
 
-    /* Set pending flag which will unlokc by fc_event_handler */
+    /* Set pending flag, which will be reset by the handler. */
     rtc_apb_pending = 1;
 
-    /* Wait for INT_APB */
+    /* Wait for INT_APB. */
     RTC_APB_WAIT();
 
     uint32_t val = base->DATA;
 
-    /* Clear IRQ*/
+    /* Clear IRQ. */
     base->IRQ_FLAG = RTC_APB_IRQ_FLAG_READ(1);
     return val;
 }
 
-static void RTC_APB_REGWrite(RTC_APB_Type *base, uint8_t addr, uint32_t val){
+static void RTC_APB_REGWrite(RTC_APB_Type *base, uint8_t addr, uint32_t val)
+{
     base->DATA = val;
     base->REQUEST = RTC_APB_REQUEST_ACCESS_ADDR(addr) | RTC_APB_REQUEST_ACCESS_RW(1);
 
-    /* Set pending flag which will unlokc by fc_event_handler */
+    /* Set pending flag, which will be reset by the handler. */
     rtc_apb_pending = 1;
 
-    /* Wait for INT_APB */
+    /* Wait for INT_APB. */
     RTC_APB_WAIT();
 
-    /* Clear IRQ */
+    /* Clear IRQ. */
     base->IRQ_FLAG = RTC_APB_IRQ_FLAG_WRITE(1);
 }
 /*! @}*/
-
-int RTC_IsEnable(RTC_APB_Type *base)
-{
-    if(rtc_is_init) {
-        uint32_t val = RTC_APB_REGRead(base, RTC_CTRL_ADDR);
-        return ((val & RTC_CR_STANDBY_MASK) == 0);
-    }
-
-    return 0;
-}
 
 static void RTC_Enable(RTC_APB_Type *base)
 {
@@ -278,188 +263,15 @@ static void RTC_Disable(RTC_APB_Type *base)
     RTC_APB_REGWrite(base, RTC_CTRL_ADDR, val);
 }
 
-uint32_t RTC_GetStatus(RTC_APB_Type *base)
-{
-    return RTC_APB_REGRead(base, RTC_STATUS_ADDR);
-}
-
-void RTC_Reset(RTC_APB_Type *base)
-{
-    uint32_t val = RTC_APB_REGRead(base, RTC_CTRL_ADDR);
-    val |= RTC_CR_SOFT_RST(1);
-    RTC_APB_REGWrite(base, RTC_CTRL_ADDR, val);
-}
-
-void RTC_Calibration(RTC_APB_Type *base)
-{
-    uint32_t val = RTC_APB_REGRead(base, RTC_CTRL_ADDR);
-    val |= RTC_CR_CALIBRATION_EN(1);
-    RTC_APB_REGWrite(base, RTC_CTRL_ADDR, val);
-
-    RTC_ClearStatusFlags(RTC_APB, uRTC_CalibrationFlag);
-}
-
 static void RTC_SetClockDiv(RTC_APB_Type *base, uint16_t div)
 {
-    /* Set CkInDiv1 to 0x80 => Clock = 32768/128 Hz, e.g 256 Hz, Period = 3.9 ms approx */
+    /* Set CkInDiv1 to 0x80 => Clock = 32768/128 Hz, e.g 256 Hz, Period = 3.9 ms approx. */
     uint16_t val = RTC_CLKIN_DIV_VAL(div);
     RTC_APB_REGWrite(base, RTC_CLKIN_DIV_ADDR, val);
 
-    /* Restart */
+    /* Restart. */
     RTC_Disable(base);
     RTC_Enable(base);
-}
-
-void RTC_StartAlarm(RTC_APB_Type *base, rt_alarm_rpt_mode_t repeatmode)
-{
-    uint8_t repeat = 0;
-
-    uint32_t val = RTC_APB_REGRead(base, RTC_ALARM_CTRL_ADDR);
-
-    if(repeatmode)
-        repeat = 1 ;
-
-    val &= ~RTC_ALARM_CTRL_STANDBY_MASK;
-
-    val &= ~RTC_ALARM_CTRL_MODE_MASK;
-    val |=  RTC_ALARM_CTRL_MODE(repeat);
-
-    val &= ~RTC_ALARM_CTRL_CONFIG_MASK;
-    val |=RTC_ALARM_CTRL_CONFIG(repeatmode);
-
-    RTC_APB_REGWrite(base, RTC_ALARM_CTRL_ADDR, val);
-
-    RTC_ClearStatusFlags(RTC_APB, uRTC_AlarmFlag);
-}
-
-void RTC_StopAlarm(RTC_APB_Type *base)
-{
-    uint32_t val = RTC_ALARM_CTRL_STANDBY(1);
-    RTC_APB_REGWrite(base, RTC_ALARM_CTRL_ADDR, val);
-}
-
-status_t RTC_SetAlarm(RTC_APB_Type *base, const rtc_datetime_t *alarm)
-{
-    assert(alarm);
-
-    rtc_datetime_t curr;
-    rtc_datetime_bcd_t curr_bcd, alarm_bcd;
-
-    /* Return error if the time provided is not valid */
-    if (!(RTC_CheckDatetimeFormat(alarm)))
-    {
-        return uStatus_InvalidArgument;
-    }
-
-    /* Get the current time */
-    RTC_GetCalendar(base, &curr);
-
-    RTC_ConvertDatetimeToBCD(&curr, &curr_bcd);
-    RTC_ConvertDatetimeToBCD(alarm, &alarm_bcd);
-
-    /* Return error if the alarm time has passed */
-    if (curr_bcd.date > alarm_bcd.date || ((curr_bcd.date == alarm_bcd.date) && (curr_bcd.time >= alarm_bcd.time)))
-    {
-        return uStatus_Fail;
-    }
-
-    /* Alarm IRQ enable */
-    RTC_EnableInterrupts(base, uRTC_AlarmInterruptEnable);
-
-    RTC_APB_REGWrite(base, RTC_ALARM_DATE_ADDR, alarm_bcd.date);
-    RTC_APB_REGWrite(base, RTC_ALARM_TIME_ADDR, alarm_bcd.time);
-
-    return uStatus_Success;
-}
-
-void RTC_GetAlarm(RTC_APB_Type *base, rtc_datetime_t *alarm)
-{
-    assert(alarm);
-
-    rtc_datetime_bcd_t alarm_bcd;
-
-    alarm_bcd.date = RTC_APB_REGRead(base, RTC_ALARM_DATE_ADDR);
-    alarm_bcd.time = RTC_APB_REGRead(base, RTC_ALARM_TIME_ADDR);
-
-    RTC_ConvertBCDToDatetime(&alarm_bcd, alarm);
-}
-
-void RTC_StartCalendar(RTC_APB_Type *base)
-{
-    RTC_APB_REGWrite(base, RTC_CALENDAR_CTRL_ADDR, 0);
-}
-
-void RTC_StopCalendar(RTC_APB_Type *base)
-{
-    RTC_APB_REGWrite(base, RTC_CALENDAR_CTRL_ADDR, 1);
-}
-
-status_t RTC_SetCalendar(RTC_APB_Type *base, const rtc_datetime_t *calendar)
-{
-    assert(calendar);
-
-    /* Return error if the time provided is not valid */
-    if (!(RTC_CheckDatetimeFormat(calendar)))
-    {
-        return uStatus_InvalidArgument;
-    }
-
-    rtc_datetime_bcd_t calendar_bcd;
-
-    RTC_ConvertDatetimeToBCD(calendar, &calendar_bcd);
-
-    RTC_APB_REGWrite(base, RTC_CALENDAR_TIME_ADDR, calendar_bcd.time);
-    RTC_APB_REGWrite(base, RTC_CALENDAR_DATE_ADDR, calendar_bcd.date);
-
-    return uStatus_Success;
-}
-
-void RTC_GetCalendar(RTC_APB_Type *base, rtc_datetime_t *calendar)
-{
-    assert(calendar);
-
-    rtc_datetime_bcd_t calendar_bcd;
-
-    calendar_bcd.time = RTC_APB_REGRead(base, RTC_CALENDAR_TIME_ADDR);
-    calendar_bcd.date = RTC_APB_REGRead(base, RTC_CALENDAR_DATE_ADDR);
-
-    RTC_ConvertBCDToDatetime(&calendar_bcd, calendar);
-}
-
-void RTC_StartTimer(RTC_APB_Type *base, uint8_t repeat_en)
-{
-    uint32_t val = RTC_APB_REGRead(base, RTC_TIMER_CTRL_ADDR);
-    val &= (~RTC_TIMER_STANDBY_MASK);
-    val |= RTC_TIMER_STANDBY(0);
-
-    val &= (~RTC_TIMER_MODE_MASK);
-    val |= RTC_TIMER_MODE(repeat_en);
-
-    RTC_APB_REGWrite(base, RTC_TIMER_CTRL_ADDR, val);
-
-    RTC_ClearStatusFlags(RTC_APB, uRTC_TimerFlag);
-}
-
-void RTC_StopTimer(RTC_APB_Type *base)
-{
-    uint32_t val = RTC_APB_REGRead(base, RTC_TIMER_CTRL_ADDR);
-    val &= (~RTC_TIMER_STANDBY_MASK);
-    val |= RTC_TIMER_STANDBY(1);
-    RTC_APB_REGWrite(base, RTC_TIMER_CTRL_ADDR, val);
-}
-
-void RTC_SetTimer(RTC_APB_Type *base, const uint32_t count)
-{
-    /* Set timer inital value */
-    RTC_APB_REGWrite(base, RTC_TIMER_INIT_ADDR, count);
-
-    /* Timer IRQ enable */
-    RTC_EnableInterrupts(base, uRTC_TimerInterruptEnable);
-}
-
-uint32_t RTC_GetTimer(RTC_APB_Type *base)
-{
-    return RTC_APB_REGRead(base, RTC_TIMER_VALUE_ADDR);
 }
 
 void RTC_Init(RTC_APB_Type *base, const rtc_config_t *Config)
@@ -478,7 +290,8 @@ void RTC_Init(RTC_APB_Type *base, const rtc_config_t *Config)
 
 void RTC_Deinit(RTC_APB_Type *base)
 {
-    if(rtc_is_init == 1) {
+    if (rtc_is_init == 1)
+    {
         RTC_Disable(base);
         SOC_EU_ClearFCMask(RTC_EVENT);
         SOC_EU_ClearFCMask(RTC_APB_EVENT);
@@ -494,33 +307,196 @@ void RTC_GetDefaultConfig(rtc_config_t *Config)
     Config->mode    = MODE_CALENDAR;
 }
 
-void RTC_EnableInterrupts(RTC_APB_Type *base, uint32_t mask)
+void RTC_Calibration(RTC_APB_Type *base)
 {
-    uint32_t val = RTC_APB_REGRead(base, RTC_IRQ_MASK_ADDR);
-    val &= ~mask;
+    uint32_t val = RTC_APB_REGRead(base, RTC_CTRL_ADDR);
+    val |= RTC_CR_CALIBRATION_EN(1);
+    RTC_APB_REGWrite(base, RTC_CTRL_ADDR, val);
 
-    RTC_APB_REGWrite(base, RTC_IRQ_MASK_ADDR, val);
+    RTC_ClearIRQFlags(RTC_APB, uRTC_CalibrationFlag);
 }
 
-void RTC_DisableInterrupts(RTC_APB_Type *base, uint32_t mask)
+uint32_t RTC_IsEnabled(RTC_APB_Type *base)
 {
-    uint32_t val = RTC_APB_REGRead(base, RTC_IRQ_MASK_ADDR);
-    val |= mask;
-
-    RTC_APB_REGWrite(base, RTC_IRQ_MASK_ADDR, val);
+    if (rtc_is_init)
+    {
+        uint32_t val = RTC_APB_REGRead(base, RTC_CTRL_ADDR);
+        return ((val & RTC_CR_STANDBY_MASK) == 0);
+    }
+    return 0;
 }
 
-uint32_t RTC_GetEnabledInterrupts(RTC_APB_Type *base)
+void RTC_Reset(RTC_APB_Type *base)
 {
-    return RTC_APB_REGRead(base, RTC_IRQ_MASK_ADDR);
+    uint32_t val = RTC_APB_REGRead(base, RTC_CTRL_ADDR);
+    val |= RTC_CR_SOFT_RST(1);
+    RTC_APB_REGWrite(base, RTC_CTRL_ADDR, val);
 }
 
-uint32_t RTC_GetStatusFlags(RTC_APB_Type *base)
+status_t RTC_SetAlarm(RTC_APB_Type *base, const rtc_datetime_t *alarmTime, rtc_alarm_rpt_mode_t repeatmode)
+{
+    assert(alarmTime);
+
+    rtc_datetime_t curr;
+    rtc_datetime_bcd_t curr_bcd, alarmTime_bcd;
+
+    /* Return error if the time provided is not valid. */
+    if (!(RTC_CheckDatetimeFormat(alarmTime)))
+    {
+        return uStatus_InvalidArgument;
+    }
+
+    /* Get the current time. */
+    RTC_GetCalendar(base, &curr);
+
+    RTC_ConvertDatetimeToBCD(&curr, &curr_bcd);
+    RTC_ConvertDatetimeToBCD(alarmTime, &alarmTime_bcd);
+
+    if ((repeatmode < RPT_SEC) || (RPT_YEAR < repeatmode))
+    {
+        /* Return error if the alarm time has passed. */
+        if(curr_bcd.date > alarmTime_bcd.date || ((curr_bcd.date == alarmTime_bcd.date) && (curr_bcd.time >= alarmTime_bcd.time)))
+            return uStatus_InvalidArgument;
+    }
+    else
+    {
+        uint32_t val = RTC_APB_REGRead(base, RTC_ALARM_CTRL_ADDR);
+
+        val &= ~RTC_ALARM_CTRL_MODE_MASK;
+        val |=  RTC_ALARM_CTRL_MODE(1);
+
+        val &= ~RTC_ALARM_CTRL_CONFIG_MASK;
+        val |=  RTC_ALARM_CTRL_CONFIG(repeatmode);
+
+        RTC_APB_REGWrite(base, RTC_ALARM_CTRL_ADDR, val);
+    }
+    /* Alarm IRQ enable. */
+    RTC_EnableIRQ(base, uRTC_AlarmInterruptEnable);
+
+    RTC_APB_REGWrite(base, RTC_ALARM_DATE_ADDR, alarmTime_bcd.date);
+    RTC_APB_REGWrite(base, RTC_ALARM_TIME_ADDR, alarmTime_bcd.time);
+
+    return uStatus_Success;
+}
+
+void RTC_GetAlarm(RTC_APB_Type *base, rtc_datetime_t *alarmTime)
+{
+    assert(alarmTime);
+
+    rtc_datetime_bcd_t alarmTime_bcd;
+
+    alarmTime_bcd.date = RTC_APB_REGRead(base, RTC_ALARM_DATE_ADDR);
+    alarmTime_bcd.time = RTC_APB_REGRead(base, RTC_ALARM_TIME_ADDR);
+
+    RTC_ConvertBCDToDatetime(&alarmTime_bcd, alarmTime);
+}
+
+void RTC_StartAlarm(RTC_APB_Type *base)
+{
+    uint32_t val = RTC_APB_REGRead(base, RTC_ALARM_CTRL_ADDR);
+
+    val &= ~RTC_ALARM_CTRL_STANDBY_MASK;
+
+    RTC_APB_REGWrite(base, RTC_ALARM_CTRL_ADDR, val);
+
+    RTC_ClearIRQFlags(RTC_APB, uRTC_AlarmFlag);
+}
+
+void RTC_StopAlarm(RTC_APB_Type *base)
+{
+    uint32_t val = RTC_ALARM_CTRL_STANDBY(1);
+    RTC_APB_REGWrite(base, RTC_ALARM_CTRL_ADDR, val);
+}
+
+status_t RTC_SetCalendar(RTC_APB_Type *base, const rtc_datetime_t *dateTime)
+{
+    assert(dateTime);
+
+    /* Return error if the time provided is not valid. */
+    if (!(RTC_CheckDatetimeFormat(dateTime)))
+    {
+        return uStatus_InvalidArgument;
+    }
+
+    rtc_datetime_bcd_t dateTime_bcd;
+
+    RTC_ConvertDatetimeToBCD(dateTime, &dateTime_bcd);
+
+    RTC_APB_REGWrite(base, RTC_CALENDAR_TIME_ADDR, dateTime_bcd.time);
+    RTC_APB_REGWrite(base, RTC_CALENDAR_DATE_ADDR, dateTime_bcd.date);
+
+    return uStatus_Success;
+}
+
+void RTC_GetCalendar(RTC_APB_Type *base, rtc_datetime_t *dateTime)
+{
+    assert(dateTime);
+
+    rtc_datetime_bcd_t dateTime_bcd;
+
+    dateTime_bcd.time = RTC_APB_REGRead(base, RTC_CALENDAR_TIME_ADDR);
+    dateTime_bcd.date = RTC_APB_REGRead(base, RTC_CALENDAR_DATE_ADDR);
+
+    RTC_ConvertBCDToDatetime(&dateTime_bcd, dateTime);
+}
+
+void RTC_StartCalendar(RTC_APB_Type *base)
+{
+    RTC_APB_REGWrite(base, RTC_CALENDAR_CTRL_ADDR, 0);
+}
+
+void RTC_StopCalendar(RTC_APB_Type *base)
+{
+    RTC_APB_REGWrite(base, RTC_CALENDAR_CTRL_ADDR, 1);
+}
+
+void RTC_SetTimer(RTC_APB_Type *base, const uint32_t count)
+{
+    /* Set timer inital value. */
+    RTC_APB_REGWrite(base, RTC_TIMER_INIT_ADDR, count);
+
+    /* Timer IRQ enable. */
+    RTC_EnableIRQ(base, uRTC_TimerInterruptEnable);
+}
+
+uint32_t RTC_GetTimer(RTC_APB_Type *base)
+{
+    return RTC_APB_REGRead(base, RTC_TIMER_VALUE_ADDR);
+}
+
+void RTC_StartTimer(RTC_APB_Type *base, uint8_t repeat_en)
+{
+    uint32_t val = RTC_APB_REGRead(base, RTC_TIMER_CTRL_ADDR);
+    val &= (~RTC_TIMER_STANDBY_MASK);
+    val |= RTC_TIMER_STANDBY(0);
+
+    val &= (~RTC_TIMER_MODE_MASK);
+    val |= RTC_TIMER_MODE(repeat_en);
+
+    RTC_APB_REGWrite(base, RTC_TIMER_CTRL_ADDR, val);
+
+    RTC_ClearIRQFlags(RTC_APB, uRTC_TimerFlag);
+}
+
+void RTC_StopTimer(RTC_APB_Type *base)
+{
+    uint32_t val = RTC_APB_REGRead(base, RTC_TIMER_CTRL_ADDR);
+    val &= (~RTC_TIMER_STANDBY_MASK);
+    val |= RTC_TIMER_STANDBY(1);
+    RTC_APB_REGWrite(base, RTC_TIMER_CTRL_ADDR, val);
+}
+
+uint32_t RTC_GetStatus(RTC_APB_Type *base)
+{
+    return RTC_APB_REGRead(base, RTC_STATUS_ADDR);
+}
+
+uint32_t RTC_GetIRQFlags(RTC_APB_Type *base)
 {
     return RTC_APB_REGRead(base, RTC_IRQ_FLAG_ADDR);
 }
 
-void RTC_ClearStatusFlags(RTC_APB_Type *base, uint32_t mask)
+void RTC_ClearIRQFlags(RTC_APB_Type *base, uint32_t mask)
 {
     uint32_t val = RTC_APB_REGRead(base, RTC_IRQ_FLAG_ADDR);
 
@@ -529,18 +505,39 @@ void RTC_ClearStatusFlags(RTC_APB_Type *base, uint32_t mask)
     RTC_APB_REGWrite(base, RTC_IRQ_FLAG_ADDR, val);
 }
 
-void RTC_APB_IRQHandler()
+uint32_t RTC_GetEnabledIRQ(RTC_APB_Type *base)
+{
+    return RTC_APB_REGRead(base, RTC_IRQ_MASK_ADDR);
+}
+
+void RTC_EnableIRQ(RTC_APB_Type *base, uint32_t mask)
+{
+    uint32_t val = RTC_APB_REGRead(base, RTC_IRQ_MASK_ADDR);
+    val &= ~mask;
+
+    RTC_APB_REGWrite(base, RTC_IRQ_MASK_ADDR, val);
+}
+
+void RTC_DisableIRQ(RTC_APB_Type *base, uint32_t mask)
+{
+    uint32_t val = RTC_APB_REGRead(base, RTC_IRQ_MASK_ADDR);
+    val |= mask;
+
+    RTC_APB_REGWrite(base, RTC_IRQ_MASK_ADDR, val);
+}
+
+void RTC_CreateHandler(rtc_callback_t callback, void *userData)
+{
+    rtc_irq_handler.callback = callback;
+    rtc_irq_handler.userData = userData;
+}
+
+void RTC_IRQHandler(void)
+{
+    rtc_irq_handler.callback(rtc_irq_handler.userData);
+}
+
+void RTC_APB_IRQHandler(void)
 {
     rtc_apb_pending = 0;
-}
-
-
-void RTC_IRQHandlerBind(uint32_t irq)
-{
-    rtc_irq_handler = (rtc_irq_handler_t)irq;
-}
-
-void RTC_IRQHandler()
-{
-    rtc_irq_handler();
 }

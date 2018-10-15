@@ -35,20 +35,21 @@
 #include "gap_gpio.h"
 #include "gap_rtc.h"
 #include "gap_pwm.h"
+#include "gap_pmu.h"
 
 /*!
- * @addtogroup fc_event_handler
+ * @addtogroup FC_EventHandler
  * @{
  */
 
 /*******************************************************************************
- * Definitions
+ * Variables, macros, structures,... definitions
  ******************************************************************************/
-extern uint32_t fc_handler_vector[];
 
 /*******************************************************************************
  * APIs
  ******************************************************************************/
+
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
@@ -56,9 +57,7 @@ extern "C" {
 /*!
  * @brief FC event handler.
  *
- * This function pop a event and deal with the handle according to event number.
- *
- * @note .
+ * This function pops an event and executes the handler corresponding to the event.
  */
 void FC_EventHandler();
 

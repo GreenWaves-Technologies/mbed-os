@@ -29,9 +29,14 @@
  */
 
 #include "gap_fc_event.h"
-#include "gap_pmu.h"
 
-uint32_t fc_handler_vector[UDMA_CHANNEL_NUM];
+/*******************************************************************************
+ * Variables, macros, structures,... definition
+ ******************************************************************************/
+
+/*******************************************************************************
+ * Function definition
+ ******************************************************************************/
 
 __attribute__((section(".text")))
 void FC_EventHandler()
@@ -48,17 +53,17 @@ void FC_EventHandler()
 
     event &= 0xFF;
 
-    if(event < UDMA_EVENT_RESERVED1) {
+    if (event < UDMA_EVENT_RESERVED1) {
         UDMA_EventHandler(event, 0);
-    } else if(event == RTC_APB_EVENT) {
+    } else if (event == RTC_APB_EVENT) {
         RTC_APB_IRQHandler();
-    } else if(event == RTC_EVENT) {
+    } else if (event == RTC_EVENT) {
         RTC_IRQHandler();
-    } else if(event == GPIO_EVENT) {
+    } else if (event == GPIO_EVENT) {
         GPIO_IRQHandler();
-    } else if(PWM0_EVENT <= event && event <= PWM3_EVENT) {
+    } else if (PWM0_EVENT <= event && event <= PWM3_EVENT) {
         PWM_IRQHandler(event);
-    } else if(event <= PMU_DLC_EVENT_BRIDGE_SCU_OK) {
+    } else if (event <= PMU_DLC_EVENT_BRIDGE_SCU_OK) {
         PMU_IRQHandler(event);
     } else {
 
