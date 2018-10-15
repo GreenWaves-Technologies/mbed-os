@@ -41,13 +41,10 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-extern GAP_FC_DATA      uint32_t gap_platform;
-extern GAP_FC_TINY_DATA uint32_t soc_events_mask;
-extern GAP_FC_TINY_DATA uint32_t fc_sw_events_mask;
-extern GAP_L2_DATA      uint32_t cluster_is_on;
+extern uint32_t cluster_is_on;
 
 #ifdef FEATURE_CLUSTER
-extern GAP_FC_TINY_DATA uint32_t cluster_status;
+extern uint32_t cluster_status;
 
 /* For PMU events
    bit0 : MSP
@@ -57,7 +54,7 @@ extern GAP_FC_TINY_DATA uint32_t cluster_status;
    bit4 : PICL_OK
    bit5 : SCU_OK
 */
-extern GAP_L1_FC_DATA uint32_t pmu_events_status;
+extern uint32_t pmu_events_status;
 #endif
 
 /*! @brief Type used for all status and error return values. */

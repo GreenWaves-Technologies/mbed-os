@@ -48,13 +48,13 @@ typedef void (*func)();
  * Variables
  ******************************************************************************/
 /*! @brief uDMA transfer initialization flag */
-GAP_FC_DATA uint32_t udmaInit = 0;
+uint32_t udmaInit = 0;
 
 /*! @brief uDMA transfer channels */
-GAP_FC_DATA udma_channel_t udma_channels[UDMA_CHANNEL_NUM];
+udma_channel_t udma_channels[UDMA_CHANNEL_NUM];
 
 /*! @brief uDMA transfer request pool which control all request */
-GAP_FC_DATA udma_req_t  udma_requests[request_queue_num];
+udma_req_t  udma_requests[request_queue_num];
 
 
 /*******************************************************************************

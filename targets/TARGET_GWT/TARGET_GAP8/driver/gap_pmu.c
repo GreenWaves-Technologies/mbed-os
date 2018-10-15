@@ -41,7 +41,7 @@
   bit4 : PICL_OK
   bit5 : SCU_OK
 */
-GAP_FC_DATA uint32_t pmu_events_status;
+uint32_t pmu_events_status;
 
 uint32_t    PMU_Sleep_Ctrl;
 pmu_state_t PMU_State = {0, 0, {0, 0, 0, 0}, {0, 0}};

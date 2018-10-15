@@ -81,20 +81,20 @@ typedef struct {
 } cmdSeq;
 
 /* Sector erase sequence */
-static GAP_L2_DATA cmdSeq Erase_Seq[6] = {{0xAA, 0x555}, {0x55, 0x2AA}, {0x80, 0x555},
-                                          {0xAA, 0x555}, {0x55, 0x2AA}, {0x30, SA}};
+static cmdSeq Erase_Seq[6] = {{0xAA, 0x555}, {0x55, 0x2AA}, {0x80, 0x555},
+                              {0xAA, 0x555}, {0x55, 0x2AA}, {0x30, SA}};
 
 /* Configure register0 sequence */
-static GAP_L2_DATA cmdSeq VCR_Seq[4]   = {{0xAA, 0x555}, {0x55, 0x2AA}, {0x38, 0x555}, {0x8e0b, 0x0}};
+static cmdSeq VCR_Seq[4]   = {{0xAA, 0x555}, {0x55, 0x2AA}, {0x38, 0x555}, {0x8e0b, 0x0}};
 
 /* Read status register sequence */
-static GAP_L2_DATA cmdSeq Reg_Seq      = {0x70, 0x555};
+static cmdSeq Reg_Seq      = {0x70, 0x555};
 
 /* Write 512/4 = 128 word to Sector addr 0x4xxx */
-static GAP_L2_DATA cmdSeq WP_Seq[3]    = {{0xAA, 0x555}, {0x55, 0x2AA}, {0xA0, 0x555}};
+static cmdSeq WP_Seq[3]    = {{0xAA, 0x555}, {0x55, 0x2AA}, {0xA0, 0x555}};
 
-static GAP_L2_DATA uint32_t read_val   = 0;
-static GAP_L2_DATA uint32_t write_val  = 0;
+static uint32_t read_val   = 0;
+static uint32_t write_val  = 0;
 
 static hyperbus_transfer_t masterXfer;
 
