@@ -175,7 +175,7 @@ static status_t CPI_ReceptionStart(CPI_Type *base, cpi_transfer_t *transfer) {
     RX->info.task = 1;
     RX->info.repeat.size = 0;
 
-    UDMA_SendRequest((UDMA_Type *)base, RX, UDMA_NO_WAIT);
+    UDMA_SendRequest((UDMA_Type *)base, RX);
 
     return uStatus_CPI_Busy;
 }

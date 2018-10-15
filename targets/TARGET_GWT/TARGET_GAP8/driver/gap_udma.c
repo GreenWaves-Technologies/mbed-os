@@ -199,6 +199,22 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
         assert(!UDMA_RxBusy(base));
     }
 
+    /* Hyperbus ctrl */
+    if(info->ctrl == UDMA_CTRL_HYPERBUS) {
+        HYPERBUS_Type *hyperbus_ptr = (HYPERBUS_Type *) base;
+
+        uint32_t ext_addr = info->u.hyperbus.ext_addr;
+        uint32_t reg_mem_access = info->u.hyperbus.reg_mem_access;
+
+        hyperbus_ptr->EXT_ADDR = ext_addr;
+
+        /* If RAM register access */
+        if ((ext_addr & 0x01000000) == 0) {
+            /* hyperbus_crt0_set */
+            HYPERBUS_SetCRT0(reg_mem_access);
+        }
+    }
+
     if (info->isTx) {
         base->TX_SADDR = info->dataAddr;
         base->TX_SIZE  = info->dataSize;
@@ -210,7 +226,7 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
     }
 
     if (hint == UDMA_WAIT) {
-        /* Wait TX finished */
+        /* Wait TX/RX finished */
         UDMA_BlockWait();
     }
 
@@ -340,7 +356,7 @@ static status_t UDMA_EnqueueRequest(UDMA_Type *base, udma_req_t *req)
     return 1;
 }
 
-status_t UDMA_SendRequest(UDMA_Type *base, udma_req_t *req, UDMAHint hint)
+status_t UDMA_SendRequest(UDMA_Type *base, udma_req_t *req)
 {
     int32_t status;
 
@@ -362,21 +378,8 @@ status_t UDMA_SendRequest(UDMA_Type *base, udma_req_t *req, UDMAHint hint)
     /* Enqueue request and send it to FIFO */
     status = UDMA_EnqueueRequest((UDMA_Type *)base, req);
 
-    /* Enqueue request wait chosen by user. If it is a dual request,
-     * For example, SPI, I2C read operation.
-     * Normally, a RX request is sent firstly then send a TX request
-     * but only need to wait the first RX request (previous request)
-     */
-    if(hint == UDMA_WAIT) {
-        if (req->info.ctrl == UDMA_CTRL_DUAL_TX)
-            UDMA_WaitRequestEnd(channel->previous);
-        else
-            UDMA_WaitRequestEnd(req);
-    }
-
     return status;
 }
-
 
 /*!
  * @brief udma channel repeat.
@@ -532,11 +535,4 @@ status_t UDMA_AbortReceive(UDMA_Type *base) {
     UDMA_EventHandler((index << 1), 1);
 
     return uStatus_Success;
-}
-
-void UDMA_WaitRequestEnd(udma_req_t *req)
-{
-    while((*(volatile int *)&req->pending) != UDMA_REQ_FREE) {
-        EU_EVT_MaskWaitAndClr(1<<FC_SW_NOTIF_EVENT);
-    }
 }

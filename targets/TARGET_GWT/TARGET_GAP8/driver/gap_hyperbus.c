@@ -123,7 +123,7 @@ void HYPERBUS_MasterDeInit(HYPERBUS_Type *base)
     hyperbus_is_init = 0;
 }
 
-static int HYPERBUS_MasterTransferTX(HYPERBUS_Type *base, int addr, const uint16_t *tx, size_t tx_length, char reg_access, char device, uint32_t hint)
+static int HYPERBUS_MasterTransferTX(HYPERBUS_Type *base, int addr, const uint16_t *tx, size_t tx_length, char reg_access, char device)
 {
     int32_t status;
 
@@ -134,10 +134,7 @@ static int HYPERBUS_MasterTransferTX(HYPERBUS_Type *base, int addr, const uint16
     TX->info.isTx      = 1;
     TX->info.channelId = UDMA_EVENT_HYPERBUS_TX;
     TX->info.configFlags = UDMA_CFG_DATA_SIZE(32 >> 4);
-    if (hint == UDMA_WAIT)
-          TX->info.task        = 0;
-      else
-          TX->info.task        = 1;
+    TX->info.task        = 1;
     TX->info.ctrl = 1;
 
     if (tx_length > 1024) {
@@ -155,12 +152,12 @@ static int HYPERBUS_MasterTransferTX(HYPERBUS_Type *base, int addr, const uint16
     }
 
     /* Send request */
-    status = UDMA_SendRequest((UDMA_Type*) base, TX, hint);
+    status = UDMA_SendRequest((UDMA_Type*) base, TX);
 
     return status;
 }
 
-static int HYPERBUS_MasterTransferRX(HYPERBUS_Type *base, int addr, uint16_t *rx, size_t rx_length, char reg_access, char device, uint32_t hint)
+static int HYPERBUS_MasterTransferRX(HYPERBUS_Type *base, int addr, uint16_t *rx, size_t rx_length, char reg_access, char device)
 {
     int32_t status;
 
@@ -171,10 +168,7 @@ static int HYPERBUS_MasterTransferRX(HYPERBUS_Type *base, int addr, uint16_t *rx
     RX->info.isTx      = 0;
     RX->info.channelId = UDMA_EVENT_HYPERBUS_RX;
     RX->info.configFlags = UDMA_CFG_DATA_SIZE(32 >> 4);
-    if (hint == UDMA_WAIT)
-          RX->info.task        = 0;
-      else
-          RX->info.task        = 1;
+    RX->info.task        = 1;
     RX->info.ctrl = UDMA_CTRL_HYPERBUS;
 
     if (rx_length > 1024) {
@@ -192,19 +186,59 @@ static int HYPERBUS_MasterTransferRX(HYPERBUS_Type *base, int addr, uint16_t *rx
     }
 
     /* Send request */
-    status = UDMA_SendRequest((UDMA_Type*) base, RX, hint);
+    status = UDMA_SendRequest((UDMA_Type*) base, RX);
 
     return status;
 }
 
-void HYPERBUS_MasterTransferBlocking(HYPERBUS_Type *base, hyperbus_transfer_t *transfer)
+status_t HYPERBUS_MasterTransferBlocking(HYPERBUS_Type *base, hyperbus_transfer_t *transfer)
 {
-    /*Start master transfer*/
-    if(transfer->txDataSize) {
-        HYPERBUS_MasterTransferTX(base, transfer->addr, transfer->txData, transfer->txDataSize, transfer->reg_access, transfer->device, UDMA_WAIT);
-    } else if(transfer->rxDataSize) {
-        HYPERBUS_MasterTransferRX(base, transfer->addr, transfer->rxData, transfer->rxDataSize, transfer->reg_access, transfer->device, UDMA_WAIT);
+    #define MAXIMUM_TRANSFER_LENGTH 1024
+
+    status_t status = uStatus_Fail;
+    udma_req_info_t info;
+
+    int addr = transfer->addr;
+    int len  = 0;
+    int data = 0;
+
+    if (transfer->txDataSize) {
+        len       = transfer->txDataSize;
+        data      = (int)transfer->txData;
+        info.isTx = 1;
+    } else if (transfer->rxDataSize) {
+        len       = transfer->rxDataSize;
+        data      = (int)transfer->rxData;
+        info.isTx = 0;
     }
+
+    int length = len;
+
+    while (len > 0) {
+        int size  = (len > MAXIMUM_TRANSFER_LENGTH) ? MAXIMUM_TRANSFER_LENGTH : len;
+
+        info.dataAddr    = (uint32_t)data;
+        info.dataSize    = size;
+        info.configFlags = UDMA_CFG_DATA_SIZE(32 >> 4) | UDMA_CFG_EN(1);
+        info.ctrl        = UDMA_CTRL_HYPERBUS;
+
+        /* Hyperbus */
+        info.u.hyperbus.reg_mem_access = transfer->reg_access;
+
+        if(transfer->device == uHYPERBUS_Ram) {
+            info.u.hyperbus.ext_addr = (uHYPERBUS_Ram_Address | addr);
+        } else {
+            info.u.hyperbus.ext_addr = (uHYPERBUS_Flash_Address | addr);
+        }
+
+        status = UDMA_BlockTransfer((UDMA_Type *)base, &info, UDMA_WAIT);
+
+        len  -= MAXIMUM_TRANSFER_LENGTH;
+        data += MAXIMUM_TRANSFER_LENGTH;
+        addr += MAXIMUM_TRANSFER_LENGTH;
+    }
+
+    return ((status == uStatus_Success) ? length : -1);
 }
 
 status_t HYPERBUS_MasterTransferNonBlocking(HYPERBUS_Type *base, hyperbus_master_handle_t *handle, hyperbus_transfer_t *transfer)
@@ -223,9 +257,9 @@ status_t HYPERBUS_MasterTransferNonBlocking(HYPERBUS_Type *base, hyperbus_master
 
     /*Start master transfer*/
     if(transfer->txDataSize) {
-        HYPERBUS_MasterTransferTX(base, transfer->addr, transfer->txData, transfer->txDataSize, transfer->reg_access, transfer->device, UDMA_NO_WAIT);
+        HYPERBUS_MasterTransferTX(base, transfer->addr, transfer->txData, transfer->txDataSize, transfer->reg_access, transfer->device);
     } else if(transfer->rxDataSize) {
-        HYPERBUS_MasterTransferRX(base, transfer->addr, transfer->rxData, transfer->rxDataSize, transfer->reg_access, transfer->device, UDMA_NO_WAIT);
+        HYPERBUS_MasterTransferRX(base, transfer->addr, transfer->rxData, transfer->rxDataSize, transfer->reg_access, transfer->device);
     }
 
     return uStatus_Success;

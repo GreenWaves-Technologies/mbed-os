@@ -189,7 +189,7 @@ static uint8_t SAI_TransferStart(I2S_Type *base, sai_transfer_t *transfer, sai_h
     RX->info.task = (uint32_t)handle;
     RX->info.repeat.size = 0;
 
-    UDMA_SendRequest((UDMA_Type *)base, RX, UDMA_NO_WAIT);
+    UDMA_SendRequest((UDMA_Type *)base, RX);
 
     return uSAI_Done;
 }

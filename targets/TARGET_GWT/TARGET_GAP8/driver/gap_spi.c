@@ -271,7 +271,7 @@ static void SPI_MasterTransferStart(SPIM_Type *base, spi_transfer_t *transfer)
       RX->info.task        = 1;
       RX->info.repeat.size = 0;
 
-      UDMA_SendRequest((UDMA_Type *)base, RX, UDMA_NO_WAIT);
+      UDMA_SendRequest((UDMA_Type *)base, RX);
     }
 
     if (transfer->txDataSize) {
@@ -292,7 +292,7 @@ static void SPI_MasterTransferStart(SPIM_Type *base, spi_transfer_t *transfer)
       }
       TX->info.repeat.size      = 0;
 
-      UDMA_SendRequest((UDMA_Type *)base, TX, UDMA_NO_WAIT);
+      UDMA_SendRequest((UDMA_Type *)base, TX);
     }
 }
 

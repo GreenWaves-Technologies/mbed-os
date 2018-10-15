@@ -285,7 +285,7 @@ static status_t I2C_TransferStart(I2C_Type *base, i2c_transfer_t *transfer)
         RX->info.task        = 1;
         RX->info.repeat.size = 0;
 
-        UDMA_SendRequest((UDMA_Type *)base, RX, UDMA_NO_WAIT);
+        UDMA_SendRequest((UDMA_Type *)base, RX);
     }
 
     if (transfer->txDataSize) {
@@ -306,7 +306,7 @@ static status_t I2C_TransferStart(I2C_Type *base, i2c_transfer_t *transfer)
         }
         TX->info.repeat.size      = 0;
 
-        UDMA_SendRequest((UDMA_Type *)base, TX, UDMA_NO_WAIT);
+        UDMA_SendRequest((UDMA_Type *)base, TX);
     }
     return status;
 }

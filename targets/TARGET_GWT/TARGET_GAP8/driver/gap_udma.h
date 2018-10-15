@@ -203,11 +203,10 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
  *
  * @param base The UDMA channel base pointer.
  * @param req  The UDMA request.
- * @param hint The UDMA usage hint.
  * @return status of status_t.
  * @note .
  */
-status_t UDMA_SendRequest(UDMA_Type *base, udma_req_t *req, UDMAHint hint);
+status_t UDMA_SendRequest(UDMA_Type *base, udma_req_t *req);
 
 
 /*!

@@ -1003,14 +1003,13 @@ static inline void HYPERBUS_ClearAndStop(HYPERBUS_Type *base)
 /*Transactional APIs*/
 
 /*!
- * @brief Writes data into the data buffer master mode and waits till complete to return.
- *
- * In master mode, the 16-bit data is appended to the 16-bit command info. The command portion
+ * @brief Write or Read data into/from the data buffer in master mode and waits till complete to return.
  *
  * @param base HYPERBUS peripheral address.
  * @param transfer The pointer to hyperbus_transfer_t structure.
+ * @return status of status_t.
  */
-void HYPERBUS_MasterTransferBlocking(HYPERBUS_Type *base, hyperbus_transfer_t *transfer);
+status_t HYPERBUS_MasterTransferBlocking(HYPERBUS_Type *base, hyperbus_transfer_t *transfer);
 
 
 /*!

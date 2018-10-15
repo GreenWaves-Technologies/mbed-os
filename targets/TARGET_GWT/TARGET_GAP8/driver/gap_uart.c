@@ -239,7 +239,7 @@ status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, co
         handle->txDataSizeAll = tx_length;
         handle->txState = uUART_TxBusy;
 
-        UDMA_SendRequest((UDMA_Type*)base, TX, UDMA_NO_WAIT);
+        UDMA_SendRequest((UDMA_Type*)base, TX);
 
         status = uStatus_Success;
     }
@@ -275,7 +275,7 @@ status_t UART_TransferReceiveNonBlocking(UART_Type *base, uart_handle_t *handle,
         handle->rxDataSizeAll = rx_length;
         handle->rxState = uUART_RxBusy;
 
-        UDMA_SendRequest((UDMA_Type*)base, RX, UDMA_NO_WAIT);
+        UDMA_SendRequest((UDMA_Type*)base, RX);
 
         status = uStatus_Success;
     }

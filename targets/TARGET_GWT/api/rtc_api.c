@@ -46,7 +46,7 @@ void rtc_free(void)
  */
 int rtc_isenabled(void)
 {
-    return RTC_IsEnable(RTC_APB);
+    return RTC_IsEnabled(RTC_APB);
 }
 
 time_t rtc_read(void)
