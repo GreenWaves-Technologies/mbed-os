@@ -168,7 +168,7 @@ void SAI_ModeConfig(I2S_Type *base, char ch_id, uint8_t lsb_first, uint8_t pdm_f
     }
 }
 
-static uint8_t SAI_TransferStart(I2S_Type *base, sai_transfer_t *transfer, sai_handle_t *handle, const int hint)
+static uint8_t SAI_TransferStart(I2S_Type *base, sai_transfer_t *transfer, sai_handle_t *handle)
 {
     sai_req_t *RX = UDMA_FindAvailableRequest();
 
@@ -186,13 +186,10 @@ static uint8_t SAI_TransferStart(I2S_Type *base, sai_transfer_t *transfer, sai_h
     RX->info.configFlags = transfer->configFlags;
     RX->info.ctrl = UDMA_CTRL_NORMAL;
 
-    if (hint == UDMA_WAIT)
-        RX->info.task = 0;
-    else
-        RX->info.task = (uint32_t)handle;
+    RX->info.task = (uint32_t)handle;
     RX->info.repeat.size = 0;
 
-    UDMA_SendRequest((UDMA_Type *)base, RX, hint);
+    UDMA_SendRequest((UDMA_Type *)base, RX, UDMA_NO_WAIT);
 
     return uSAI_Done;
 }
@@ -230,7 +227,7 @@ status_t SAI_TransferReceiveNonBlocking(I2S_Type *base, sai_handle_t *handle, sa
 {
     handle->state = uSAI_Busy;
 
-    SAI_TransferStart(base, xfer, handle, UDMA_NO_WAIT);
+    SAI_TransferStart(base, xfer, handle);
 
     return handle->state;
 }

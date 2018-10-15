@@ -268,7 +268,7 @@ int I2C_Read(I2C_Type *base, uint32_t address, char *data, int length, int stop)
         return -1;
 }
 
-static status_t I2C_TransferStart(I2C_Type *base, i2c_transfer_t *transfer, const int hint)
+static status_t I2C_TransferStart(I2C_Type *base, i2c_transfer_t *transfer)
 {
     int32_t status = 0;
 
@@ -282,10 +282,7 @@ static status_t I2C_TransferStart(I2C_Type *base, i2c_transfer_t *transfer, cons
         RX->info.channelId = UDMA_EVENT_I2C0_RX + (I2C_GetInstance(base) << 1);
         RX->info.ctrl        = UDMA_CTRL_DUAL_RX;
         RX->info.configFlags = UDMA_CFG_DATA_SIZE((transfer->configFlags >> 4));
-        if (hint == UDMA_WAIT)
-            RX->info.task        = 0;
-        else
-            RX->info.task        = 1;
+        RX->info.task        = 1;
         RX->info.repeat.size = 0;
 
         UDMA_SendRequest((UDMA_Type *)base, RX, UDMA_NO_WAIT);
@@ -305,14 +302,11 @@ static status_t I2C_TransferStart(I2C_Type *base, i2c_transfer_t *transfer, cons
             TX->info.task = 0;
         } else {
             TX->info.ctrl = UDMA_CTRL_NORMAL;
-            if (hint == UDMA_WAIT)
-                TX->info.task = 0;
-            else
-                TX->info.task = 1;
+            TX->info.task = 1;
         }
         TX->info.repeat.size      = 0;
 
-        UDMA_SendRequest((UDMA_Type *)base, TX, hint);
+        UDMA_SendRequest((UDMA_Type *)base, TX, UDMA_NO_WAIT);
     }
     return status;
 }
@@ -359,9 +353,7 @@ status_t I2C_TransferNonBlocking(I2C_Type *base, i2c_handle_t *handle, i2c_trans
     s_i2cIsr = I2C_TransferHandleIRQ;
 
     /*Start transfer*/
-    I2C_TransferStart(base,
-                      transfer,
-                      UDMA_NO_WAIT);
+    I2C_TransferStart(base, transfer);
 
     return uStatus_Success;
 }

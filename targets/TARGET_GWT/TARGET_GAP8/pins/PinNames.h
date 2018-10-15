@@ -307,6 +307,7 @@ typedef enum {
 
     // Dummy LED
     LED1 = GPIO_A31,
+    LED2 = GPIO_A30,
 
     // Not connected
     NC = (int)0xFFFFFFFF

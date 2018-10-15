@@ -558,8 +558,12 @@ typedef struct
   __OM uint32_t EOC;                   /*!< Offset: 0x000 (R/W ) CPUID Base Register */
   __IOM uint32_t _reserved0;           /*!< Offset: 0x004 (R/W)  reserved Register */
   __IOM uint32_t FETCH_EN;             /*!< Offset: 0x008 (R/W)  Interrupt Control and State Register */
-  __IOM uint32_t _reserved1[13];       /*!< Offset: 0x00C (R/W)  reserved Registers */
-  __IOM uint32_t BOOT_ADDR[8];            /*!< Offset: 0x040 (R/W)  Vector Table Offset Register */
+  __IOM uint32_t _reserved1;           /*!< Offset: 0x00C (R/W)  reserved Register */
+  __OM  uint32_t EVENT;                /*!< Offset: 0x010 (W)  Event out Register */
+  __IOM uint32_t _reserved2[3];        /*!< Offset: 0x014 (R/W)  reserved Register */
+  __OM  uint32_t CLUSTER_CG;           /*!< Offset: 0x020 (R/W)  Event out Register */
+  __IOM uint32_t _reserved3[7];        /*!< Offset: 0x024 (R/W)  reserved Registers */
+  __IOM uint32_t BOOT_ADDR[8];         /*!< Offset: 0x040 (R/W)  Vector Table Offset Register */
 } SCB_Type;
 
 /* SCB Registers Definitions */
@@ -584,7 +588,8 @@ typedef struct
   __IOM uint32_t ICACHE_FLUSH;             /*!< Offset: 0x04 (R/W)  Cluster Icache Flush Register */
   __IOM uint32_t ICACHE_LX_SEL_FLUSH;      /*!< Offset: 0x08 (R/W)  Cluster Icache Level-X Flush Register or FC Flush Selected Address Register*/
   __IOM uint32_t ICACHE_SEL_FLUSH_STATUS;  /*!< Offset: 0x0C (R/W)  Cluster Icache Flush Selected Address Register or FC ICACHE status */
-  __IOM uint32_t ICACHE_IS_PRI;            /*!< Offset: 0x10 (R/W)  Cluster Icache is private Icache */
+  __IOM uint32_t ICACHE_CNTS_CLEAR;        /*!< Offset: 0x10 (R/W)  Cluster Icache is private Icache */
+  __IOM uint32_t ICACHE_CNTS_ENABLE;       /*!< Offset: 0x10 (R/W)  Cluster Icache is private Icache */
 } SCBC_Type;
 
 /* SCBC Registers Definitions */
@@ -1075,20 +1080,31 @@ typedef struct
 #define CORE_EU_SW_EVENTS_DEMUX_BASE (CORE_EU_DEMUX_BASE + 0x0100UL)   /*!< RISC Core Event Unit SW Event Demux Base Address */
 #define CORE_EU_BARRIER_DEMUX_BASE   (CORE_EU_DEMUX_BASE + 0x0200UL)   /*!< RISC Core Event Unit HW Barrier Demux Base Address */
 
-#define CORE_MCHAN_BASE              (CORE_EU_DEMUX_BASE + 0x0400UL)   /*!< RISC Core DMAMCHAN Base Address between L2 and Cluster TCDM */
+
+#define CORE_SysTick_BASE   (CORE_PERI_BASE +  0x0400UL)               /*!< RISC Core SysTick Base Address */
 
 #if defined(__GAP8__)
-#define CORE_SysTick_BASE   (CORE_PERI_BASE +  0x0400UL)               /*!< RISC Core SysTick Base Address */
 #define NVIC_BASE           (CORE_EU_CORE_DEMUX_BASE)                  /*!< RISC NVIC Base Address */
+#define CORE_MCHAN_BASE     (CORE_EU_DEMUX_BASE + 0x0400UL)            /*!< RISC Core DMAMCHAN Base Address between L2 and Cluster TCDM */
 
 #elif defined(__VEGA__)
-#define CORE_SysTick_BASE   (SOC_PERI_BASE  +  0xB000UL)               /*!< RISC Core SysTick Base Address */
+#define TIMER0_BASE         (SOC_PERI_BASE  +  0xB000UL)               /*!< RISC Peripheral TIMER0 Base Address */
+#define TIMER1_BASE         (SOC_PERI_BASE  +  0xB800UL)               /*!< RISC Peripheral TIMER1 Base Address */
 #define NVIC_BASE           (SOC_PERI_BASE  +  0x9000UL)               /*!< RISC NVIC Base Address */
+
+#define CORE_MCHAN_CL_BASE  (CORE_PERI_BASE +  0x1800UL)               /*!< RISC Core DMAMCHAN Cluster control Base Address between L2 and Cluster TCDM */
+#define CORE_MCHAN_FC_BASE  (CORE_PERI_BASE +  0x1C00UL)               /*!< RISC Core DMAMCHAN FC control Base Address between L2 and Cluster TCDM */
+#define CORE_MCHAN_COMPRESSOR_BASE   (CORE_PERI_BASE + 0x2000UL)       /*!< RISC Core DMAMCHAN Compressor control Base Address between L2 and Cluster TCDM */
+#define CORE_MCHAN_BASE      CORE_MCHAN_CL_BASE
 #endif
 
 /* FC core Memory map */
 #define FC_SCBC_BASE        (FC_BASE + CORE_SCBC_BASE)                 /*!< FC System Control Block Cache Base Address */
+#if defined(__GAP8__)
 #define FC_SysTick_BASE     (FC_BASE + CORE_SysTick_BASE)              /*!< FC SysTick Base Address */
+#elif defined(__VEGA__)
+#define FC_SysTick_BASE     (TIMER0_BASE)                              /*!< FC SysTick Base Address */
+#endif
 
 #define FC_EU_BARRIER_BASE         (FC_BASE + CORE_EU_BARRIER_BASE)    /*!< FC Event Unit HW Barrier Base Address */
 #define FC_EU_SW_EVENTS_BASE       (FC_BASE + CORE_EU_SW_EVENTS_BASE)  /*!< FC Event Unit SW Events Base Address */
@@ -1106,15 +1122,15 @@ typedef struct
 
 #define FC_MCHAN_BASE              (FC_BASE + CORE_MCHAN_BASE)                /*!< FC DMAMCHAN Base Address between L2 and Cluster TCDM */
 
-#define SCBC                ((SCBC_Type   *)   CORE_SCBC_BASE )           /*!< Icache SCBC configuration struct */
+#define SCBC                ((SCBC_Type   *)   CORE_SCBC_BASE )               /*!< Icache SCBC configuration struct */
 
 /* Core Structrue definitions */
-#define SysTick             ((SysTick_Type   *)     CORE_SysTick_BASE  )   /*!< SysTick configuration struct */
-#define TIMERL              ((TimerL_Type    *)     CORE_SysTick_BASE  )   /*!< SysTick configuration struct */
-#define TIMERH              ((TimerH_Type    *)     CORE_SysTick_BASE  )   /*!< SysTick configuration struct */
+#define SysTick             ((SysTick_Type   *)     FC_SysTick_BASE  )    /*!< SysTick configuration struct */
+#define TIMERL              ((TimerL_Type    *)     FC_SysTick_BASE  )    /*!< SysTick configuration struct */
+#define TIMERH              ((TimerH_Type    *)     FC_SysTick_BASE  )    /*!< SysTick configuration struct */
 
 #if defined (__MPU_PRESENT) && (__MPU_PRESENT == 1U)
-  #define FC_MPU_BASE       (FC_BASE + CORE_PERI_BASE + 0x4400UL)    /*!< Memory Protection Unit */
+  #define FC_MPU_BASE       (FC_BASE + CORE_PERI_BASE + 0x4400UL)        /*!< Memory Protection Unit */
   #define MPU               ((MPU_Type       *)     FC_MPU_BASE      )   /*!< Memory Protection Unit */
 #endif
 

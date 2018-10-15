@@ -111,7 +111,7 @@ typedef struct {
 #define CLUSTER_TIMERH              ((TimerH_Type    *)     CLUSTER_SysTick_BASE  )   /*!< SysTick configuration struct */
 
 
-     
+
 #ifdef __cplusplus
 }
 #endif

@@ -47,12 +47,6 @@ typedef void (*func)();
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-/*! @brief uDMA transfer blocking flag 0 for RX, 1 for TX */
-GAP_FC_DATA volatile uint8_t blocking[2] = {0, 0};
-
-/*! @brief uDMA transfer auto polling end */
-GAP_FC_DATA volatile uint8_t auto_polling_end;
-
 /*! @brief uDMA transfer initialization flag */
 GAP_FC_DATA uint32_t udmaInit = 0;
 
@@ -150,9 +144,6 @@ void UDMA_Init(UDMA_Type *base)
         SOC_EU_SetFCMask(index << 1);
         SOC_EU_SetFCMask((index << 1) + 1);
     }
-
-    /* Initilal auto polling flag for SPI */
-    auto_polling_end = 0;
 }
 
 
@@ -175,15 +166,38 @@ void UDMA_Deinit(UDMA_Type *base)
     udmaInit--;
 }
 
+void UDMA_BlockWait()
+{
+    /* Disable IRQ */
+    int irq_en = NVIC_GetEnableIRQ(FC_SOC_EVENT_IRQn);
+    NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
+
+    do {
+        EU_EVT_MaskWaitAndClr(1 << FC_SOC_EVENT_IRQn);
+    } while (!(EU_CORE_DEMUX->BUFFER & (1 << FC_SOC_EVENT_IRQn)));
+
+    uint32_t event = EU_SOC_EVENTS->CURRENT_EVENT;
+
+    /* Now that we popped the element, we can clear the soc event FIFO event as the FIFO is
+       generating an event as soon as the FIFO is not empty */
+    EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SOC_EVENT_IRQn);
+
+    /* Restore IRQ */
+    if (irq_en)
+        NVIC_EnableIRQ(FC_SOC_EVENT_IRQn);
+}
+
 status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hint)
 {
+    /* Disable IRQ */
+    int irq_en = NVIC_GetEnableIRQ(FC_SOC_EVENT_IRQn);
+    NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
+
     if (info->isTx) {
         assert(!UDMA_TxBusy(base));
     } else {
         assert(!UDMA_RxBusy(base));
     }
-
-    blocking[info->isTx] = 1;
 
     if (info->isTx) {
         base->TX_SADDR = info->dataAddr;
@@ -195,16 +209,22 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
         base->RX_CFG   = info->configFlags;
     }
 
-    if (hint == UDMA_WAIT_RX) {
-        /* Wait util previous RX is finished */
-        while(blocking[0]) {
-            EU_EVT_MaskWaitAndClr(1<<FC_SW_NOTIF_EVENT);
-        }
-    } else if (hint == UDMA_WAIT) {
-        while(blocking[info->isTx]) {
-            EU_EVT_MaskWaitAndClr(1<<FC_SW_NOTIF_EVENT);
-        }
+    if (hint == UDMA_WAIT) {
+        /* Wait TX finished */
+        UDMA_BlockWait();
     }
+
+    if (hint == UDMA_WAIT_RX) {
+        /* Wait TX finished */
+        UDMA_BlockWait();
+
+        /* Wait util previous RX is finished */
+        UDMA_BlockWait();
+    }
+
+    /* Restore IRQ */
+    if (irq_en)
+        NVIC_EnableIRQ(FC_SOC_EVENT_IRQn);
 
     return uStatus_Success;
 }
@@ -250,7 +270,6 @@ static void UDMA_StartTransfer(UDMA_Type *base, udma_req_info_t *info) {
     }
 }
 
-
 /*!
  * @brief Deal with the transfer request in uDMA.
  *
@@ -262,7 +281,9 @@ static void UDMA_StartTransfer(UDMA_Type *base, udma_req_info_t *info) {
  */
 static status_t UDMA_EnqueueRequest(UDMA_Type *base, udma_req_t *req)
 {
-    int irq = __disable_irq();
+    /* Disable IRQ */
+    int irq_en = NVIC_GetEnableIRQ(FC_SOC_EVENT_IRQn);
+    NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
 
     /* Special calculation for I2S and CPI -- TODO */
     udma_channel_t *channel = &udma_channels[(req->info.channelId >> 1)];
@@ -312,7 +333,9 @@ static status_t UDMA_EnqueueRequest(UDMA_Type *base, udma_req_t *req)
         }
     }
 
-    __restore_irq(irq);
+    /* Restore IRQ */
+    if (irq_en)
+        NVIC_EnableIRQ(FC_SOC_EVENT_IRQn);
 
     return 1;
 }
@@ -395,22 +418,6 @@ extern void SAI_IRQHandler_CH1(void *handle);
 __attribute__((section(".text")))
 void UDMA_EventHandler(uint32_t index, int abort)
 {
-    /* Auto polling return */
-    if (index > UDMA_EVENT_RESERVED0)
-    {
-        auto_polling_end = 1;
-        return;
-    }
-
-    /*
-     * Quick response for blocking synchronous transfer
-     *
-     */
-    if(blocking[index & 0x01]) {
-        blocking[index & 0x01] = 0;
-        return;
-    }
-
     /*
      * Asynchronous transfer control
      * The main idea is to check each request's pending flag.
@@ -532,15 +539,4 @@ void UDMA_WaitRequestEnd(udma_req_t *req)
     while((*(volatile int *)&req->pending) != UDMA_REQ_FREE) {
         EU_EVT_MaskWaitAndClr(1<<FC_SW_NOTIF_EVENT);
     }
-}
-
-void UDMA_AutoPollingWait(UDMA_Type *base)
-{
-    /* if polling already finished, do not need to wait */
-    while(!auto_polling_end) {
-        EU_EVT_MaskWaitAndClr(1<<FC_SW_NOTIF_EVENT);
-    }
-
-    /* Set flag */
-    auto_polling_end = 0;
 }

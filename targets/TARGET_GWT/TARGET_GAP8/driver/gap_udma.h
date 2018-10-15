@@ -244,7 +244,14 @@ void UDMA_EventHandler(uint32_t index, int abort);
 
 
 /*!
- * @brief WAIT the udma channel transfer end.
+ * @brief Wait the udma channel transfer end, for blocking transfer.
+ *
+ * @note .
+ */
+void UDMA_BlockWait();
+
+/*!
+ * @brief WAIT the udma channel transfer end, for non-blocking transfer.
  *
  * @param req The UDMA request.
  * @note .
@@ -259,14 +266,6 @@ void UDMA_WaitRequestEnd(udma_req_t *req);
  * @name Busy state
  * @{
  */
-
-/*!
- * @brief UDMA wait auto polling end
- *
- * @param base The UDMA channel.
- * @note .
- */
-void UDMA_AutoPollingWait(UDMA_Type *base);
 
 /*!
  * @brief Get UDMA TX channel busy state.

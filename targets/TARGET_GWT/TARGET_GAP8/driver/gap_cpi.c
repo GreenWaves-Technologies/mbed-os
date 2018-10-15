@@ -162,7 +162,7 @@ void CPI_GetDefaultConfig(cpi_config_t *masterConfig)
 /* masterConfig->wordWidth = */
 }
 
-static status_t CPI_ReceptionStart(CPI_Type *base, cpi_transfer_t *transfer, const int hint) {
+static status_t CPI_ReceptionStart(CPI_Type *base, cpi_transfer_t *transfer) {
     cpi_req_t *RX = UDMA_FindAvailableRequest();
 
     RX->info.dataAddr = (uint32_t) transfer->data;
@@ -172,18 +172,12 @@ static status_t CPI_ReceptionStart(CPI_Type *base, cpi_transfer_t *transfer, con
     RX->info.configFlags = transfer->configFlags;
     RX->info.ctrl = UDMA_CTRL_NORMAL;
 
-    if (hint == UDMA_WAIT)
-        RX->info.task = 0;
-    else
-        RX->info.task = 1;
+    RX->info.task = 1;
     RX->info.repeat.size = 0;
 
-    UDMA_SendRequest((UDMA_Type *)base, RX, hint);
+    UDMA_SendRequest((UDMA_Type *)base, RX, UDMA_NO_WAIT);
 
-    if (hint == UDMA_WAIT)
-        return uStatus_CPI_Idle;
-    else
-        return uStatus_CPI_Busy;
+    return uStatus_CPI_Busy;
 }
 
 
@@ -213,7 +207,7 @@ status_t CPI_ReceptionNonBlocking(CPI_Type *base, cpi_handle_t *handle, cpi_tran
 
     s_cpiMasterIsr = CPI_ReceptionHandleIRQ;
 
-    CPI_ReceptionStart(base, transfer, UDMA_NO_WAIT);
+    CPI_ReceptionStart(base, transfer);
 
     return handle->state;
 

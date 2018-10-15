@@ -216,7 +216,7 @@ int SPI_Master_AutoPolling(SPIM_Type *base, spi_polling_config_t *conf)
                                0, 0, 32);
 
     /* Wait the polling end */
-    UDMA_AutoPollingWait((UDMA_Type*)base);
+    UDMA_BlockWait();
 
     /* Disallow reference Clock propagating to UDMA */
     SOC_EU_ClearPRMask( REF32K_CLK_RISE_EVENT );
@@ -228,52 +228,6 @@ int SPI_Master_AutoPolling(SPIM_Type *base, spi_polling_config_t *conf)
     SOC_EU_ClearFCMask(UDMA_EVENT_SPIM0_EOT + SPI_GetInstance(base));
 
     return 0;
-}
-
-static void SPI_MasterTransferStart(SPIM_Type *base, spi_transfer_t *transfer, int hint)
-{
-    /*Start master transfer*/
-    if (transfer->rxDataSize) {
-      spi_req_t *RX = UDMA_FindAvailableRequest();
-
-      RX->info.dataAddr  = (uint32_t)  transfer->rxData;
-      RX->info.dataSize  = transfer->rxDataSize;
-      RX->info.isTx      = 0;
-      RX->info.channelId = UDMA_EVENT_SPIM0_RX + (SPI_GetInstance(base) << 1);
-      RX->info.ctrl        = UDMA_CTRL_DUAL_RX;
-      RX->info.configFlags = UDMA_CFG_DATA_SIZE((transfer->configFlags >> 4));
-      if (hint == UDMA_WAIT)
-          RX->info.task        = 0;
-      else
-          RX->info.task        = 1;
-      RX->info.repeat.size = 0;
-
-      UDMA_SendRequest((UDMA_Type *)base, RX, UDMA_NO_WAIT);
-    }
-
-    if (transfer->txDataSize) {
-      spi_req_t *TX = UDMA_FindAvailableRequest();
-
-      TX->info.dataAddr = (uint32_t) transfer->txData;
-      TX->info.dataSize  = transfer->txDataSize;
-      TX->info.isTx      = 1;
-      TX->info.channelId   = UDMA_EVENT_SPIM0_TX + (SPI_GetInstance(base) << 1);
-      TX->info.configFlags = UDMA_CFG_DATA_SIZE((transfer->configFlags >> 4));
-
-      if(transfer->rxDataSize){
-          TX->info.ctrl = UDMA_CTRL_DUAL_TX;
-          TX->info.task = 0;
-      } else {
-          TX->info.ctrl = UDMA_CTRL_NORMAL;
-          if (hint == UDMA_WAIT)
-              TX->info.task = 0;
-          else
-              TX->info.task = 1;
-      }
-      TX->info.repeat.size      = 0;
-
-      UDMA_SendRequest((UDMA_Type *)base, TX, hint);
-    }
 }
 
 void SPI_MasterTransferBlocking(SPIM_Type *base, const void *tx_buffer, int tx_length, void *rx_buffer, int rx_length, unsigned char bit_width)
@@ -302,6 +256,46 @@ void SPI_MasterTransferBlocking(SPIM_Type *base, const void *tx_buffer, int tx_l
     }
 }
 
+static void SPI_MasterTransferStart(SPIM_Type *base, spi_transfer_t *transfer)
+{
+    /*Start master transfer*/
+    if (transfer->rxDataSize) {
+      spi_req_t *RX = UDMA_FindAvailableRequest();
+
+      RX->info.dataAddr  = (uint32_t)  transfer->rxData;
+      RX->info.dataSize  = transfer->rxDataSize;
+      RX->info.isTx      = 0;
+      RX->info.channelId = UDMA_EVENT_SPIM0_RX + (SPI_GetInstance(base) << 1);
+      RX->info.ctrl        = UDMA_CTRL_DUAL_RX;
+      RX->info.configFlags = UDMA_CFG_DATA_SIZE((transfer->configFlags >> 4));
+      RX->info.task        = 1;
+      RX->info.repeat.size = 0;
+
+      UDMA_SendRequest((UDMA_Type *)base, RX, UDMA_NO_WAIT);
+    }
+
+    if (transfer->txDataSize) {
+      spi_req_t *TX = UDMA_FindAvailableRequest();
+
+      TX->info.dataAddr = (uint32_t) transfer->txData;
+      TX->info.dataSize  = transfer->txDataSize;
+      TX->info.isTx      = 1;
+      TX->info.channelId   = UDMA_EVENT_SPIM0_TX + (SPI_GetInstance(base) << 1);
+      TX->info.configFlags = UDMA_CFG_DATA_SIZE((transfer->configFlags >> 4));
+
+      if(transfer->rxDataSize){
+          TX->info.ctrl = UDMA_CTRL_DUAL_TX;
+          TX->info.task = 0;
+      } else {
+          TX->info.ctrl = UDMA_CTRL_NORMAL;
+          TX->info.task = 1;
+      }
+      TX->info.repeat.size      = 0;
+
+      UDMA_SendRequest((UDMA_Type *)base, TX, UDMA_NO_WAIT);
+    }
+}
+
 status_t SPI_MasterTransferNonBlocking(SPIM_Type *base, spi_master_handle_t *handle, spi_transfer_t *transfer)
 {
     assert(handle);
@@ -317,9 +311,7 @@ status_t SPI_MasterTransferNonBlocking(SPIM_Type *base, spi_master_handle_t *han
     s_spiMasterIsr = SPI_MasterTransferHandleIRQ;
 
     /*Start master transfer*/
-    SPI_MasterTransferStart(base,
-                            transfer,
-                            UDMA_NO_WAIT);
+    SPI_MasterTransferStart(base, transfer);
 
     return uStatus_Success;
 }
