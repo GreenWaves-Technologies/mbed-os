@@ -65,19 +65,20 @@ void spi_init(spi_t *obj, PinName mosi, PinName miso, PinName sclk, PinName ssel
     uint32_t spi_mosi = pinmap_peripheral(mosi, PinMap_SPI_MOSI);
     uint32_t spi_miso = pinmap_peripheral(miso, PinMap_SPI_MISO);
     uint32_t spi_sclk = pinmap_peripheral(sclk, PinMap_SPI_SCLK);
-    uint32_t spi_ssel = pinmap_peripheral(ssel, PinMap_SPI_SSEL);
     uint32_t spi_data = pinmap_merge(spi_mosi, spi_miso);
-    uint32_t spi_cntl = pinmap_merge(spi_sclk, spi_ssel);
+    spi_obj->instance = pinmap_merge(spi_sclk, spi_data);
 
-    spi_obj->instance = pinmap_merge(spi_data, spi_cntl);
     MBED_ASSERT((int)spi_obj->instance != NC);
-    MBED_ASSERT(ssel != NC);
 
     /* pin out the spi pins */
     pinmap_pinout(mosi, PinMap_SPI_MOSI);
     pinmap_pinout(miso, PinMap_SPI_MISO);
     pinmap_pinout(sclk, PinMap_SPI_SCLK);
-    pinmap_pinout(ssel, PinMap_SPI_SSEL);
+
+    if (ssel != NC)
+        pinmap_pinout(ssel & 0xFF, PinMap_SPI_SSEL);
+    else
+        pinmap_pinout(SPI0_CSN0, PinMap_SPI_SSEL);
 
     /* Get default Master config */
     SPI_MasterGetDefaultConfig(&master_config);
@@ -236,7 +237,6 @@ static int spi_master_tx_transfer_prepare(spi_t *obj, int tx_bits)
 {
     int index = 0;
 
-    s_command_sequence[index++] = SPIM_CMD_SOT(master_config.whichCsn);
     s_command_sequence[index++] = SPIM_CMD_TX_DATA(tx_bits, master_config.qpi, 0);
 
     /* Blocking transfer */
