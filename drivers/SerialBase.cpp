@@ -300,6 +300,18 @@ void SerialBase::interrupt_handler_asynch(void)
 
 #endif
 
+#if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
+int SerialBase::get_read_remain_size() const
+{
+    return serial_read_remain_size(&_serial);
+}
+
+int SerialBase::get_write_remain_size() const
+{
+    return serial_write_remain_size(&_serial);
+}
+#endif
+
 } // namespace mbed
 
 #endif

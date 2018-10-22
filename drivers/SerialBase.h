@@ -141,6 +141,21 @@ public:
      */
     void send_break();
 
+#if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
+    /** Get the remain size which has not been transferd in UDMA RX channel
+     *
+     * @param obj The serial object
+     */
+    int get_read_remain_size() const;
+
+
+    /** Get the remain size which has not been transferd in UDMA TX channel
+     *
+     * @param obj The serial object
+     */
+    int get_write_remain_size() const;
+#endif
+
 protected:
 
     /** Acquire exclusive access to this serial port
