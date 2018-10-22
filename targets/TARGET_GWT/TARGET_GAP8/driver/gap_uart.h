@@ -513,8 +513,7 @@ status_t UART_TransferReceiveNonBlocking(UART_Type *base,
  */
 static inline  uint32_t UART_TXBusy(UART_Type *base) {
     /* Fix, Need to use UDMA register cfg_rx_en bit to determine busy or not */
-    UDMA_Type *udma_uart = (UDMA_Type *)base;
-    return ((udma_uart->TX_CFG & UDMA_CFG_EN_MASK) >> UDMA_CFG_EN_SHIFT);
+    return UDMA_TXBusy((UDMA_Type *)base);
 }
 
 /*!
@@ -527,8 +526,27 @@ static inline  uint32_t UART_TXBusy(UART_Type *base) {
  */
 static inline uint32_t UART_RXBusy(UART_Type *base) {
     /* Fix, Need to use UDMA register cfg_rx_en bit to determine busy or not */
-    UDMA_Type *udma_uart = (UDMA_Type *)base;
-    return ((udma_uart->RX_CFG & UDMA_CFG_EN_MASK) >> UDMA_CFG_EN_SHIFT);
+    return UDMA_RXBusy((UDMA_Type *)base);
+}
+
+/*!
+ * @brief Get the TX UDMA channel Reamin bytes.
+ *
+ * @param base UART peripheral base address.
+ */
+static inline  uint32_t UART_TXRemainBytes(UART_Type *base) {
+    /* Fix, Need to use UDMA register cfg_rx_en bit to determine busy or not */
+    return UDMA_TXRemainBytes((UDMA_Type *)base);
+}
+
+/*!
+ * @brief Get the RX UDMA channel Remain bytes.
+ *
+ * @param base UART peripheral base address.
+ */
+static inline uint32_t UART_RXRemainBytes(UART_Type *base) {
+    /* Fix, Need to use UDMA register cfg_rx_en bit to determine busy or not */
+    return UDMA_RXRemainBytes((UDMA_Type *)base);
 }
 
 /*!

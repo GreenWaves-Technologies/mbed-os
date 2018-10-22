@@ -194,9 +194,9 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
     NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
 
     if (info->isTx) {
-        assert(!UDMA_TxBusy(base));
+        assert(!UDMA_TXBusy(base));
     } else {
-        assert(!UDMA_RxBusy(base));
+        assert(!UDMA_RXBusy(base));
     }
 
     /* Hyperbus ctrl */

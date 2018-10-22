@@ -272,9 +272,9 @@ void UDMA_WaitRequestEnd(udma_req_t *req);
  * @param base The UDMA channel.
  * @note .
  */
-static inline int UDMA_TxBusy(UDMA_Type *base)
+static inline int UDMA_TXBusy(UDMA_Type *base)
 {
-    return (base->TX_CFG & UDMA_CFG_EN_MASK);
+    return ((base->TX_CFG & UDMA_CFG_EN_MASK) >> UDMA_CFG_EN_SHIFT);
 }
 
 /*!
@@ -283,9 +283,53 @@ static inline int UDMA_TxBusy(UDMA_Type *base)
  * @param base The UDMA channel.
  * @note .
  */
-static inline int UDMA_RxBusy(UDMA_Type *base)
+static inline int UDMA_RXBusy(UDMA_Type *base)
 {
-    return (base->RX_CFG & UDMA_CFG_EN_MASK);
+    return ((base->RX_CFG & UDMA_CFG_EN_MASK) >> UDMA_CFG_EN_SHIFT);
+}
+
+/*!
+ * @brief Get UDMA TX channel pending state.
+ *
+ * @param base The UDMA channel.
+ * @note .
+ */
+static inline int UDMA_TXPending(UDMA_Type *base)
+{
+    return ((base->TX_CFG & UDMA_CFG_PENDING_MASK) >> UDMA_CFG_PENDING_SHIFT);
+}
+
+/*!
+ * @brief Get UDMA RX channel pending state.
+ *
+ * @param base The UDMA channel.
+ * @note .
+ */
+static inline int UDMA_RXPending(UDMA_Type *base)
+{
+    return ((base->RX_CFG & UDMA_CFG_PENDING_MASK) >> UDMA_CFG_PENDING_SHIFT);
+}
+
+/*!
+ * @brief Get UDMA TX channel transfer left size which has not been transfered.
+ *
+ * @param base The UDMA channel.
+ * @note .
+ */
+static inline int UDMA_TXRemainBytes(UDMA_Type *base)
+{
+    return (base->TX_SIZE & UDMA_SIZE_SIZE_MASK);
+}
+
+/*!
+ * @brief Get UDMA RX channel transfer left size which has not been transfered.
+ *
+ * @param base The UDMA channel.
+ * @note .
+ */
+static inline int UDMA_RXRemainBytes(UDMA_Type *base)
+{
+    return (base->RX_SIZE & UDMA_SIZE_SIZE_MASK);
 }
 
 /*!

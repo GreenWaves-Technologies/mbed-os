@@ -409,4 +409,17 @@ void serial_rx_abort_asynch(serial_t *obj)
         UART_TransferAbortReceive(uart_addrs[obj->serial.index], &obj->serial.uart_transfer_handle);
     }
 }
+
+#if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
+int serial_read_remain_size(const serial_t *obj)
+{
+    return UART_RXRemainBytes(uart_addrs[obj->serial.index]);
+}
+
+int serial_write_remain_size(const serial_t *obj)
+{
+    return UART_TXRemainBytes(uart_addrs[obj->serial.index]);
+}
+#endif
+
 #endif
