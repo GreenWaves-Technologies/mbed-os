@@ -271,7 +271,11 @@ public:
     static const int8_t SOCKET_COUNT = 5;
 
 private:
+    #if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
+    DoubleBufferingSerial _serial;
+    #else
     UARTSerial _serial;
+    #endif
     ATCmdParser _parser;
     Mutex _smutex; // Protect serial port access
 
