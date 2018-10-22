@@ -534,7 +534,10 @@ void RTC_CreateHandler(rtc_callback_t callback, void *userData)
 
 void RTC_IRQHandler(void)
 {
-    rtc_irq_handler.callback(rtc_irq_handler.userData);
+    if (rtc_irq_handler.callback != NULL)
+    {
+        rtc_irq_handler.callback(rtc_irq_handler.userData);
+    }
 }
 
 void RTC_APB_IRQHandler(void)

@@ -27,6 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _GAP_MALLOC_H_
 #define _GAP_MALLOC_H_
 
@@ -39,74 +40,90 @@
  */
 
 /*******************************************************************************
- * Definitions
+ * Variables, macros, structures,... definitions
  ******************************************************************************/
-typedef struct malloc_block_s {
-    int                      size;
-    struct malloc_block_s *next;
+
+/*! @brief Memory block structure. */
+typedef struct malloc_block_s
+{
+    int32_t                size; /*!< Size of the memory block. */
+    struct malloc_block_s *next; /*!< Pointer to the next memory block. */
 } malloc_chunk_t;
 
-
-typedef struct malloc_s {
-    malloc_chunk_t *first_free;
+/*! @brief Memory allocator structure. */
+typedef struct malloc_s
+{
+    malloc_chunk_t *first_free; /*!< List of memory blocks. */
 } malloc_t;
 
 /*******************************************************************************
- * APIs
+ * API
  ******************************************************************************/
+
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
 
 /*!
- * @name Initialization and deinitialization
- * @{
- */
-
-/*!
- * @brief Get malloc info.
- *
- * @note .
+ * @brief Get memory allocator information.
  */
 void __malloc_info(malloc_t *a, int *_size, void **first_chunk, int *_nb_chunks);
 
 /*!
- * @brief Print malloc.
+ * @brief Print information of a memory allocator.
  *
- * @note .
+ * This function diplays information such as free blocks, size of the block,... of a memory allocator.
+ *
+ * @param a Pointer to a memory allocator.
  */
 void __malloc_dump(malloc_t *a);
 
 /*!
- * @brief Initializes malloc.
+ * @brief Initialize a memory allocator.
  *
- * @note .
+ * This function initializes a memory allocator(FC or L1).
+ *
+ * @param a      Pointer to a memory allocator.
+ * @param _chunk Start address of a memory region.
+ * @param size   Size of the memory region to be used by the allocator.
  */
 void __malloc_init(malloc_t *a, void *_chunk, int size);
 
 /*!
- * @brief Allocate memory.
+ * @brief Allocate memory from an allocator.
  *
- * @note .
- * @return Start address of memory
+ * This function allocates a memory chunk.
+ *
+ * @param a      Pointer to a memory allocator.
+ * @param size   Size of the memory to be allocated.
+ *
+ * @return Start address of an allocated memory chunk or NULL if there is not enough memory to allocate.
  */
 void *__malloc(malloc_t *a, int size);
 
 /*!
- * @brief Free the l1 malloc.
+ * @brief Free an allocated memory chunk.
  *
- * @note .
+ * This function frees an allocated memory chunk. The freed memory chunk is chained back to the list of free space to allocate again.
+ *
+ * @param a      Pointer to a memory allocator.
+ * @param _chunk Start address of an allocated memory chunk.
+ * @param size   Size of the allocated memory chunk.
  */
-void __attribute__((noinline)) __malloc_free(malloc_t *a, void *_chunk, int size);
+void __malloc_free(malloc_t *a, void *_chunk, int size) __attribute__((noinline)) ;
 
 /*!
- * @brief Memory Alignment.
+ * @brief Allocate memory from an allocator with aligned address.
  *
- * @note .
+ * This function allocates an adress aligned memory chunk.
+ *
+ * @param a      Pointer to a memory allocator.
+ * @param size   Size of the memory to be allocated.
+ * @param align  Memory alignement size.
+ *
+ * @return Start address of an allocated memory chunk or NULL if there is not enough memory to allocate.
  */
 void *__malloc_align(malloc_t *a, int size, int align);
-
-/* @} */
 
 #if defined(__cplusplus)
 }

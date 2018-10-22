@@ -54,7 +54,7 @@ void __malloc_dump(malloc_t *a)
 
     printf("======== Memory allocator state: ============\n");
     for (pt = a->first_free; pt; pt = pt->next) {
-        printf("Free Block at %8X, size: %8x, Next: %8X ", (unsigned int) pt, pt->size, (unsigned int) pt->next);
+        printf("Free Block at %8X, size: %8x, Next: %8X ", (unsigned int) pt, (unsigned int) pt->size, (unsigned int) pt->next);
         if (pt == pt->next) {
             printf(" CORRUPTED\n"); break;
         } else printf("\n");

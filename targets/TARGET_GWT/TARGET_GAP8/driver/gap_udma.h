@@ -249,14 +249,6 @@ void UDMA_EventHandler(uint32_t index, int abort);
  */
 void UDMA_BlockWait();
 
-/*!
- * @brief WAIT the udma channel transfer end, for non-blocking transfer.
- *
- * @param req The UDMA request.
- * @note .
- */
-void UDMA_WaitRequestEnd(udma_req_t *req);
-
 /* @} */
 
 

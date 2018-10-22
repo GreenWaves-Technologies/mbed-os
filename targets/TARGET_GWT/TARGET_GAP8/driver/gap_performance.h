@@ -32,75 +32,73 @@
 #define _GAP_PERFORMANCE_H_
 
 #include <assert.h>
-#include "cmsis.h"
 #include <string.h>
+#include "cmsis.h"
+
 /*!
- * @addtogroup performance
+ * @addtogroup Performance
  * @{
  */
 
 /*******************************************************************************
- * Definitions
+ * Variables, macros, structures,... definitions
  ******************************************************************************/
-#define PERFORMANCE_USING_TIMER_SHIFT            17U                                           /*!< PCER: Timer_CONT Position */
-#define PERFORMANCE_USING_TIMER_MASK             (0x1UL << PERFORMANCE_USING_TIMER_SHIFT)      /*!< PCER: Timer CONT Mask */
 
-/*! @brief performance transfer blocking or nonblocking hint */
-typedef struct performance_s {
-    uint32_t events_mask;     /*!< Events mask */
-    uint32_t count[PCER_EVENTS_NUM + 1];  /*!< Count value for all events including one timer value */
+#define PERFORMANCE_USING_TIMER_SHIFT 17U                                      /*!< PCER: Timer COUNT Position. */
+#define PERFORMANCE_USING_TIMER_MASK  (0x1UL << PERFORMANCE_USING_TIMER_SHIFT) /*!< PCER: Timer COUNT Mask. */
+
+/*!
+ * @brief Performance counter structure.
+ *
+ * This structure holds information on the events used by the performance counter
+ * and their value.
+ */
+typedef struct performance_s
+{
+    uint32_t events_mask;                /*!< Events' mask. */
+    uint32_t count[PCER_EVENTS_NUM + 1]; /*!< Performance counter's value for each events of the above mask. */
 } performance_t;
 
-
 /*******************************************************************************
- * APIs
+ * API
  ******************************************************************************/
+
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
 
 /*!
- * @name Initialization and deinitialization
- * @{
- */
-
-/*!
  * @brief Start the performance counter.
  *
- * This function will do initialization of performance counter and do the configurations
- * according to specific events, finally enable the counter.
+ * This function initializes the performance counter, configures it
+ * according to the events specified through the mask parameter then enables the counter.
  *
- * @param base The PERFORMANCE channel base pointer.
- * @param mask The logic or of wanted PERFORMANCE counter number bit mask.
- * @note .
+ * @param base  Performance base pointer.
+ * @param mask  Mask of the events.
  */
 void PERFORMANCE_Start(performance_t *base, uint32_t mask);
 
 /*!
  * @brief Stop the performance counter.
  *
- * This function will stop of performance counter and save the data
- * according to specific events, finally disable the counter.
+ * This function stops the performance counter, saves each events' counter value
+ * then disables the counter.
  *
- * @param base The PERFORMANCE channel base pointer.
- * @note .
+ * @param base  Performance base pointer.
  */
 void PERFORMANCE_Stop(performance_t *base);
 
 /*!
- * @brief Get the performance counter of specific event.
+ * @brief Get the performance counter's value for a specific event.
  *
- * This function will return the performance counter data
- * according to specific event
+ * This function returns the performance counter's value for the specified event.
  *
- * @param base  The PERFORMANCE channel base pointer.
- * @param event The PERFORMANCE counter number to read.
- * @note .
- * @return counter value of specific event
+ * @param base  Performance base pointer.
+ * @param event Event of the counter to return.
+ *
+ * @return Performance counter's value.
  */
 uint32_t PERFORMANCE_Get(performance_t *base, uint32_t event);
-
-/* @} */
 
 #if defined(__cplusplus)
 }
