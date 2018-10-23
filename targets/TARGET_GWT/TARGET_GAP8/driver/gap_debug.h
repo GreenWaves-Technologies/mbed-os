@@ -39,6 +39,7 @@
 #define HAL_DEBUG_STRUCT_NAME_STR "Debug_Struct"
 
 #define GAP_USE_DEBUG_STRUCT 1
+#define GAP_USE_NEW_REQLOOP  1
 #define PRINTF_BUF_SIZE 128
 
 #ifdef GAP_USE_DEBUG_STRUCT
@@ -49,7 +50,14 @@ typedef enum {
   BRIDGE_REQ_READ = 3,
   BRIDGE_REQ_WRITE = 4,
   BRIDGE_REQ_CLOSE = 5,
-  BRIDGE_REQ_FIRST_USER = 5
+  BRIDGE_REQ_FB_OPEN = 6,
+  BRIDGE_REQ_FB_UPDATE = 7,
+#ifdef GAP_USE_NEW_REQLOOP
+  BRIDGE_REQ_TARGET_STATUS_SYNC = 8,
+  BRIDGE_REQ_FIRST_USER = 9
+#else
+  BRIDGE_REQ_FIRST_USER = 8
+#endif
 } bridge_req_e;
 
 typedef struct _bridge_req_s {
@@ -58,6 +66,7 @@ typedef struct _bridge_req_s {
   uint32_t type;
   uint32_t done;
   uint32_t popped;
+  uint32_t padding;
   union {
     struct {
       uint32_t name_len;
@@ -82,11 +91,46 @@ typedef struct _bridge_req_s {
       uint32_t len;
       uint32_t retval;
     } write;
+    struct {
+      uint64_t screen;
+      uint32_t name_len;
+      uint32_t name;
+      uint32_t width;
+      uint32_t height;
+      uint32_t format;
+    } fb_open;
+    struct {
+      uint64_t screen;
+      uint32_t addr;
+      uint32_t posx;
+      uint32_t posy;
+      uint32_t width;
+      uint32_t height;
+    } fb_update;
+#ifdef GAP_USE_NEW_REQLOOP
+    struct {
+    } target_status_sync;
+#endif
   };
 } bridge_req_t;
 
+#ifdef GAP_USE_NEW_REQLOOP
+typedef struct {
+  volatile int32_t available;
+} target_state_t;
+
+typedef struct {
+  volatile int32_t connected;
+} bridge_state_t;
+#endif
+
 /* This structure can be used to interact with the host loader */
 typedef struct _debug_struct {
+#ifdef GAP_USE_NEW_REQLOOP
+    target_state_t target;
+
+    bridge_state_t bridge;
+#endif
     /* Used by external debug bridge to get exit status when using the board */
     uint32_t exitStatus;
 
@@ -108,7 +152,9 @@ typedef struct _debug_struct {
     uint32_t notifReqAddr;
     uint32_t notifReqValue;
 
+#ifndef GAP_USE_NEW_REQLOOP
     uint32_t bridgeConnected;
+#endif
 
 } debug_struct_t;
 #endif
@@ -124,10 +170,18 @@ static inline debug_struct_t* DEBUG_GetDebugStruct()
 #endif
 }
 
+#ifdef GAP_USE_NEW_REQLOOP
+#define GAP_DEBUG_STRUCT_INIT { {0}, {0}, 0, 1, 0 ,0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, 0}
+#else
 #define GAP_DEBUG_STRUCT_INIT {0, 1, 0 ,0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, 0, 0}
+#endif
 
 static inline int BRIDGE_isConnected(debug_struct_t *bridge) {
+#ifdef GAP_USE_NEW_REQLOOP
+  return *(volatile uint32_t *)&bridge->bridge.connected;
+#else
   return *(volatile uint32_t *)&bridge->bridgeConnected;
+#endif
 }
 
 static inline void BRIDGE_Connect(bridge_req_t *req)
