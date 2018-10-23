@@ -171,9 +171,11 @@ ssize_t DoubleBufferingSerial::read(void *buffer, size_t length)
 
     api_lock();
     while (data_read < length) {
-        ptr[data_read++] = _rxbuf[(read_size >= 0 ? read_size : (MBED_CONF_DRIVERS_UART_SERIAL_RXBUF_SIZE + read_size))];
-        read_size++;
+        ptr[data_read++] = _rxbuf[read_size++];
     }
+    if (read_size == MBED_CONF_DRIVERS_UART_SERIAL_RXBUF_SIZE)
+        read_size = 0;
+
     api_unlock();
 
     return data_read;
@@ -197,7 +199,9 @@ short DoubleBufferingSerial::poll(short events) const
 
     /* Check the Serial if space available for writing out */
     if (events & POLLIN) {
-        if (((SerialBase::get_read_remain_size() + read_size) < MBED_CONF_DRIVERS_UART_SERIAL_RXBUF_SIZE)) {
+        int read_available_size = MBED_CONF_DRIVERS_UART_SERIAL_RXBUF_SIZE - SerialBase::get_read_remain_size();
+
+        if (read_available_size != read_size) {
             revents |= POLLIN;
         }
     }
@@ -235,8 +239,6 @@ void DoubleBufferingSerial::api_unlock(void)
 
 void DoubleBufferingSerial::rx_irq(int event)
 {
-    read_size -= MBED_CONF_DRIVERS_UART_SERIAL_RXBUF_SIZE;
-
     SerialBase::read((uint8_t *)_rxbuf, MBED_CONF_DRIVERS_UART_SERIAL_RXBUF_SIZE, callback(this, &DoubleBufferingSerial::rx_irq), SERIAL_EVENT_RX_ALL, 0);
 }
 
