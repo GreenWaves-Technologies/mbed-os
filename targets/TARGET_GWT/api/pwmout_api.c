@@ -76,7 +76,7 @@ void pwmout_write(pwmout_t* obj, float value)
     PWM_Type *base = pwm_addrs[obj->pwm_name >> PWM_SHIFT];
 
     uint32_t TH        = base->TH;
-    uint16_t th_low    = TH & PWM_THRESHOLD_LOW_MASK;
+    /* uint16_t th_low    = TH & PWM_THRESHOLD_LOW_MASK; */
     uint16_t th_high   = (TH & PWM_THRESHOLD_HIGH_MASK) >> PWM_THRESHOLD_HIGH_SHIFT;
 
     // float ch_th = (float)(value * (float) th_high + (float)th_low) / (float)(1.0f + value);
@@ -102,7 +102,7 @@ float pwmout_read(pwmout_t* obj)
 
     uint32_t channel   = (obj->pwm_name & 0x3);
     uint32_t TH        = base->TH;
-    uint16_t th_low    = TH & PWM_THRESHOLD_LOW_MASK;
+    /* uint16_t th_low    = TH & PWM_THRESHOLD_LOW_MASK; */
     uint16_t th_high   = (TH & PWM_THRESHOLD_HIGH_MASK) >> PWM_THRESHOLD_HIGH_SHIFT;
     uint16_t ch_th     = base->CH_TH[channel] & PWM_CHANNEL_CONFIG_THRESHOLD_MASK;
 

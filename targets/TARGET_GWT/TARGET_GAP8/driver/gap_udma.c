@@ -176,7 +176,8 @@ void UDMA_BlockWait()
         EU_EVT_MaskWaitAndClr(1 << FC_SOC_EVENT_IRQn);
     } while (!(EU_CORE_DEMUX->BUFFER & (1 << FC_SOC_EVENT_IRQn)));
 
-    uint32_t event = EU_SOC_EVENTS->CURRENT_EVENT;
+    /* Pop a event. */
+    EU_SOC_EVENTS->CURRENT_EVENT;
 
     /* Now that we popped the element, we can clear the soc event FIFO event as the FIFO is
        generating an event as soon as the FIFO is not empty */
