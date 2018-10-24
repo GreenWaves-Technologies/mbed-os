@@ -91,6 +91,7 @@ public:
      *  @param ssel SPI chip select pin
      */
     SPI(PinName mosi, PinName miso, PinName sclk, PinName ssel = NC);
+    virtual ~SPI();
 
     /** Configure the data transmission format
      *
@@ -308,11 +309,6 @@ private:
 #endif
 
 #endif
-
-public:
-    virtual ~SPI()
-    {
-    }
 
 protected:
     spi_t _spi;

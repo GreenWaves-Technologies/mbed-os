@@ -81,35 +81,16 @@ class GCC(mbedToolchain):
             if target.core.startswith("Cortex-M"):
                 self.cpu.append("-mthumb")
 
-            # FPU handling, M7 possibly to have double FPU
-            if target.core == "Cortex-M4F":
-                self.cpu.append("-mfpu=fpv4-sp-d16")
-                self.cpu.append("-mfloat-abi=softfp")
-            elif target.core == "Cortex-M7F":
-                self.cpu.append("-mfpu=fpv5-sp-d16")
-                self.cpu.append("-mfloat-abi=softfp")
-            elif target.core == "Cortex-M7FD":
-                self.cpu.append("-mfpu=fpv5-d16")
-                self.cpu.append("-mfloat-abi=softfp")
-
-            if target.core == "Cortex-A9":
-                self.cpu.append("-mthumb-interwork")
-                self.cpu.append("-marm")
-                self.cpu.append("-march=armv7-a")
-                self.cpu.append("-mfpu=vfpv3")
-                self.cpu.append("-mfloat-abi=hard")
-                self.cpu.append("-mno-unaligned-access")
-
-            if ((target.core.startswith("Cortex-M23") or
-                 target.core.startswith("Cortex-M33")) and
-                not target.core.endswith("-NS")):
-                self.cpu.append("-mcmse")
-                self.flags["ld"].extend([
-                    "-Wl,--cmse-implib",
-                    "-Wl,--out-implib=%s" % join(build_dir, "cmse_lib.o")
-                ])
-            elif target.core == "Cortex-M23-NS" or target.core == "Cortex-M33-NS":
-                self.flags["ld"].append("-D__DOMAIN_NS=1")
+        if ((target.core.startswith("Cortex-M23") or
+             target.core.startswith("Cortex-M33")) and
+            not target.core.endswith("-NS")):
+            self.cpu.append("-mcmse")
+            self.flags["ld"].extend([
+                "-Wl,--cmse-implib",
+                "-Wl,--out-implib=%s" % join(build_dir, "cmse_lib.o")
+            ])
+        elif target.core == "Cortex-M23-NS" or target.core == "Cortex-M33-NS":
+             self.flags["ld"].append("-D__DOMAIN_NS=1")
 
         self.flags["common"] += self.cpu
 
@@ -165,7 +146,7 @@ class GCC(mbedToolchain):
                 "file": "",
                 "line": "",
                 "col": "",
-                "severity": "ERROR",
+                "severity": "Warning",
             })
 
     def is_not_supported_error(self, output):

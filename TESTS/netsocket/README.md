@@ -234,6 +234,16 @@ content at minimum:
 
 ```
 {
+    "config": {
+        "echo-server-addr" : {
+            "help" : "IP address of echo server",
+            "value" : "\"echo.mbedcloudtesting.com\""
+        },
+        "echo-server-port" : {
+            "help" : "Port of echo server",
+            "value" : "7"
+        }
+    },
     "macros": ["MBED_EXTENDED_TESTS"]
 }
 ```
@@ -257,7 +267,7 @@ the `mbed_app.json` might look like this:
             "value": "\"password\""
         },
         "wifi-secure-protocol": {
-            "help": "WiFi security protocol, valid values are WEP, WPA, WPA2, WPA/WPA2",
+            "help": "WiFi security protocol, valid values are WEP, WPA, WPA2, WPA_WPA2",
             "value": "\"WPA2\""
         },
         "wifi-ch-secure": {
@@ -280,17 +290,6 @@ the `mbed_app.json` might look like this:
             "help": "How many networks may appear in Wifi scan result",
             "value": 30
         },
-        "header-file": {
-            "help" : "String for including your driver header file",
-            "value" : "\"MyWifiInterface.h\""
-        },
-        "object-construction" : {
-            "value" : "new MyWifiInterface()"
-        },
-        "connect-statement" : {
-            "help" : "Must use 'net' variable name",
-            "value" : "net->wifiInterface()->connect(MBED_CONF_APP_WIFI_SECURE_SSID, MBED_CONF_APP_WIFI_PASSWORD, NSAPI_SECURITY_WPA_WPA2)"
-        },
         "echo-server-addr" : {
             "help" : "IP address of echo server",
             "value" : "\"echo.mbedcloudtesting.com\""
@@ -300,9 +299,18 @@ the `mbed_app.json` might look like this:
             "value" : "7"
         }
     },
-    "macros": ["MBED_EXTENDED_TESTS"]
+    "macros": ["MBED_EXTENDED_TESTS"],
+    "target_overrides": {
+        "*": {
+            "target.network-default-interface-type": "WIFI",
+            "nsapi.default-wifi-ssid": "\"WIFI_SSID\"",
+            "nsapi.default-wifi-password": "\"WIFI_PASSWORD\"",
+            "nsapi.default-wifi-security": "WPA_WPA2"
+        }
+    }
 }
 ```
+See `mbed-os/tools/test_configs` folder for examples.
 
 Now build test binaries:
 
@@ -707,10 +715,9 @@ Call `UDPSocket::sendto()` with invalid parameters.
 3.  Call `UDPSocket:sendto( "", 0, NULL, 0);`
 4.  Call `UDPSocket:sendto(NULL, 9, "hello", 5);`
 5.  Call `UDPSocket:sendto(NULL, 0, "hello", 5);`
-6.  Call `UDPSocket:sendto("echo.mbedcloudtesting.com", 0, "hello", 5);`
-7.  Call `UDPSocket:sendto("echo.mbedcloudtesting.com", 9,NULL, 0);`
-8.  Call `UDPSocket:sendto("echo.mbedcloudtesting.com", 9, "hello", 5);`
-9.  destroy the socket
+6.  Call `UDPSocket:sendto("echo.mbedcloudtesting.com", 9,NULL, 0);`
+7.  Call `UDPSocket:sendto("echo.mbedcloudtesting.com", 9, "hello", 5);`
+8.  destroy the socket
 
 **Expected result:**
 
@@ -982,9 +989,8 @@ Call `TCPSocket::connect()` with invalid parameters.
 1.  Call `TCPSocket:connect( NULL, 9);`
 2.  Call `TCPSocket:connect( "", 9);`
 3.  Call `TCPSocket:connect( "", 0);`
-4.  Call `TCPSocket:connect( "echo.mbedcloudtesting.com", 0);`
-5.  Call `TCPSocket:connect( "echo.mbedcloudtesting.com", 9);`
-6.  destroy the socket
+4.  Call `TCPSocket:connect( "echo.mbedcloudtesting.com", 9);`
+5.  destroy the socket
 
 **Expected result:**
 

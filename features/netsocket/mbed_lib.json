@@ -6,6 +6,7 @@
         "default-wifi-ssid": null,
         "default-wifi-password": null,
         "default-wifi-security": "NONE",
+        "default-cellular-sim-pin": null,
         "default-cellular-apn": null,
         "default-cellular-username": null,
         "default-cellular-password": null,
@@ -35,6 +36,9 @@
             "nsapi.default-mesh-type": "LOWPAN"
         },
         "NCS36510": {
+            "nsapi.default-mesh-type": "LOWPAN"
+        },
+        "TB_SENSE_12": {
             "nsapi.default-mesh-type": "LOWPAN"
         }
     }

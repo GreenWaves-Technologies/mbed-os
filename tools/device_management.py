@@ -31,6 +31,8 @@ from mbed_cloud import AccountManagementAPI, CertificatesAPI
 import colorama
 colorama.init()
 
+from utils import (generate_update_filename)
+
 
 LOG = logging.getLogger(__name__)
 LOG_FORMAT = '[%(levelname)s] %(asctime)s - %(name)s - %(message)s'
@@ -44,6 +46,15 @@ from tools.options import extract_mcus
 
 
 class MbedExtendedArgs(MainArgumentParser):
+
+    def __init__(self, *args, **kwargs):
+        MainArgumentParser.__init__(self, *args, **kwargs)
+        self.parser.prog = "mbed device-management"
+        self.parser.description = (
+            "Create or transform a manifest. "
+            "Use {} [command] -h for help on each command."
+        ).format(self.parser.prog)
+
     def _addCreateArgs(self, parser, exclusions=[]):
         if 'payload' not in exclusions:
             parser.add_argument(
@@ -69,11 +80,11 @@ def wrap_payload(func):
             sources = options.source_dir or ['.']
             config = Config(mcus[0], sources)
             app_name = config.name or basename(abspath(sources[0]))
-            output_ext = getattr(config.target, "OUTPUT_EXT", "bin")
-            payload_name = join(options.build, "{}_application.{}".format(
-                app_name, output_ext
-            ))
+            payload_name = join(options.build, generate_update_filename(app_name, config.target))
             options.payload = open(payload_name, "rb")
+        if not options.payload:
+            LOG.error("No Payload specified. Please use \"-t\" and \"-m\" or \"-p\" to specify a payload ")
+            exit(1)
         return func(options)
     return inner
 

@@ -39,7 +39,7 @@
 #define HAL_DEBUG_STRUCT_NAME_STR "Debug_Struct"
 
 #define GAP_USE_DEBUG_STRUCT 1
-#define GAP_USE_NEW_REQLOOP  1
+/* #define GAP_USE_NEW_REQLOOP  1 */
 #define PRINTF_BUF_SIZE 128
 
 #ifdef GAP_USE_DEBUG_STRUCT

@@ -20,8 +20,8 @@
 #include "rtos/Thread.h"
 using namespace rtos;
 #else
-#include "Timer.h"
-#include "LowPowerTimer.h"
+#include "drivers/Timer.h"
+#include "drivers/LowPowerTimer.h"
 #endif
 
 namespace mbed {
@@ -29,7 +29,7 @@ namespace mbed {
 // timeout -1 forever, or milliseconds
 int poll(pollfh fhs[], unsigned nfhs, int timeout)
 {
-    /**
+    /*
      * TODO Proper wake-up mechanism.
      * In order to correctly detect availability of read/write a FileHandle, we needed
      * a select or poll mechanisms. We opted for poll as POSIX defines in

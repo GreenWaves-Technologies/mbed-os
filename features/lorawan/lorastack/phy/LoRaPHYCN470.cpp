@@ -220,7 +220,7 @@ LoRaPHYCN470::LoRaPHYCN470()
     }
 
     // Initialize the channels default mask
-    for (uint8_t i = 0; i < CN470_MAX_NB_CHANNELS; i++) {
+    for (uint8_t i = 0; i < CN470_CHANNEL_MASK_SIZE; i++) {
         default_channel_mask[i] = 0xFFFF & fsb_mask[i];
     }
 
@@ -510,7 +510,7 @@ uint8_t LoRaPHYCN470::link_ADR_request(adr_req_params_t* params,
     verify_params.nb_rep = adr_settings.nb_rep;
     verify_params.current_datarate = params->current_datarate;
     verify_params.current_tx_power = params->current_tx_power;
-    verify_params.current_nb_rep = params->current_nb_rep;
+    verify_params.current_nb_rep = params->current_nb_trans;
     verify_params.channel_mask = temp_channel_masks;
 
 

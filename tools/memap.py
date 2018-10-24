@@ -142,7 +142,10 @@ class _GccParser(_Parser):
                 return join('[lib]', test_re_obj_name.group(2),
                             test_re_obj_name.group(3))
             else:
-                print("Unknown object name found in GCC map file: %s" % line)
+                if (not line.startswith("LONG") and
+                    not line.startswith("linker stubs")):
+                    print("Unknown object name found in GCC map file: %s"
+                          % line)
                 return '[misc]'
 
     def parse_section(self, line):
@@ -764,7 +767,7 @@ class MemapParser(object):
 
         return output
 
-    toolchains = ["ARM", "ARM_STD", "ARM_MICRO", "GCC_ARM", "GCC_CR", "GCC_RISCV", "IAR"]
+    toolchains = ["ARM", "ARM_STD", "ARM_MICRO", "GCC_ARM", "GCC_RISCV", "IAR"]
 
     def compute_report(self):
         """ Generates summary of memory usage for main areas
@@ -814,7 +817,7 @@ class MemapParser(object):
         self.tc_name = toolchain.title()
         if toolchain in ("ARM", "ARM_STD", "ARM_MICRO", "ARMC6"):
             parser = _ArmccParser
-        elif toolchain == "GCC_ARM" or toolchain == "GCC_CR" or toolchain == "GCC_RISCV":
+        elif toolchain == "GCC_ARM" or toolchain == "GCC_RISCV":
             parser = _GccParser
         elif toolchain == "IAR":
             parser = _IarParser
