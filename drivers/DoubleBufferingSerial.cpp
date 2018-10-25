@@ -172,10 +172,10 @@ ssize_t DoubleBufferingSerial::read(void *buffer, size_t length)
     api_lock();
     while (data_read < length) {
         ptr[data_read++] = _rxbuf[read_size++];
-    }
-    if (read_size == MBED_CONF_DRIVERS_UART_SERIAL_RXBUF_SIZE)
-        read_size = 0;
 
+        if (read_size == MBED_CONF_DRIVERS_UART_SERIAL_RXBUF_SIZE)
+            read_size = 0;
+    }
     api_unlock();
 
     return data_read;
@@ -240,11 +240,16 @@ void DoubleBufferingSerial::api_unlock(void)
 void DoubleBufferingSerial::rx_irq(int event)
 {
     SerialBase::read((uint8_t *)_rxbuf, MBED_CONF_DRIVERS_UART_SERIAL_RXBUF_SIZE, callback(this, &DoubleBufferingSerial::rx_irq), SERIAL_EVENT_RX_ALL, 0);
+
+    /* Report the File handler that data is ready to be read from the buffer. */
+    // wake();
 }
 
 // Also called from write to start transfer
 void DoubleBufferingSerial::tx_irq(int event)
 {
+    /* Report the File handler that data is ready to be read from the buffer. */
+    // wake();
 }
 
 void DoubleBufferingSerial::wait_ms(uint32_t millisec)
