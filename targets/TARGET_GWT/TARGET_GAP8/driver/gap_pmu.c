@@ -195,7 +195,7 @@ void PMU_DeInit(int retentive, pmu_system_state_t wakeup_state)
 
     if (retentive) {
         PMU_Sleep_Ctrl |= PMU_CTRL_SLEEP_CTRL_BOOT_L2(uPMU_BOOT_FROM_L2) |
-                          PMU_CTRL_SLEEP_CTRL_REBOOT(uPMU_RETENTIVE_BOOT);
+                          PMU_CTRL_SLEEP_CTRL_REBOOT(uPMU_RETENTIVE_SLEEP_BOOT);
     } else {
         PMU_Sleep_Ctrl |= PMU_CTRL_SLEEP_CTRL_BOOT_L2(uPMU_BOOT_FROM_ROM) |
                           PMU_CTRL_SLEEP_CTRL_REBOOT(uPMU_DEEP_SLEEP_BOOT);
@@ -220,7 +220,7 @@ int PMU_StateSwitch(pmu_switch_state_t state, pmu_switch_mode_t mode) {
     /* Need retentive or not */
     if (state == uPMU_SWITCH_DEEP_SLEEP)
         retentive = 0;
-    else if (state == uPMU_SWITCH_SLEEP)
+    else if (state == uPMU_SWITCH_RETENTIVE_SLEEP)
         retentive = 1;
 
     /* PMU shutdown, change state and set wakeup state */

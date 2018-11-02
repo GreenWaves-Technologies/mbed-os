@@ -55,8 +55,8 @@
 #define    UDMA_EVENT_I2C0_TX              11
 #define    UDMA_EVENT_I2C1_RX              12
 #define    UDMA_EVENT_I2C1_TX              13
-#define    UDMA_EVENT_TCDM_RX              14
-#define    UDMA_EVENT_TCDM_TX              15
+#define    UDMA_EVENT_MEMCPY_RX            14
+#define    UDMA_EVENT_MEMCPY_TX            15
 #define    UDMA_EVENT_SAI_CH0              16
 #define    UDMA_EVENT_SAI_CH1              17
 #define    UDMA_EVENT_CPI_RX               18

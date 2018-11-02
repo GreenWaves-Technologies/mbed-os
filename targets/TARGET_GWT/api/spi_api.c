@@ -78,7 +78,7 @@ void spi_init(spi_t *obj, PinName mosi, PinName miso, PinName sclk, PinName ssel
     if (ssel != NC)
         pinmap_pinout(ssel & 0xFF, PinMap_SPI_SSEL);
     else
-        pinmap_pinout(SPI0_CSN0, PinMap_SPI_SSEL);
+        pinmap_pinout(SPI0_CSN0 & 0xFF, PinMap_SPI_SSEL);
 
     /* Get default Master config */
     SPI_MasterGetDefaultConfig(&master_config);

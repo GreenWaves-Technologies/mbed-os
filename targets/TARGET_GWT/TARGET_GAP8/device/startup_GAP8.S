@@ -98,6 +98,7 @@ CRT0_Resume:
   bltu  a0, a1, .LC2
 #endif
 
+System_Init:
 #ifndef __NO_SYSTEM_INIT
   /* Do all other initializations from C code */
   jal  ra, SystemInit

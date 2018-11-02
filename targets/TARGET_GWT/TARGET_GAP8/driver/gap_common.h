@@ -52,6 +52,7 @@
 #include "gap_fll.h"
 #include "gap_gpio.h"
 #include "gap_pwm.h"
+#include "gap_memcpy.h"
 
 #include "gap_fc_malloc.h"
 #endif

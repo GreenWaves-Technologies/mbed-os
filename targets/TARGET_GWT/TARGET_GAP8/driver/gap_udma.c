@@ -67,7 +67,7 @@ udma_req_t  udma_requests[request_queue_num];
 static void UDMA_SetChannelBase() {
 #if DEVICE_LVDS == 1
   udma_channels[0].base = (UDMA_Type *) LVDS;
-#esle
+#else
 #if DEVICE_ORCA_ == 1
   udma_channels[0].base = (UDMA_Type *) ORCA;
 #endif
@@ -79,7 +79,7 @@ static void UDMA_SetChannelBase() {
   udma_channels[4].base = (UDMA_Type *) UART;
   udma_channels[5].base = (UDMA_Type *) I2C0;
   udma_channels[6].base = (UDMA_Type *) I2C1;
-  udma_channels[7].base = (UDMA_Type *) TCDM;
+  udma_channels[7].base = (UDMA_Type *) MEMCPY;
   /* Special channel I2S1 use TX for RX */
   udma_channels[8].base = (UDMA_Type *) I2S;
   udma_channels[9].base = (UDMA_Type *) CPI;
@@ -226,12 +226,11 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
         base->RX_CFG   = info->configFlags;
     }
 
+
     if (hint == UDMA_WAIT) {
         /* Wait TX/RX finished */
         UDMA_BlockWait();
-    }
-
-    if (hint == UDMA_WAIT_RX) {
+    } else if (hint == UDMA_WAIT_RX) {
         /* Wait TX finished */
         UDMA_BlockWait();
 
@@ -262,18 +261,6 @@ static void UDMA_StartTransfer(UDMA_Type *base, udma_req_info_t *info) {
             /* hyperbus_crt0_set */
             HYPERBUS_SetCRT0(reg_mem_access);
         }
-    }
-    /* TCDM ctrl */
-    else if ((info->ctrl & 0x0F) == UDMA_CTRL_TCDM) {
-        TCDM_Type *tcdm_ptr = (TCDM_Type *) base;
-        /* RX or TX */
-        if (info->channelId == UDMA_EVENT_TCDM_RX)
-            tcdm_ptr->SRC_ADDR = info->u.fcTcdm.fc_addr;
-        else
-            tcdm_ptr->DST_ADDR = info->u.fcTcdm.fc_addr;
-    }
-    else if(info->ctrl == 3) {
-        /* For other special IP */
     }
 
     if (info->isTx) {
@@ -418,6 +405,7 @@ static inline void UDMA_RepeatTransfer(udma_req_t *req) {
 
 extern void SAI_IRQHandler_CH0(void *handle);
 extern void SAI_IRQHandler_CH1(void *handle);
+extern void MEMCPY_IRQHandler(void *handle);
 
 __attribute__((section(".text")))
 void UDMA_EventHandler(uint32_t index, int abort)
@@ -505,6 +493,8 @@ void UDMA_EventHandler(uint32_t index, int abort)
                     SAI_IRQHandler_CH0((void *)first->info.task);
                 if(index == UDMA_EVENT_SAI_CH1)
                     SAI_IRQHandler_CH1((void *)first->info.task);
+                if(index == UDMA_EVENT_MEMCPY_RX || index == UDMA_EVENT_MEMCPY_TX)
+                    MEMCPY_IRQHandler((void *)first->info.task);
             }
         }
     }

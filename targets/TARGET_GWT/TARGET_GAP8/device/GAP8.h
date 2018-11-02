@@ -1022,7 +1022,7 @@ typedef struct {
 
 /** HYPERBUS - Register Layout Typedef */
 typedef struct {
-  UDMA_Type    UDMA_HYPERBUS;                           /**< HYPERBUS UDMA general register, offset: 0x0 */
+  UDMA_Type    UDMA_HYPERBUS;                        /**< HYPERBUS UDMA general register, offset: 0x0 */
   __IO  uint32_t EXT_ADDR;                           /**< HYPERBUS Memory access address register, offset: 0x20 */
   __IO  uint32_t EXT_CFG;                            /**< Reserved, offset: 0x24 */
   __IO  uint32_t MEM_CFG0;                           /**< HYPERBUS Memory control Configuration register0, offset: 0x28 */
@@ -1077,12 +1077,12 @@ typedef struct {
 
 
 /*! @name MEM_CFG2 - HYPERBUS Memory control Configuration register2 */
-#define HYPERBUS_MEM_CFG2_RD_MAX_LENGTH0_MASK                    (0x1FFU)
-#define HYPERBUS_MEM_CFG2_RD_MAX_LENGTH0_SHIFT                   (0U)
-#define HYPERBUS_MEM_CFG2_RD_MAX_LENGTH0(x)                      (((uint32_t)(((uint32_t)(x)) << HYPERBUS_MEM_CFG2_RD_MAX_LENGTH0_SHIFT)) & HYPERBUS_MEM_CFG2_RD_MAX_LENGTH0_MASK)
-#define HYPERBUS_MEM_CFG2_WR_MAX_LENGTH0_MASK                    (0x1FF0000U)
-#define HYPERBUS_MEM_CFG2_WR_MAX_LENGTH0_SHIFT                   (16U)
-#define HYPERBUS_MEM_CFG2_WR_MAX_LENGTH0(x)                      (((uint32_t)(((uint32_t)(x)) << HYPERBUS_MEM_CFG2_WR_MAX_LENGTH0_SHIFT)) & HYPERBUS_MEM_CFG2_WR_MAX_LENGTH0_MASK)
+#define HYPERBUS_MEM_CFG2_RD_MAX_LENGTH0_MASK          (0x1FFU)
+#define HYPERBUS_MEM_CFG2_RD_MAX_LENGTH0_SHIFT         (0U)
+#define HYPERBUS_MEM_CFG2_RD_MAX_LENGTH0(x)            (((uint32_t)(((uint32_t)(x)) << HYPERBUS_MEM_CFG2_RD_MAX_LENGTH0_SHIFT)) & HYPERBUS_MEM_CFG2_RD_MAX_LENGTH0_MASK)
+#define HYPERBUS_MEM_CFG2_WR_MAX_LENGTH0_MASK          (0x1FF0000U)
+#define HYPERBUS_MEM_CFG2_WR_MAX_LENGTH0_SHIFT         (16U)
+#define HYPERBUS_MEM_CFG2_WR_MAX_LENGTH0(x)            (((uint32_t)(((uint32_t)(x)) << HYPERBUS_MEM_CFG2_WR_MAX_LENGTH0_SHIFT)) & HYPERBUS_MEM_CFG2_WR_MAX_LENGTH0_MASK)
 
 /*! @name MEM_CFG3 - HYPERBUS Memory control Configuration register3 */
 #define HYPERBUS_MEM_CFG3_ACS0_MASK                    (0x1U)
@@ -1355,60 +1355,60 @@ typedef struct {
 
 
 /* ----------------------------------------------------------------------------
-   -- TCDM Peripheral Access Layer
+   -- MEMCPY Peripheral Access Layer
    ---------------------------------------------------------------------------- */
 
 /*!
- * @addtogroup TCDM_Peripheral_Access_Layer TCDM Peripheral Access Layer
+ * @addtogroup MEMCPY_Peripheral_Access_Layer MEMCPY Peripheral Access Layer
  * @{
  */
 
-/** TCDM - Register Layout Typedef */
+/** MEMCPY - Register Layout Typedef */
 typedef struct {
-  UDMA_Type     UDMA_TCDM;                           /**< TCDM UDMA general register, offset: 0x0 */
-  __IO  uint32_t DST_ADDR;                           /**< TCDM destination address register, offset: 0x20 */
-  __IO  uint32_t SRC_ADDR;                           /**< TCDM source address register, offset: 0x24 */
-} TCDM_Type;
+  UDMA_Type     UDMA_MEMCPY;                         /**< MEMCPY UDMA general register, offset: 0x00 */
+  __IO  uint32_t DST_ADDR;                           /**< MEMCPY destination address register, offset: 0x20 */
+  __IO  uint32_t SRC_ADDR;                           /**< MEMCPY source address register, offset: 0x24 */
+  __IO  uint32_t MEM_SEL;                            /**< MEMCPY transfer direction register, offset: 0x28 */
+} MEMCPY_Type;
 
 /* ----------------------------------------------------------------------------
-   -- TCDM Register Masks
+   -- MEMCPY Register Masks
    ---------------------------------------------------------------------------- */
 
 /*!
- * @addtogroup TCDM_Register_Masks TCDM Register Masks
+ * @addtogroup MEMCPY_Register_Masks MEMCPY Register Masks
  * @{
  */
-/*! @name DST_ADDR - TCDM destination address register */
-#define TCDM_DST_ADDR_MASK                    (0x1FFFFU)
-#define TCDM_DST_ADDR_SHIFT                   (0U)
-#define TCDM_DST_ADDR(x)                      (((uint32_t)(((uint32_t)(x)) << TCDM_DST_ADDR_SHIFT)) & TCDM_DST_ADDR_MASK)
+/*! @name MEMCPY_ADDR - DST SRC MEMCPY destination address register */
+#define MEMCPY_ADDR_MASK                          (0x1FFFFU)
+#define MEMCPY_ADDR_SHIFT                         (0)
+#define MEMCPY_ADDR(x)                            (((uint32_t)(((uint32_t)(x)) /*<< MEMCPY_ADDR_SHIFT*/)) & MEMCPY_ADDR_MASK)
 
-/*! @name SRC_ADDR - TCDM source address register */
-#define TCDM_SRC_ADDR_MASK                    (0x1FFFFU)
-#define TCDM_SRC_ADDR_SHIFT                   (0U)
-#define TCDM_SRC_ADDR(x)                      (((uint32_t)(((uint32_t)(x)) << TCDM_SRC_ADDR_SHIFT)) & TCDM_SRC_ADDR_MASK)
+/*! @name MEM_SEL - MEMCPY transfer direction selection */
+#define MEMCPY_MEM_SEL_MASK                       (0x1U)
+#define MEMCPY_MEM_SEL_SHIFT                      (0)
+#define MEMCPY_MEM_SEL(x)                         (((uint32_t)(((uint32_t)(x)) << MEMCPY_MEM_SEL_SHIFT)) & MEMCPY_MEM_SEL_MASK)
+/*!
+ * @}
+ */ /* end of group MEMCPY_Register_Masks */
+
+
+/* MEMCPY - Peripheral instance base addresses */
+/** Peripheral MEMCPY base address */
+#define MEMCPY_BASE                                 (UDMA_BASE + 7 * 128U)
+/** Peripheral MEMCPY base pointer */
+#define MEMCPY                                      ((MEMCPY_Type *)MEMCPY_BASE)
+/** Array initializer of MEMCPY peripheral base addresses */
+#define MEMCPY_BASE_ADDRS                           { MEMCPY_BASE }
+/** Array initializer of MEMCPY peripheral base pointers */
+#define MEMCPY_BASE_PTRS                            { MEMCPY }
+/** Interrupt vectors for the MEMCPY peripheral type */
+#define MEMCPY_RX_IRQS                              { MEMCPY_RX_IRQn }
+#define MEMCPY_TX_IRQS                              { MEMCPY_TX_IRQn }
 
 /*!
  * @}
- */ /* end of group TCDM_Register_Masks */
-
-
-/* TCDM - Peripheral instance base addresses */
-/** Peripheral TCDM base address */
-#define TCDM_BASE                                 (UDMA_BASE + 7 * 128U)
-/** Peripheral TCDM base pointer */
-#define TCDM                                      ((TCDM_Type *)TCDM_BASE)
-/** Array initializer of TCDM peripheral base addresses */
-#define TCDM_BASE_ADDRS                           { TCDM_BASE }
-/** Array initializer of TCDM peripheral base pointers */
-#define TCDM_BASE_PTRS                            { TCDM }
-/** Interrupt vectors for the TCDM peripheral type */
-#define TCDM_RX_IRQS                              { TCDM_RX_IRQn }
-#define TCDM_TX_IRQS                              { TCDM_TX_IRQn}
-
-/*!
- * @}
- */ /* end of group TCDM_Peripheral_Access_Layer */
+ */ /* end of group MEMCPY_Peripheral_Access_Layer */
 
 /* ----------------------------------------------------------------------------
    -- I2S Peripheral Access Layer
@@ -1670,7 +1670,7 @@ typedef struct {
   __IO  uint32_t CLKDIV2;             /**< SOC_CTRL Slepp control register, offset: 0x88 */
   __IO  uint32_t CLKDIV3;             /**< SOC_CTRL Slepp control register, offset: 0x8C */
   __IO  uint32_t CLKDIV4;             /**< SOC_CTRL Slepp control register, offset: 0x90 */
-  __IO  uint32_t _reserved2[3];      /**< reserved, offset: 0x94 */
+  __IO  uint32_t _reserved2[3];       /**< reserved, offset: 0x94 */
 
   __IO  uint32_t CORE_STATUS;         /**< SOC_CTRL Slepp control register, offset: 0xA0 */
   __IO  uint32_t CORE_STATUS_EOC;     /**< SOC_CTRL Slepp control register, offset: 0xC0 */

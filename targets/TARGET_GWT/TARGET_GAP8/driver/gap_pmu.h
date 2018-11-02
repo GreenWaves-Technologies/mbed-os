@@ -108,7 +108,7 @@ typedef enum _pmu_scu_seq {
 typedef enum _pmu_wakeup_state {    /* Enum encoding follows the definition of the boot_type field of PMU_RetentionStateT */
   uPMU_COLD_BOOT       = 0, /* SoC cold boot, from Flash usually */
   uPMU_DEEP_SLEEP_BOOT = 1, /* Reboot from deep sleep state, state has been lost, somehow equivalent to COLD_BOOT */
-  uPMU_RETENTIVE_BOOT  = 2 /* Reboot from Retentive state, state has been retained, should bypass flash reload */
+  uPMU_RETENTIVE_SLEEP_BOOT  = 2 /* Reboot from Retentive state, state has been retained, should bypass flash reload */
 } pmu_wakeup_state_t;
 
 /*! @brief PMU boot mode, from L2 or ROM  */
@@ -127,7 +127,7 @@ typedef enum _pmu_wakeup_mode {
 
 /*! @brief PMU switch state  */
 typedef enum pmu_switch_state {
-  uPMU_SWITCH_SLEEP = 0,
+  uPMU_SWITCH_RETENTIVE_SLEEP = 0,
   uPMU_SWITCH_DEEP_SLEEP = 1
 } pmu_switch_state_t;
 
