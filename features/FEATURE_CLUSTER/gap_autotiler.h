@@ -43,8 +43,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#define AUTOTILE_DMAMCHAN_Memcpy_1D(a,b,c,d,e,f)            DMAMCHAN_Memcpy_1D(a,b,c,d,f)
-#define AUTOTILE_DMAMCHAN_Memcpy_2D(a,b,c,d,e,f,g,h)        DMAMCHAN_Memcpy_2D(a,b,c,d,e,f,h)
+#define AUTOTILE_DMAMCHAN_Memcpy_1D(a,b,c,d,e,f)            DMAMCHAN_Memcpy_1D((uint32_t) a, (uint32_t) b, (uint16_t) c, (uint8_t) d, (dma_req_t *) f)
+#define AUTOTILE_DMAMCHAN_Memcpy_2D(a,b,c,d,e,f,g,h)        DMAMCHAN_Memcpy_2D((uint32_t) a, (uint32_t) b, (uint16_t) c, (uint16_t) d, (uint16_t) e, (uint8_t) f, (dma_req_t *) h);
 
 #define GAP_UDMA_L32TCDM GAP_DMA_L22TCDM
 #define GAP_UDMA_TCDM2L3 GAP_DMA_TCDM2L2
@@ -52,7 +52,7 @@ extern "C" {
 #define AUTOTILE_CLUSTER_CoresFork(a,b,c)                   CLUSTER_CoresFork(b,c)
 
 #define rt_team_barrier()                                   CLUSTER_SynchBarrier()
-#define rt_nb_pe()                                          CORE_NUMBER
+#define rt_nb_pe()                                          8
 #define rt_core_id()                                        __core_ID()
 
 #if defined(__cplusplus)
