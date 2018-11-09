@@ -27,6 +27,7 @@
 
  - Add three registers currentStack, kernelStack, userStack to control stack for Machine mode and User mode
  - In svcRtxKernelStart add privilege mode change support for GAP architecture.
+ - Add systick timer frequency update API.
 */
 #include "rtx_lib.h"
 
@@ -530,6 +531,16 @@ static uint32_t svcRtxKernelGetSysTimerFreq (void) {
   return freq;
 }
 
+#if(__RISCV_ARCH_GAP__ == 1U)
+/// Update the RTOS kernel system timer frequency.
+/// \note API identical to osKernelUpdateSysTimerFreq
+static int32_t svcRtxKernelUpdateSysTimerFreq (void) {
+  int32_t status = OS_Tick_UpdateClock();
+  EvrRtxKernelUpdateSysTimerFreq(status);
+  return status;
+}
+#endif
+
 //  Service Calls definitions
 //lint ++flb "Library Begin" [MISRA Note 11]
 SVC0_0 (KernelInitialize,       osStatus_t)
@@ -545,6 +556,9 @@ SVC0_0 (KernelGetTickCount,     uint32_t)
 SVC0_0 (KernelGetTickFreq,      uint32_t)
 SVC0_0 (KernelGetSysTimerCount, uint32_t)
 SVC0_0 (KernelGetSysTimerFreq,  uint32_t)
+#if(__RISCV_ARCH_GAP__ == 1U)
+SVC0_0 (KernelUpdateSysTimerFreq,  int32_t)
+#endif
 //lint --flb "Library End"
 
 
@@ -728,3 +742,14 @@ uint32_t osKernelGetSysTimerFreq (void) {
   }
   return freq;
 }
+
+#if(__RISCV_ARCH_GAP__ == 1U)
+/// Update the RTOS kernel system timer frequency.
+int32_t osKernelUpdateSysTimerFreq (void) {
+  if (IsIrqMode() || IsIrqMasked()) {
+    return svcRtxKernelUpdateSysTimerFreq();
+  } else {
+    return  __svcKernelUpdateSysTimerFreq();
+  }
+}
+#endif

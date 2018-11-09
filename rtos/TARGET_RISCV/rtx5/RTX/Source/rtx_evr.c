@@ -22,6 +22,11 @@
  *
  * -----------------------------------------------------------------------------
  */
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
+
+ - Add systick timer frequency update API.
+ */
 
 #include <string.h>
 #include "cmsis_compiler.h"
@@ -62,6 +67,9 @@
 #define EvtRtxKernelGetTickFreq             EventID(EventLevelAPI,    EvtRtxKernelNo, 0x14U)
 #define EvtRtxKernelGetSysTimerCount        EventID(EventLevelAPI,    EvtRtxKernelNo, 0x15U)
 #define EvtRtxKernelGetSysTimerFreq         EventID(EventLevelAPI,    EvtRtxKernelNo, 0x16U)
+#if(__RISCV_ARCH_GAP__ == 1U)
+#define EvtRtxKernelUpdateSysTimerFreq      EventID(EventLevelAPI,    EvtRtxKernelNo, 0x17U)
+#endif
 
 /// Event IDs for "RTX Thread"
 #define EvtRtxThreadError                   EventID(EventLevelError,  EvtRtxThreadNo, 0x00U)
@@ -522,6 +530,17 @@ __WEAK void EvrRtxKernelGetSysTimerFreq (uint32_t freq) {
 }
 #endif
 
+#if(__RISCV_ARCH_GAP__ == 1U)
+#if (!defined(EVR_RTX_DISABLE) && (OS_EVR_KERNEL != 0) && !defined(EVR_RTX_KERNEL_UPDATE_SYS_TIMER_FREQ_DISABLE))
+__WEAK void EvrRtxKernelUpdateSysTimerFreq (int32_t status) {
+#if defined(RTE_Compiler_EventRecorder)
+  (void)EventRecord2(EvtRtxKernelUpdateSysTimerFreq, (uint32_t)status, 0U);
+#else
+  (void)status;
+#endif
+}
+#endif
+#endif
 
 //  ==== Thread Events ====
 

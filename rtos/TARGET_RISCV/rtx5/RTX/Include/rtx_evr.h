@@ -22,6 +22,11 @@
  *
  * -----------------------------------------------------------------------------
  */
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
+
+ - Add systick timer frequency update API.
+ */
 
 #ifndef RTX_EVR_H_
 #define RTX_EVR_H_
@@ -378,6 +383,17 @@ extern void EvrRtxKernelGetSysTimerFreq (uint32_t freq);
 #define EvrRtxKernelGetSysTimerFreq(freq)
 #endif
 
+#if(__RISCV_ARCH_GAP__ == 1U)
+/**
+  \brief  Event on RTOS kernel system timer frequency update (API)
+  \param[in]  status          update frequency status of the system timer.
+*/
+#if (!defined(EVR_RTX_DISABLE) && (OS_EVR_KERNEL != 0) && !defined(EVR_RTX_KERNEL_UPDATE_SYS_TIMER_FREQ_DISABLE))
+extern void EvrRtxKernelUpdateSysTimerFreq (int32_t status);
+#else
+#define EvrRtxKernelUpdateSysTimerFreq(status)
+#endif
+#endif
 
 //  ==== Thread Events ====
 

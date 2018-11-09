@@ -21,6 +21,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
+
+ - Add systick timer frequency update API.
+ */
 
 #ifndef OS_TICK_H
 #define OS_TICK_H
@@ -55,6 +60,12 @@ int32_t  OS_Tick_GetIRQn (void);
 /// Get OS Tick timer clock frequency
 /// \return OS Tick timer clock frequency in Hz
 uint32_t OS_Tick_GetClock (void);
+
+#if(__RISCV_ARCH_GAP__ == 1U)
+/// Update OS Tick timer clock.
+/// \return 0 on success, -1 on error.
+int32_t OS_Tick_UpdateClock (void);
+#endif
 
 /// Get OS Tick timer interval reload value
 /// \return OS Tick timer interval reload value

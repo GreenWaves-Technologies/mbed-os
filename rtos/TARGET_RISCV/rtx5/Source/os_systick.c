@@ -25,6 +25,7 @@
  Modifications copyright (C) 2018 GreenWaves Technologies
 
  - For each function in OS_TicK_* add OS systick support for GAP architecture.
+ - Add systick timer frequency update API.
  */
 #include "os_tick.h"
 
@@ -39,6 +40,7 @@
 #endif
 
 static uint8_t PendST;
+static uint32_t Freq;
 
 // Setup OS Tick.
 __WEAK int32_t OS_Tick_Setup (uint32_t freq, IRQHandler_t handler) {
@@ -50,6 +52,7 @@ __WEAK int32_t OS_Tick_Setup (uint32_t freq, IRQHandler_t handler) {
     return (-1);
   }
 
+  Freq = freq;
   load = (SystemCoreClock / freq) - 1U;
   if (load > 0x00FFFFFFU) {
     //lint -e{904} "Return statement before end of function"
@@ -151,6 +154,22 @@ __WEAK int32_t  OS_Tick_GetIRQn (void) {
 __WEAK uint32_t OS_Tick_GetClock (void) {
   return (SystemCoreClock);
 }
+
+#if(__RISCV_ARCH_GAP__ == 1U)
+// Update OS Tick clock.
+__WEAK int32_t OS_Tick_UpdateClock (void) {
+
+  uint32_t load = (SystemCoreClock / Freq) - 1U;
+  if (load > 0x00FFFFFFU) {
+    return (-1);
+  }
+
+  SysTick->CMP_LO    = load;
+  SysTick->VALUE_LO  = 0;
+
+  return (0);
+}
+#endif
 
 // Get OS Tick interval.
 __WEAK uint32_t OS_Tick_GetInterval (void) {

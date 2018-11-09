@@ -43,6 +43,11 @@
  * Version 2.0.0
  *    Initial Release
  *---------------------------------------------------------------------------*/
+/*
+ Modifications copyright (C) 2018 GreenWaves Technologies
+
+ - Add systick timer frequency update API.
+ */
  
 #ifndef CMSIS_OS2_H_
 #define CMSIS_OS2_H_
@@ -360,6 +365,11 @@ uint32_t osKernelGetSysTimerCount (void);
 /// \return frequency of the system timer in hertz, i.e. timer ticks per second.
 uint32_t osKernelGetSysTimerFreq (void);
  
+#if(__RISCV_ARCH_GAP__ == 1U)
+/// Update the RTOS kernel system timer frequency.
+/// \return update state (0 - updated, error code if negative).
+int32_t osKernelUpdateSysTimerFreq (void);
+#endif
  
 //  ==== Thread Management Functions ====
  
