@@ -79,7 +79,7 @@ static void UDMA_SetChannelBase() {
   udma_channels[4].base = (UDMA_Type *) UART;
   udma_channels[5].base = (UDMA_Type *) I2C0;
   udma_channels[6].base = (UDMA_Type *) I2C1;
-  udma_channels[7].base = (UDMA_Type *) MEMCPY;
+  udma_channels[7].base = (UDMA_Type *) DMACPY;
   /* Special channel I2S1 use TX for RX */
   udma_channels[8].base = (UDMA_Type *) I2S;
   udma_channels[9].base = (UDMA_Type *) CPI;
@@ -405,7 +405,7 @@ static inline void UDMA_RepeatTransfer(udma_req_t *req) {
 
 extern void SAI_IRQHandler_CH0(void *handle);
 extern void SAI_IRQHandler_CH1(void *handle);
-extern void MEMCPY_IRQHandler(void *handle);
+extern void DMACPY_IRQHandler(void *handle);
 
 __attribute__((section(".text")))
 void UDMA_EventHandler(uint32_t index, int abort)
@@ -493,8 +493,8 @@ void UDMA_EventHandler(uint32_t index, int abort)
                     SAI_IRQHandler_CH0((void *)first->info.task);
                 if(index == UDMA_EVENT_SAI_CH1)
                     SAI_IRQHandler_CH1((void *)first->info.task);
-                if(index == UDMA_EVENT_MEMCPY_RX || index == UDMA_EVENT_MEMCPY_TX)
-                    MEMCPY_IRQHandler((void *)first->info.task);
+                if(index == UDMA_EVENT_DMACPY_RX || index == UDMA_EVENT_DMACPY_TX)
+                    DMACPY_IRQHandler((void *)first->info.task);
             }
         }
     }

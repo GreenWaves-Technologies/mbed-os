@@ -28,8 +28,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GAP_MEMCPY_H_
-#define _GAP_MEMCPY_H_
+#ifndef _GAP_DMACPY_H_
+#define _GAP_DMACPY_H_
 
 #include "GAP8.h"
 #include "gap_udma.h"
@@ -46,18 +46,18 @@
 /*! @brief Memcopy module status. */
 typedef enum
 {
-    uMEMCPY_Idle  = 0x0,  /*!< Memcopy is idle. */
-    uMEMCPY_Error = 0x1,  /*!< Error during transfer. */
-    uMEMCPY_Busy  = 0x2   /*!< Memcopy is busy with a transfer. */
-} memcpy_status_t;
+    uDMACPY_Idle  = 0x0,  /*!< Memcopy is idle. */
+    uDMACPY_Error = 0x1,  /*!< Error during transfer. */
+    uDMACPY_Busy  = 0x2   /*!< Memcopy is busy with a transfer. */
+} dmacpy_status_t;
 
 /*! @brief Memcopy type of transfer. */
 typedef enum
 {
-    uMEMCPY_L22L2 = 0x0, /*!< Transfer from L2 to L2. */
-    uMEMCPY_FC2L2 = 0x1, /*!< Transfer from FC to L2. */
-    uMEMCPY_L22FC = 0x2  /*!< Transfer from L2 to FC. */
-} memcpy_sel_t;
+    uDMACPY_L22L2 = 0x0, /*!< Transfer from L2 to L2. */
+    uDMACPY_FC2L2 = 0x1, /*!< Transfer from FC to L2. */
+    uDMACPY_L22FC = 0x2  /*!< Transfer from L2 to FC. */
+} dmacpy_sel_t;
 
 /*!
  * @brief Completion callback function pointer type.
@@ -66,7 +66,7 @@ typedef enum
  *
  * @param userData  Parameter passed to the callback function by the user.
  */
-typedef void (*memcpy_callback_t)(void *useData);
+typedef void (*dmacpy_callback_t)(void *useData);
 
 /*!
  * @brief Memcopy handler structure.
@@ -74,12 +74,12 @@ typedef void (*memcpy_callback_t)(void *useData);
  * This structure holds information to handle events from UDMA upon asynchronous transfers completion.
  * When asynchronous transfers are used, this structure should be filled.
  */
-typedef struct _memcpy_handle_t
+typedef struct _dmacpy_handle_t
 {
-    memcpy_status_t state;
-    memcpy_callback_t callback;
+    dmacpy_status_t state;
+    dmacpy_callback_t callback;
     void *userData;
-} memcpy_handle_t;
+} dmacpy_handle_t;
 
 /*******************************************************************************
  * API
@@ -95,20 +95,20 @@ extern "C" {
  */
 
 /*!
- * @brief Initialize the MEMCPY module.
+ * @brief Initialize the DMACPY module.
  *
  * This function intializes the Memcopy module for transfers between FC_TCDM/L2 and L2.
  *
- * @param base         MEMCPY base pointer.
+ * @param base         DMACPY base pointer.
  */
-void MEMCPY_Init(MEMCPY_Type *base);
+void DMACPY_Init(DMACPY_Type *base);
 
 /*!
- * @brief Release the MEMCPY module.
+ * @brief Release the DMACPY module.
  *
- * @param base         MEMCPY base pointer.
+ * @param base         DMACPY base pointer.
  */
-void MEMCPY_Deinit(MEMCPY_Type *base);
+void DMACPY_Deinit(DMACPY_Type *base);
 
 /* @} */
 
@@ -122,7 +122,7 @@ void MEMCPY_Deinit(MEMCPY_Type *base);
  *
  * This function initiates a blocking transfer between FC_TCDM/L2 and L2.
  *
- * @param base         MEMCPY base pointer.
+ * @param base         DMACPY base pointer.
  * @param src_addr     Source buffer.
  * @param dst_addr     Dest buffer.
  * @param size         Size of data to transfer.
@@ -130,8 +130,8 @@ void MEMCPY_Deinit(MEMCPY_Type *base);
  *
  * @return Return uStatus_Success if the read operation is successful, an error otherwise.
  */
-status_t MEMCPY_BlockingTransfer(MEMCPY_Type *base, uint32_t *src_addr, uint32_t *dst_addr,
-                                 uint32_t size, memcpy_sel_t direction);
+status_t DMACPY_BlockingTransfer(DMACPY_Type *base, uint32_t *src_addr, uint32_t *dst_addr,
+                                 uint32_t size, dmacpy_sel_t direction);
 
 /* @} */
 
@@ -146,17 +146,17 @@ status_t MEMCPY_BlockingTransfer(MEMCPY_Type *base, uint32_t *src_addr, uint32_t
  * This function is used for non blocking transactions using UDMA.
  * Once the UDMA, called for the transfer operations, is configured, this function returns.
  *
- * @param base         MEMCPY base pointer.
+ * @param base         DMACPY base pointer.
  * @param src_addr     Source buffer.
  * @param dst_addr     Dest buffer.
  * @param size         Size of data to transfer.
  * @param direction    Direction of the transfer.
- * @param handle       Pointer to memcpy_handle_t structure.
+ * @param handle       Pointer to dmacpy_handle_t structure.
  *
  * @return status_t.
  */
-status_t MEMCPY_NonBlockingTransfer(MEMCPY_Type *base, uint32_t *src_addr, uint32_t *dst_addr,
-                                    uint32_t size, memcpy_sel_t direction, memcpy_handle_t *handle);
+status_t DMACPY_NonBlockingTransfer(DMACPY_Type *base, uint32_t *src_addr, uint32_t *dst_addr,
+                                    uint32_t size, dmacpy_sel_t direction, dmacpy_handle_t *handle);
 
 /* @} */
 
@@ -166,26 +166,26 @@ status_t MEMCPY_NonBlockingTransfer(MEMCPY_Type *base, uint32_t *src_addr, uint3
  */
 
 /*!
- * @brief Initialize the MEMCPY IRQ Handler.
+ * @brief Initialize the DMACPY IRQ Handler.
  *
- * This function creates a IRQ handler for MEMCPY non blocking operations.
+ * This function creates a IRQ handler for DMACPY non blocking operations.
  * The callback function passed to this function is called when transaction is done.
  *
- * @param handle       Pointer to memcpy_handle_t structure.
+ * @param handle       Pointer to dmacpy_handle_t structure.
  * @param callback     Callback function.
  * @param userData     Parameter passed to the callback function.
  */
-void MEMCPY_CreateHandler(memcpy_handle_t *handle, memcpy_callback_t callback, void *userData);
+void DMACPY_CreateHandler(dmacpy_handle_t *handle, dmacpy_callback_t callback, void *userData);
 
 /*!
- * @brief MEMCPY IRQ Handler.
+ * @brief DMACPY IRQ Handler.
  *
  * This function is called when a non blocking transfer is completed.
  * When called, the callback function previously defined is executed.
  *
  * @param arg          Callback function.
  */
-void MEMCPY_IRQHandler(void *arg);
+void DMACPY_IRQHandler(void *arg);
 
 /* @} */
 
@@ -195,4 +195,4 @@ void MEMCPY_IRQHandler(void *arg);
 
 /* @} */
 
-#endif /*_GAP_MEMCPY_H_*/
+#endif /*_GAP_DMACPY_H_*/

@@ -1355,60 +1355,60 @@ typedef struct {
 
 
 /* ----------------------------------------------------------------------------
-   -- MEMCPY Peripheral Access Layer
+   -- DMACPY Peripheral Access Layer
    ---------------------------------------------------------------------------- */
 
 /*!
- * @addtogroup MEMCPY_Peripheral_Access_Layer MEMCPY Peripheral Access Layer
+ * @addtogroup DMACPY_Peripheral_Access_Layer DMACPY Peripheral Access Layer
  * @{
  */
 
-/** MEMCPY - Register Layout Typedef */
+/** DMACPY - Register Layout Typedef */
 typedef struct {
-  UDMA_Type     UDMA_MEMCPY;                         /**< MEMCPY UDMA general register, offset: 0x00 */
-  __IO  uint32_t DST_ADDR;                           /**< MEMCPY destination address register, offset: 0x20 */
-  __IO  uint32_t SRC_ADDR;                           /**< MEMCPY source address register, offset: 0x24 */
-  __IO  uint32_t MEM_SEL;                            /**< MEMCPY transfer direction register, offset: 0x28 */
-} MEMCPY_Type;
+  UDMA_Type     UDMA_DMACPY;                         /**< DMACPY UDMA general register, offset: 0x00 */
+  __IO  uint32_t DST_ADDR;                           /**< DMACPY destination address register, offset: 0x20 */
+  __IO  uint32_t SRC_ADDR;                           /**< DMACPY source address register, offset: 0x24 */
+  __IO  uint32_t MEM_SEL;                            /**< DMACPY transfer direction register, offset: 0x28 */
+} DMACPY_Type;
 
 /* ----------------------------------------------------------------------------
-   -- MEMCPY Register Masks
+   -- DMACPY Register Masks
    ---------------------------------------------------------------------------- */
 
 /*!
- * @addtogroup MEMCPY_Register_Masks MEMCPY Register Masks
+ * @addtogroup DMACPY_Register_Masks DMACPY Register Masks
  * @{
  */
-/*! @name MEMCPY_ADDR - DST SRC MEMCPY destination address register */
-#define MEMCPY_ADDR_MASK                          (0x1FFFFU)
-#define MEMCPY_ADDR_SHIFT                         (0)
-#define MEMCPY_ADDR(x)                            (((uint32_t)(((uint32_t)(x)) /*<< MEMCPY_ADDR_SHIFT*/)) & MEMCPY_ADDR_MASK)
+/*! @name DMACPY_ADDR - DST SRC DMACPY destination address register */
+#define DMACPY_ADDR_MASK                          (0x1FFFFU)
+#define DMACPY_ADDR_SHIFT                         (0)
+#define DMACPY_ADDR(x)                            (((uint32_t)(((uint32_t)(x)) /*<< DMACPY_ADDR_SHIFT*/)) & DMACPY_ADDR_MASK)
 
-/*! @name MEM_SEL - MEMCPY transfer direction selection */
-#define MEMCPY_MEM_SEL_MASK                       (0x1U)
-#define MEMCPY_MEM_SEL_SHIFT                      (0)
-#define MEMCPY_MEM_SEL(x)                         (((uint32_t)(((uint32_t)(x)) << MEMCPY_MEM_SEL_SHIFT)) & MEMCPY_MEM_SEL_MASK)
+/*! @name MEM_SEL - DMACPY transfer direction selection */
+#define DMACPY_MEM_SEL_MASK                       (0x1U)
+#define DMACPY_MEM_SEL_SHIFT                      (0)
+#define DMACPY_MEM_SEL(x)                         (((uint32_t)(((uint32_t)(x)) << DMACPY_MEM_SEL_SHIFT)) & DMACPY_MEM_SEL_MASK)
 /*!
  * @}
- */ /* end of group MEMCPY_Register_Masks */
+ */ /* end of group DMACPY_Register_Masks */
 
 
-/* MEMCPY - Peripheral instance base addresses */
-/** Peripheral MEMCPY base address */
-#define MEMCPY_BASE                                 (UDMA_BASE + 7 * 128U)
-/** Peripheral MEMCPY base pointer */
-#define MEMCPY                                      ((MEMCPY_Type *)MEMCPY_BASE)
-/** Array initializer of MEMCPY peripheral base addresses */
-#define MEMCPY_BASE_ADDRS                           { MEMCPY_BASE }
-/** Array initializer of MEMCPY peripheral base pointers */
-#define MEMCPY_BASE_PTRS                            { MEMCPY }
-/** Interrupt vectors for the MEMCPY peripheral type */
-#define MEMCPY_RX_IRQS                              { MEMCPY_RX_IRQn }
-#define MEMCPY_TX_IRQS                              { MEMCPY_TX_IRQn }
+/* DMACPY - Peripheral instance base addresses */
+/** Peripheral DMACPY base address */
+#define DMACPY_BASE                                 (UDMA_BASE + 7 * 128U)
+/** Peripheral DMACPY base pointer */
+#define DMACPY                                      ((DMACPY_Type *)DMACPY_BASE)
+/** Array initializer of DMACPY peripheral base addresses */
+#define DMACPY_BASE_ADDRS                           { DMACPY_BASE }
+/** Array initializer of DMACPY peripheral base pointers */
+#define DMACPY_BASE_PTRS                            { DMACPY }
+/** Interrupt vectors for the DMACPY peripheral type */
+#define DMACPY_RX_IRQS                              { DMACPY_RX_IRQn }
+#define DMACPY_TX_IRQS                              { DMACPY_TX_IRQn }
 
 /*!
  * @}
- */ /* end of group MEMCPY_Peripheral_Access_Layer */
+ */ /* end of group DMACPY_Peripheral_Access_Layer */
 
 /* ----------------------------------------------------------------------------
    -- I2S Peripheral Access Layer
