@@ -72,7 +72,7 @@ static PORT_Type *const port_addrs[] = PORT_BASE_PTRS;
  ******************************************************************************/
 static void pin_function(PinName pin, int function)
 {
-    int pin_num = (pin & 0xFF) - 8;
+    int pin_num = (pin & 0xFF) - GAP_PIN_OFFSET;
 
     if (0<= pin_num && pin_num < 47 )
         PORT_SetPinMux(port_addrs[GET_GPIO_PORT(pin)], pin_num, (port_mux_t)function);

@@ -148,7 +148,7 @@ int hyperbus_read(hyperbus_t *obj, const int addr, char reg_access, char device)
 
     hyperbus_block_read(obj, addr, &HYPERBUS_READ_VALUE, 2, reg_access, device);
 
-    return ((HYPERBUS_READ_VALUE >> 16) & 0XFFFF);
+    return ((HYPERBUS_READ_VALUE >> 16) & 0xFFFF);
 }
 
 int hyperbus_block_write(hyperbus_t *obj, const int addr, const void *tx, size_t tx_length, char reg_access, char device) {

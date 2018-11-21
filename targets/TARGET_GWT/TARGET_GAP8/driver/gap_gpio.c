@@ -49,6 +49,10 @@ void GPIO_PinInit(GPIO_Type *base, uint32_t pin, const gpio_pin_config_t *config
 {
     assert(config);
 
+    /* Configure drive strength and pull up/down */
+    GPIO_SetPinConfig(base, pin, config);
+
+    /* Configure pin direction */
     GPIO_SetPinDirection(base, pin, config->pinDirection);
 }
 

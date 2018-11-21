@@ -74,8 +74,8 @@ typedef enum _port_mux
 /*! @brief PORT pin configuration structure */
 typedef struct _port_pin_config
 {
-    uint16_t pullSelect;    /*!< No-pull/pull-down/pull-up select */
-    uint16_t driveStrength; /*!< Fast/slow drive strength configure */
+    uint8_t pullSelect;    /*!< No-pull/pull-down/pull-up select */
+    uint8_t driveStrength; /*!< Fast/slow drive strength configure */
     port_mux_t mux;         /*!< Pin mux Configure */
 } port_pin_config_t;
 
@@ -117,7 +117,10 @@ static inline void PORT_SetPinConfig(PORT_Type *base, uint32_t pin, const port_p
     int pos = pin & 0x3;
     int val = base->PADCFG[reg_num];
     val &= ~((PORT_PADCFG_DRIVE_STRENGTH_MASK | PORT_PADCFG_PULL_EN_MASK) << (pos << 3));
-    base->PADCFG[reg_num] = val | (uint32_t)((config->pullSelect | config->driveStrength) << (pos << 3));
+
+    base->PADCFG[reg_num] = val | (uint32_t)((config->pullSelect |
+                                              PORT_PADCFG_DRIVE_STRENGTH(config->driveStrength)) << (pos << 3));
+
 
     PORT_SetPinMux(base, pin, config->mux);
 }

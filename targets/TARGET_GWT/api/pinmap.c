@@ -25,7 +25,7 @@ static GPIO_Type *const gpio_addrs[] = GPIO_BASE_PTRS;
 void pin_function(PinName pin, int function)
 {
     MBED_ASSERT(pin != (PinName)NC);
-    int pin_num = (pin & 0xFF) - 8;
+    int pin_num = (pin & 0xFF) - GAP_PIN_OFFSET;
 
     if (0<= pin_num && pin_num < 47 )
         PORT_SetPinMux(port_addrs[GET_GPIO_PORT(pin)], pin_num, (port_mux_t)function);
@@ -47,18 +47,18 @@ void pin_mode(PinName pin, PinMode mode)
         GPIO_Type *base = gpio_addrs[instance];
         switch (mode) {
         case PullNone:
-            /* Write 0 to the PE bits */
+            /* Write 0 to the PullUp bits */
             base->PADCFG[reg_num] &= ~(1U << pos);
             break;
         case PullUp:
-            /* Write 1 to the PE bits */
+            /* Write 1 to the PullUp Enable bits */
             base->PADCFG[reg_num] |= (1U << pos);
             break;
         default:
             break;
         }
     } else {
-        int pin_num = (pin & 0xFF) - 8;
+        int pin_num = (pin & 0xFF) - GAP_PIN_OFFSET;
 
         if (0 <= pin_num && pin_num < 47 ) {
             int reg_num = pin_num >> 2;
@@ -68,11 +68,11 @@ void pin_mode(PinName pin, PinMode mode)
 
             switch (mode) {
             case PullNone:
-                /* Write 0 to the PE bits */
+                /* Write 0 to the PullUp bits */
                 base->PADCFG[reg_num] &= ~(1U << pos);
                 break;
             case PullUp:
-                /* Write 1 to the PE bits */
+                /* Write 1 to the PullUp Enable bits */
                 base->PADCFG[reg_num] |= (1U << pos);
                 break;
             default:

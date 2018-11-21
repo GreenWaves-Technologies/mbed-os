@@ -349,11 +349,21 @@ typedef struct {
  * @addtogroup GPIO_Register_Masks GPIO Register Masks
  * @{
  */
-#define GPIO_INTCFG_TYPE_MASK                     (0x3U)
-#define GPIO_INTCFG_TYPE_SHIFT                    (0U)
-#define GPIO_INTCFG_TYPE(x)                       (((uint32_t)(((uint32_t)(x)) << GPIO_INTCFG_TYPE_SHIFT)) & GPIO_INTCFG_TYPE_MASK)
+/*! @name INTCFG - GPIO pad interrupt configuration registers */
+#define GPIO_INTCFG_TYPE_MASK                    (0x3U)
+#define GPIO_INTCFG_TYPE_SHIFT                   (0U)
+#define GPIO_INTCFG_TYPE(x)                      (((uint32_t)(((uint32_t)(x)) << GPIO_INTCFG_TYPE_SHIFT)) & GPIO_INTCFG_TYPE_MASK)
 
-#define GPIO_INTCFG_TYPE_BITS_WIDTH_MASK          (0x3U)
+/*! @name PADCFG - GPIO pad configuration registers */
+#define GPIO_PADCFG_PULL_EN_MASK                 (0x1U)
+#define GPIO_PADCFG_PULL_EN_SHIFT                (0U)
+#define GPIO_PADCFG_PULL_EN(x)                   (((uint32_t)(((uint32_t)(x)) << GPIO_PADCFG_PULL_EN_SHIFT)) & GPIO_PADCFG_PULL_EN_MASK)
+
+#define GPIO_PADCFG_DRIVE_STRENGTH_MASK          (0x2U)
+#define GPIO_PADCFG_DRIVE_STRENGTH_SHIFT         (1U)
+#define GPIO_PADCFG_DRIVE_STRENGTH(x)            (((uint32_t)(((uint32_t)(x)) << GPIO_PADCFG_DRIVE_STRENGTH_SHIFT)) & GPIO_PADCFG_DRIVE_STRENGTH_MASK)
+
+#define GPIO_INTCFG_TYPE_BITS_WIDTH_MASK         (0x3U)
 
 
 /*!
@@ -1924,17 +1934,18 @@ typedef struct {
  */
 #define GPIO_NUM                                 32
 
-#define PORT_PADCFG_PULL_EN_MASK                 (0x1U)
-#define PORT_PADCFG_PULL_EN_SHIFT                (0U)
-#define PORT_PADCFG_PULL_EN(x)                   (((uint32_t)(((uint32_t)(x)) << PORT_PADCFG_PULL_EN_SHIFT)) & PORT_PADCFG_PULL_EN_MASK)
-
-#define PORT_PADCFG_DRIVE_STRENGTH_MASK          (0x2U)
-#define PORT_PADCFG_DRIVE_STRENGTH_SHIFT         (1U)
-#define PORT_PADCFG_DRIVE_STRENGTH(x)            (((uint32_t)(((uint32_t)(x)) << PORT_PADCFG_DRIVE_STRENGTH_SHIFT)) & PORT_PADCFG_DRIVE_STRENGTH_MASK)
-
+/*! @name PADFUN - GPIO pad mux registers */
 #define PORT_PADFUN_MUX_MASK                     (0x3U)
 #define PORT_PADFUN_MUX_SHIFT                    (0U)
 #define PORT_PADFUN_MUX(x)                       (((uint32_t)(((uint32_t)(x)) << PORT_PADFUN_MUX_SHIFT)) & PORT_PADFUN_MUX_MASK)
+
+/*! @name PADCFG - GPIO pad configuration registers */
+#define PORT_PADCFG_PULL_EN_MASK                 (0x1U)
+#define PORT_PADCFG_PULL_EN_SHIFT                (0U)
+#define PORT_PADCFG_PULL_EN(x)                   (((uint32_t)(((uint32_t)(x)) << PORT_PADCFG_PULL_EN_SHIFT)) & PORT_PADCFG_PULL_EN_MASK)
+#define PORT_PADCFG_DRIVE_STRENGTH_MASK          (0x2U)
+#define PORT_PADCFG_DRIVE_STRENGTH_SHIFT         (1U)
+#define PORT_PADCFG_DRIVE_STRENGTH(x)            (((uint32_t)(((uint32_t)(x)) << PORT_PADCFG_DRIVE_STRENGTH_SHIFT)) & PORT_PADCFG_DRIVE_STRENGTH_MASK)
 
 /*!
  * @}

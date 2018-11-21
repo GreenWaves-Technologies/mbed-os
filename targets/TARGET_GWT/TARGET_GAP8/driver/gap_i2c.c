@@ -33,6 +33,7 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
+#define I2C_REPEAT_TRANSFER_MAX_LENGH 128
 
 /*! @brief i2c transfer state. */
 enum _i2c_transfer_states
@@ -173,7 +174,7 @@ int I2C_ByteWrite(I2C_Type *base, uint8_t data)
 
 int I2C_Write(I2C_Type *base, uint32_t address, const char *data, int length, int stop)
 {
-    status_t status;
+    status_t status = uStatus_Fail;
     int index = 0;
     int len = length;
 
@@ -181,18 +182,13 @@ int I2C_Write(I2C_Type *base, uint32_t address, const char *data, int length, in
     s_command_sequence[index++] = I2C_CMD_WR;
     s_command_sequence[index++] = address;
 
-    status = I2C_TransferBlocking(base,
-                                  (const uint8_t*)&s_command_sequence,
-                                  index, NULL, 0, 8);
-
     while(len > 0) {
-        int size  = (len > 128) ? 128 : len;
-        index = 0;
+        int size  = (len > I2C_REPEAT_TRANSFER_MAX_LENGH) ? I2C_REPEAT_TRANSFER_MAX_LENGH : len;
         s_command_sequence[index++] = I2C_CMD_RPT;
         s_command_sequence[index++] = size;
         s_command_sequence[index++] = I2C_CMD_WR;
 
-        /* Transfer sequence header with written data repeately (maximum 128 bytes) by udma */
+        /* Transfer sequence header with written data repeately (maximum I2C_REPEAT_TRANSFER_MAX_LENGH bytes) by udma */
         status = I2C_TransferBlocking(base,
                                       (const uint8_t*)&s_command_sequence,
                                       index, NULL, 0, 8);
@@ -203,19 +199,18 @@ int I2C_Write(I2C_Type *base, uint32_t address, const char *data, int length, in
                                       size, NULL, 0, 8);
 
         /* Transfer stop signal */
-        if ((len <= 128) && stop) {
+        if ((len <= I2C_REPEAT_TRANSFER_MAX_LENGH) && stop) {
             index = 0;
             s_command_sequence[index++] = I2C_CMD_STOP;
-            s_command_sequence[index++] = I2C_CMD_WAIT;
-            s_command_sequence[index++] = 0xFF;
 
             status = I2C_TransferBlocking(base,
                                           (const uint8_t*)&s_command_sequence,
                                           index, NULL, 0, 8);
         }
 
-        len -= 128;
-        data    +=128;
+        index = 0;
+        len  -= I2C_REPEAT_TRANSFER_MAX_LENGH;
+        data += I2C_REPEAT_TRANSFER_MAX_LENGH;
     }
 
     if(status == uStatus_Success)
@@ -228,7 +223,7 @@ int I2C_Write(I2C_Type *base, uint32_t address, const char *data, int length, in
 int I2C_Read(I2C_Type *base, uint32_t address, char *data, int length, int stop)
 {
 
-    status_t status;
+    status_t status = uStatus_Fail;
     int index = 0;
     int len = length;
 
@@ -236,19 +231,15 @@ int I2C_Read(I2C_Type *base, uint32_t address, char *data, int length, int stop)
     s_command_sequence[index++] = I2C_CMD_WR;
     s_command_sequence[index++] = address | 0x1;
 
-    status = I2C_TransferBlocking(base,
-                                  (const uint8_t*)&s_command_sequence,
-                                  index, NULL, 0, 8);
-
     while(len > 0) {
-        int size  = (len > 128) ? 128 : len;
-        index = 0;
+        int size  = (len > I2C_REPEAT_TRANSFER_MAX_LENGH) ? I2C_REPEAT_TRANSFER_MAX_LENGH : len;
+
         s_command_sequence[index++] = I2C_CMD_RPT;
         s_command_sequence[index++] = size - 1;
         s_command_sequence[index++] = I2C_CMD_RD_ACK;
         s_command_sequence[index++] = I2C_CMD_RD_NACK;
 
-        if ((size < 128 || len == 128) && stop) {
+        if ((size < I2C_REPEAT_TRANSFER_MAX_LENGH || len == I2C_REPEAT_TRANSFER_MAX_LENGH) && stop) {
             s_command_sequence[index++] = I2C_CMD_STOP;
             s_command_sequence[index++] = I2C_CMD_WAIT;
             s_command_sequence[index++] = 0xFF;
@@ -257,9 +248,9 @@ int I2C_Read(I2C_Type *base, uint32_t address, char *data, int length, int stop)
         status = I2C_TransferBlocking(base,
                                       (const uint8_t*)&s_command_sequence,
                                       index, data, size, 8);
-
-        len -= 128;
-        data    +=128;
+        index = 0;
+        len  -= I2C_REPEAT_TRANSFER_MAX_LENGH;
+        data += I2C_REPEAT_TRANSFER_MAX_LENGH;
     }
 
     if(status == uStatus_Success)
@@ -316,11 +307,14 @@ status_t I2C_TransferBlocking(I2C_Type *base, const void *tx_buffer, int tx_leng
     status_t status = uStatus_Success;
     udma_req_info_t info;
 
+    info.ctrl        = UDMA_CTRL_NORMAL;
+
     if (rx_length) {
         info.dataAddr    = (uint32_t) rx_buffer;
         info.dataSize    = (uint32_t) rx_length;
         info.configFlags = UDMA_CFG_DATA_SIZE((bit_width >> 4)) | UDMA_CFG_EN(1);
         info.isTx        = 0;
+
         status = UDMA_BlockTransfer((UDMA_Type *)base, &info, UDMA_NO_WAIT);
     }
 
