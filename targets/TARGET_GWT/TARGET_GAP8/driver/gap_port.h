@@ -165,7 +165,7 @@ static inline void PORT_SetMultiplePinsConfig(PORT_Type *base, uint32_t mask, co
  */
 static inline void PORT_SetPinMux(PORT_Type *base, uint32_t pin, port_mux_t mux)
 {
-    int reg_num = pin >> 4;
+    int reg_num = (pin >> 4) & 0x3;
     /* Positon in the target register */
     int pos = pin & 0xF;
     int val = base->PADFUN[reg_num];
