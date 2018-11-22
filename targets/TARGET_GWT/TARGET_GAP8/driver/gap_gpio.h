@@ -271,7 +271,7 @@ static inline void GPIO_TogglePinsOutput(GPIO_Type *base, uint32_t mask)
  */
 static inline uint32_t GPIO_ReadPinInput(GPIO_Type *base, uint32_t pin)
 {
-    return (((base->IN) >> pin) & 0x01U);
+    return (((base->OUT) >> pin) & 0x01U);
 }
 /*@}*/
 
