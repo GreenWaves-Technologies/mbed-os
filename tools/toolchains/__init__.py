@@ -53,6 +53,8 @@ CPU_COUNT_MIN = 1
 CPU_COEF = 1
 
 class mbedToolchain:
+    OFFICIALLY_SUPPORTED = False
+
     # Verbose logging
     VERBOSE = True
 
@@ -78,9 +80,9 @@ class mbedToolchain:
         "Cortex-M23": ["__CORTEX_M23", "ARM_MATH_ARMV8MBL", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],
         "Cortex-M33-NS": ["__CORTEX_M33", "ARM_MATH_ARMV8MML", "DOMAIN_NS=1", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],
         "Cortex-M33": ["__CORTEX_M33", "ARM_MATH_ARMV8MML", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],
-        "Cortex-M33F-NS": ["__CORTEX_M33", "ARM_MATH_ARMV8MML", "DOMAIN_NS=1", "__FPU_PRESENT", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],
-        "Cortex-M33F": ["__CORTEX_M33", "ARM_MATH_ARMV8MML", "__FPU_PRESENT", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],
-        "IMXGAP8": ["__GAP", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],
+        "Cortex-M33F-NS": ["__CORTEX_M33", "ARM_MATH_ARMV8MML", "DOMAIN_NS=1", "__FPU_PRESENT=1U", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],
+        "Cortex-M33F": ["__CORTEX_M33", "ARM_MATH_ARMV8MML", "__FPU_PRESENT=1U", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],
+        "IMXGAP8": ["__GAP", "__CMSIS_RTOS", "__MBED_CMSIS_RTOS_CM"],   
     }
 
     MBED_CONFIG_FILE_NAME="mbed_config.h"
@@ -335,7 +337,7 @@ class mbedToolchain:
         """Generate a via file for all includes.
         ARM, GCC, IAR cross compatible
         """
-        cmd_list = ("-I{}".format(c.replace("\\", "/")) for c in includes if c)
+        cmd_list = ("\"-I{}\"".format(c.replace("\\", "/")) for c in includes if c)
         if self.CHROOT:
             cmd_list = (c.replace(self.CHROOT, '') for c in cmd_list)
         return self.make_option_file(list(cmd_list), naming=".includes_{}.txt")
@@ -626,12 +628,16 @@ class mbedToolchain:
         objects = sorted(set(r.get_file_paths(FileType.OBJECT)))
         config_file = ([self.config.app_config_location]
                        if self.config.app_config_location else [])
-        linker_script = [path for _, path in r.get_file_refs(FileType.LD_SCRIPT)
-                         if path.endswith(self.LINKER_EXT)][-1]
+        try:
+            linker_script = [path for _, path in r.get_file_refs(FileType.LD_SCRIPT)
+                             if path.endswith(self.LINKER_EXT)][-1]
+        except IndexError:
+            raise NotSupportedException("No linker script found")
         lib_dirs = r.get_file_paths(FileType.LIB_DIR)
         libraries = [l for l in r.get_file_paths(FileType.LIB)
                      if l.endswith(self.LIBRARY_EXT)]
-        dependencies = objects + libraries + [linker_script] + config_file
+        hex_files = r.get_file_paths(FileType.HEX)
+        dependencies = objects + libraries + [linker_script] + config_file + hex_files
         dependencies.append(join(self.build_dir, self.PROFILE_FILE_NAME + "-ld"))
         if self.need_update(elf, dependencies):
             needed_update = True

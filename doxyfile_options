@@ -484,14 +484,14 @@ HIDE_UNDOC_MEMBERS     = YES
 # has no effect if EXTRACT_ALL is enabled.
 # The default value is: NO.
 
-HIDE_UNDOC_CLASSES     = YES
+HIDE_UNDOC_CLASSES     = NO
 
 # If the HIDE_FRIEND_COMPOUNDS tag is set to YES, doxygen will hide all friend
 # (class|struct|union) declarations. If set to NO, these declarations will be
 # included in the documentation.
 # The default value is: NO.
 
-HIDE_FRIEND_COMPOUNDS  = NO
+HIDE_FRIEND_COMPOUNDS  = YES
 
 # If the HIDE_IN_BODY_DOCS tag is set to YES, doxygen will hide any
 # documentation blocks found inside the body of a function. If set to NO, these
@@ -849,6 +849,7 @@ EXCLUDE_PATTERNS       = */tools/* \
                          */features/lwipstack/* \
                          */features/nanostack/sal-stack-nanostack/* \
                          */features/nanostack/coap-service/* \
+                         */features/netsocket/emac-drivers/* \
                          */mbed-trace/* \
                          */mbed-coap/* \
                          */nanostack-libservice/* \

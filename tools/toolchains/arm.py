@@ -188,7 +188,7 @@ class ARM(mbedToolchain):
         if self.RESPONSE_FILES:
             opts += ['--via', self.get_inc_file(includes)]
         else:
-            opts += ["-I%s" % i for i in includes]
+            opts += ["-I%s" % i for i in includes if i]
 
         return opts
 
@@ -337,6 +337,7 @@ class ARM(mbedToolchain):
 
 
 class ARM_STD(ARM):
+    OFFICIALLY_SUPPORTED = True
     def __init__(self, target, notify=None, macros=None,
                  build_profile=None, build_dir=None):
         ARM.__init__(self, target, notify, macros, build_dir=build_dir,
@@ -347,6 +348,7 @@ class ARM_STD(ARM):
 
 class ARM_MICRO(ARM):
     PATCHED_LIBRARY = False
+    OFFICIALLY_SUPPORTED = True
     def __init__(self, target, notify=None, macros=None,
                  silent=False, extra_verbose=False, build_profile=None,
                  build_dir=None):
@@ -357,11 +359,12 @@ class ARM_MICRO(ARM):
             raise NotSupportedException("ARM/uARM compiler support is required for ARM build")
 
 class ARMC6(ARM_STD):
+    OFFICIALLY_SUPPORTED = False
     SHEBANG = "#! armclang -E --target=arm-arm-none-eabi -x c"
     SUPPORTED_CORES = ["Cortex-M0", "Cortex-M0+", "Cortex-M3", "Cortex-M4",
                        "Cortex-M4F", "Cortex-M7", "Cortex-M7F", "Cortex-M7FD",
-                       "Cortex-M23", "Cortex-M23-NS", "Cortex-M33",
-                       "Cortex-M33-NS", "Cortex-A9"]
+                       "Cortex-M23", "Cortex-M23-NS", "Cortex-M33", "Cortex-M33F",
+                       "Cortex-M33-NS", "Cortex-M33F-NS", "Cortex-A9"]
     ARMCC_RANGE = (LooseVersion("6.10"), LooseVersion("7.0"))
 
     @staticmethod
@@ -413,6 +416,9 @@ class ARMC6(ARM_STD):
             self.flags['common'].append("-mfloat-abi=softfp")
         elif target.core.startswith("Cortex-M23"):
             self.flags['common'].append("-march=armv8-m.base")
+        elif target.core.startswith("Cortex-M33F"):
+            self.flags['common'].append("-mfpu=fpv5-sp-d16")
+            self.flags['common'].append("-mfloat-abi=softfp")
 
         if target.core == "Cortex-M23" or target.core == "Cortex-M33":
             self.flags['cxx'].append("-mcmse")
@@ -468,7 +474,7 @@ class ARMC6(ARM_STD):
 
     def get_compile_options(self, defines, includes, for_asm=False):
         opts = ['-D%s' % d for d in defines]
-        opts.extend(["-I%s" % i for i in includes])
+        opts.extend(["-I%s" % i for i in includes if i])
         if for_asm:
             return ["--cpreproc",
                     "--cpreproc_opts=%s" % ",".join(self.flags['common'] + opts)]
