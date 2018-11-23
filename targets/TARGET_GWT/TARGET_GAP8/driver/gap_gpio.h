@@ -271,7 +271,10 @@ static inline void GPIO_TogglePinsOutput(GPIO_Type *base, uint32_t mask)
  */
 static inline uint32_t GPIO_ReadPinInput(GPIO_Type *base, uint32_t pin)
 {
-    return (((base->OUT) >> pin) & 0x01U);
+    if (((base->DIR) >> pin) == uGPIO_DigitalOutput)
+        return (((base->OUT) >> pin) & 0x01U);
+    else
+        return (((base->IN) >> pin) & 0x01U);
 }
 /*@}*/
 
