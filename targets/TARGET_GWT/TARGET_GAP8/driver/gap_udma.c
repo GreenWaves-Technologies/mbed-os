@@ -210,10 +210,17 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
         hyperbus_ptr->EXT_ADDR = ext_addr;
 
         /* If RAM register access */
-        if ((ext_addr & 0x01000000) == 0) {
+#if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
+        if (ext_addr < uHYPERBUS_Flash_Address) {
             /* hyperbus_crt0_set */
             HYPERBUS_SetCRT0(reg_mem_access);
         }
+#else
+        if (ext_addr >= uHYPERBUS_Ram_Address) {
+            /* hyperbus_crt1_set */
+            HYPERBUS_SetCRT1(reg_mem_access);
+        }
+#endif
     }
 
     if (info->isTx) {
@@ -257,10 +264,20 @@ static void UDMA_StartTransfer(UDMA_Type *base, udma_req_info_t *info) {
         hyperbus_ptr->EXT_ADDR = ext_addr;
 
         /* If RAM register access */
-        if ((ext_addr & 0x01000000) == 0) {
+#if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
+        if (ext_addr < uHYPERBUS_Flash_Address) {
             /* hyperbus_crt0_set */
             HYPERBUS_SetCRT0(reg_mem_access);
         }
+#else
+        if (ext_addr >= uHYPERBUS_Ram_Address) {
+            /* hyperbus_crt1_set */
+            HYPERBUS_SetCRT1(reg_mem_access);
+        }
+#endif
+    }
+    else if(info->ctrl == 3) {
+        /* For other special IP */
     }
 
     if (info->isTx) {

@@ -100,7 +100,9 @@ void HYPERBUS_MasterInit(HYPERBUS_Type *base, hyperbus_master_config_t *masterCo
     HYPERBUS_SetDT1(masterConfig->dt1);
 
     /* When using flash, this bit should set to 0, always memory access */
-    if(masterConfig->dt1 == uHYPERBUS_Flash)
+    if(masterConfig->dt0 == uHYPERBUS_Flash)
+        HYPERBUS_SetCRT0(uHYPERBUS_Mem_Access);
+    else
         HYPERBUS_SetCRT1(uHYPERBUS_Mem_Access);
 
     hyperbus_is_init = 1;
@@ -111,10 +113,17 @@ void HYPERBUS_MasterGetDefaultConfig(hyperbus_master_config_t *masterConfig)
     assert(masterConfig);
 
     masterConfig->baudRate = 50000000U;
+#if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
     masterConfig->mbr0     = uHYPERBUS_Ram_Address;
     masterConfig->mbr1     = uHYPERBUS_Flash_Address >> 24;
     masterConfig->dt0      = uHYPERBUS_Ram;
     masterConfig->dt1      = uHYPERBUS_Flash;
+#else
+    masterConfig->mbr0     = uHYPERBUS_Flash_Address;
+    masterConfig->mbr1     = uHYPERBUS_Ram_Address >> 24;
+    masterConfig->dt0      = uHYPERBUS_Flash;
+    masterConfig->dt1      = uHYPERBUS_Ram;
+#endif
 }
 
 void HYPERBUS_MasterDeInit(HYPERBUS_Type *base)

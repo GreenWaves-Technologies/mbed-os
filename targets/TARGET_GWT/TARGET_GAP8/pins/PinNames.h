@@ -37,6 +37,7 @@ typedef enum {
 } PinDirection;
 
 #define GAP_PIN_OFFSET  8
+#define GAP_PORT_PIN_NUM    47
 
 /* Mapping for GPIO type pinname */
 #define GPIO_PIN_NUM_SHIFT 0

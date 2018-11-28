@@ -41,6 +41,9 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
+/*! @brief Hyperbus csn0 for RAM, csn1 for FLASH or inverse. */
+#define  __HYPERBUS_CSN0_FOR_RAM__  1
+
 /*! @brief Hyperbus transfer request type definition.*/
 #define  hyperbus_req_t udma_req_t
 
@@ -50,9 +53,15 @@
 /*! @brief Hyperbus bus device address.*/
 enum _hyperbus_device_address
 {
+#if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
     uHYPERBUS_Ram_Address   = 0x0U,        /*!< RAM base address. RAM sapce is 8M bytes*/
                                         /*!< Eah address has two bytes, total 4M addresses*/
     uHYPERBUS_Flash_Address = 0x01000000U  /*!< Flash base address = 16M. */
+#else
+    uHYPERBUS_Ram_Address   = 0x20000000U,        /*!< RAM base address. RAM sapce is 8M bytes*/
+                                        /*!< Eah address has two bytes, total 4M addresses*/
+    uHYPERBUS_Flash_Address = 0x0  /*!< Flash base address = 16M. */
+#endif
 };
 
 /*! @brief Hyperbus bus RAM register Space.*/
@@ -924,7 +933,11 @@ void HYPERBUS_MasterDeInit(HYPERBUS_Type *base);
  */
 static inline void HYPERBUS_SetMaxLength(HYPERBUS_Type *base, int max_length_en, int max_length, int rd_wr, char device)
 {
+#if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
     if (device == uHYPERBUS_Ram) {
+#else
+    if (device == uHYPERBUS_Flash) {
+#endif
         if (rd_wr == uHYPERBUS_Read) {
             HYPERBUS_SetRdMaxLengthEn0(max_length_en);
             HYPERBUS_SetRdMaxLength0(max_length);
@@ -957,7 +970,11 @@ static inline void HYPERBUS_SetMaxLength(HYPERBUS_Type *base, int max_length_en,
  */
 static inline void HYPERBUS_SetTiming(HYPERBUS_Type *base, int cshi, int css, int csh, int latency, int rd_wr, char device)
 {
+#if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
     if (device == uHYPERBUS_Ram) {
+#else
+    if (device == uHYPERBUS_Flash) {
+#endif
         if (rd_wr == uHYPERBUS_Read) {
             HYPERBUS_SetRdCSHI0(cshi);
             HYPERBUS_SetRdCSS0(css);
@@ -978,6 +995,7 @@ static inline void HYPERBUS_SetTiming(HYPERBUS_Type *base, int cshi, int css, in
             HYPERBUS_SetWrCSS1(css);
             HYPERBUS_SetWrCSH1(csh);
         }
+        HYPERBUS_SetLatency1(latency);
     }
 }
 
