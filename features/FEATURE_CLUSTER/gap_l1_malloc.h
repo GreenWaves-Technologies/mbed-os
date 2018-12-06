@@ -49,6 +49,9 @@
 extern char  __heapsram_start;
 extern char  __heapsram_size;
 
+/* L1 Free fucntion alias */
+#define L1_Free     L1_MallocFree
+
 /*******************************************************************************
  * APIs
  ******************************************************************************/
@@ -62,20 +65,45 @@ extern "C" {
  */
 
 /*!
- * @brief Initializes the L1 allocator.
+ * @brief Initializes the L1 malloc.
  *
- * @note .
+ * @note This is will bind the L1 heap start and stop address to the inner stucture malloc_t __L1_malloc,
+ *        It will record the allocation information of L1 heap
  */
 void L1_MallocInit();
 
+
+/*!
+ * @brief Initializes the L1 malloc.
+ *
+ * @note Allocate the memory according to the size and return the address pointer.
+ *
+ * @param size Memory allocation size.
+ *
+ * @return memory address pointer.
+ *
+ */
 void *L1_Malloc(int size);
 
+/*!
+ * @brief Allocate the L1 heap memory with aligned size.
+ *
+ * @param size  Memory allocation size.
+ * @param align Memory allocation align size.
+ *
+ * @return memory address pointer.
+ *
+ */
 void *L1_MallocAlign(int size, int align);
 
 /*!
- * @brief Free memory allocated by the L1 allocator.
+ * @brief Free the L1 malloc.
  *
- * @note .
+ * @note Free the memory pointed by the _chunk
+ *
+ * @param _chunk Address of memory need to free.
+ * @param size  Size of memory need to free.
+ *
  */
 void L1_MallocFree(void *_chunk, int size);
 

@@ -51,6 +51,9 @@ extern "C" {
 extern char  __heapfcram_start;
 extern char  __heapfcram_size;
 
+/* FC Free fucntion alias */
+#define FC_Free     FC_MallocFree
+
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */

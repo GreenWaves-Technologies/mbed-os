@@ -74,7 +74,7 @@ typedef enum IRQn {
   CLUSTER_NOTIFY_FC_EVENT      = 1,                /**< Software event interrupt */
   FC_SW_NOTIF_HWCE_EVENT       = 2,                /**< Software event interrupt */
   FC_SW_NOTIF_EVENT            = 3,                /**< Software event interrupt */
-  CLUSTER_NOTIFY_FC_IRQn       = 4,                /**< HW       event interrupt */
+  CLUSTER_NOTIFY_FC_IRQn       = 4,                /**< Software event interrupt */
   PendSV_IRQn                  = 7,                /**< Software event U -> M PendSV interrupt */
 
   /* Device specific interrupts */
