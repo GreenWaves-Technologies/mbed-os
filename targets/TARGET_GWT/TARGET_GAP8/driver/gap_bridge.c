@@ -207,6 +207,8 @@ void BRIDGE_BlockWait()
         event = EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_BRIDGE_EVENT);
     } while (!(event & (1 << FC_SW_NOTIFY_BRIDGE_EVENT)));
 
+    EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SW_NOTIFY_BRIDGE_EVENT);
+
     /* Restore IRQ */
     if (irq_en)
         NVIC_EnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
