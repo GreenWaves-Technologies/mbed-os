@@ -54,7 +54,7 @@ static inline bridge_t *BRIDGE_Get()
     return DEBUG_GetDebugStruct();
 }
 
-static inline int BRIDGE_isConnected(debug_struct_t *bridge) {
+static inline int BRIDGE_IsConnected(debug_struct_t *bridge) {
 #ifdef GAP_USE_NEW_REQLOOP
     return *(volatile uint32_t *)&bridge->bridge.connected;
 #else
@@ -62,17 +62,17 @@ static inline int BRIDGE_isConnected(debug_struct_t *bridge) {
 #endif
 }
 
-static inline void BRIDGE_Connect(bridge_req_t *req)
+static inline void BRIDGE_SetConnect(bridge_req_t *req)
 {
     req->type = BRIDGE_REQ_CONNECT;
 }
 
-static inline void BRIDGE_Disconnect(bridge_req_t *req)
+static inline void BRIDGE_SetDisconnect(bridge_req_t *req)
 {
     req->type = BRIDGE_REQ_DISCONNECT;
 }
 
-static inline void BRIDGE_Open(bridge_req_t *req, int name_len, const char* name, int flags, int mode)
+static inline void BRIDGE_SetOpen(bridge_req_t *req, int name_len, const char* name, int flags, int mode)
 {
     req->type = BRIDGE_REQ_OPEN;
     req->open.name_len = name_len;
@@ -81,13 +81,13 @@ static inline void BRIDGE_Open(bridge_req_t *req, int name_len, const char* name
     req->open.mode = mode;
 }
 
-static inline void BRIDGE_Close(bridge_req_t *req, int file)
+static inline void BRIDGE_SetClose(bridge_req_t *req, int file)
 {
     req->type = BRIDGE_REQ_CLOSE;
     req->close.file = file;
 }
 
-static inline void BRIDGE_Read(bridge_req_t *req, int file, void* ptr, int len)
+static inline void BRIDGE_SetRead(bridge_req_t *req, int file, void* ptr, int len)
 {
     req->type = BRIDGE_REQ_READ;
     req->read.file = file;
@@ -95,7 +95,7 @@ static inline void BRIDGE_Read(bridge_req_t *req, int file, void* ptr, int len)
     req->read.len = len;
 }
 
-static inline void BRIDGE_Write(bridge_req_t *req, int file, void* ptr, int len)
+static inline void BRIDGE_SetWrite(bridge_req_t *req, int file, void* ptr, int len)
 {
     req->type = BRIDGE_REQ_WRITE;
     req->write.file = file;
@@ -104,7 +104,7 @@ static inline void BRIDGE_Write(bridge_req_t *req, int file, void* ptr, int len)
 }
 
 
-static inline void BRIDGE_FBOpen(bridge_req_t *req, int name_len, const char* name, int width, int height, int format)
+static inline void BRIDGE_SetFBOpen(bridge_req_t *req, int name_len, const char* name, int width, int height, int format)
 {
     req->type = BRIDGE_REQ_FB_OPEN;
     req->fb_open.name_len = name_len;
@@ -114,7 +114,7 @@ static inline void BRIDGE_FBOpen(bridge_req_t *req, int name_len, const char* na
     req->fb_open.format = format;
 }
 
-static inline void BRIDGE_FBUpdate(bridge_req_t *req, uint64_t fb, unsigned int addr, int posx, int posy, int width, int height)
+static inline void BRIDGE_SetFBUpdate(bridge_req_t *req, uint64_t fb, unsigned int addr, int posx, int posy, int width, int height)
 {
     req->type = BRIDGE_REQ_FB_UPDATE;
     req->fb_update.screen = fb;
@@ -125,7 +125,7 @@ static inline void BRIDGE_FBUpdate(bridge_req_t *req, uint64_t fb, unsigned int 
     req->fb_update.height = height;
 }
 
-static inline void BRIDGE_TargetStatusSync(bridge_req_t *req)
+static inline void BRIDGE_SetTargetStatusSync(bridge_req_t *req)
 {
     req->type = BRIDGE_REQ_TARGET_STATUS_SYNC;
 }
@@ -214,7 +214,7 @@ void BRIDGE_BlockWait()
         NVIC_EnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
 }
 
-void BRIDGE_EventInit()
+void BRIDGE_Init()
 {
     bridge_t* bridge = BRIDGE_Get();
 
@@ -228,17 +228,17 @@ void BRIDGE_EventInit()
     NVIC_EnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
 }
 
-int BRIDGE_EventConnect(int wait_bridge, void *event)
+int BRIDGE_Connect(int wait_bridge, void *event)
 {
     bridge_t *bridge = BRIDGE_Get();
 
-    if (!wait_bridge && !BRIDGE_isConnected(bridge)) {
+    if (!wait_bridge && !BRIDGE_IsConnected(bridge)) {
         return -1;
     }
 
     request.next = 0;
 
-    BRIDGE_Connect(&request);
+    BRIDGE_SetConnect(&request);
 
     BRIDGE_PostReq(&request, NULL);
 
@@ -247,22 +247,22 @@ int BRIDGE_EventConnect(int wait_bridge, void *event)
     return 0;
 }
 
-void BRIDGE_EventDisconnect(void *event)
+void BRIDGE_Disconnect(void *event)
 {
     request.next = 0;
 
-    BRIDGE_Disconnect(&request);
+    BRIDGE_SetDisconnect(&request);
 
     BRIDGE_PostReq(&request, NULL);
 
     BRIDGE_BlockWait();
 }
 
-int BRIDGE_EventOpen(const char* name, int flags, int mode, void *event)
+int BRIDGE_Open(const char* name, int flags, int mode, void *event)
 {
     memset((void *)&request, 0, sizeof(bridge_req_t));
 
-    BRIDGE_Open(&request, strlen(name), name, flags, mode);
+    BRIDGE_SetOpen(&request, strlen(name), name, flags, mode);
 
     BRIDGE_PostReq(&request, NULL);
 
@@ -271,18 +271,18 @@ int BRIDGE_EventOpen(const char* name, int flags, int mode, void *event)
     return request.open.retval;
 }
 
-int BRIDGE_EventOpenWait(void* event)
+int BRIDGE_OpenWait(void* event)
 {
     BRIDGE_BlockWait();
 
     return request.open.retval;
 }
 
-int BRIDGE_EventClose(int file, void *event)
+int BRIDGE_Close(int file, void *event)
 {
     memset((void *)&request, 0, sizeof(bridge_req_t));
 
-    BRIDGE_Close(&request, file);
+    BRIDGE_SetClose(&request, file);
 
     BRIDGE_PostReq(&request, NULL);
 
@@ -291,18 +291,18 @@ int BRIDGE_EventClose(int file, void *event)
     return request.close.retval;
 }
 
-int BRIDGE_EventCloseWait(void *event)
+int BRIDGE_CloseWait(void *event)
 {
     BRIDGE_BlockWait();
 
     return request.close.retval;
 }
 
-int BRIDGE_EventRead(int file, void* ptr, int len, void *event)
+int BRIDGE_Read(int file, void* ptr, int len, void *event)
 {
     memset((void *)&request, 0, sizeof(bridge_req_t));
 
-    BRIDGE_Read(&request, file, ptr, len);
+    BRIDGE_SetRead(&request, file, ptr, len);
 
     BRIDGE_PostReq(&request, NULL);
 
@@ -311,18 +311,18 @@ int BRIDGE_EventRead(int file, void* ptr, int len, void *event)
     return request.read.retval;
 }
 
-int BRIDGE_EventReadWait(void *event)
+int BRIDGE_ReadWait(void *event)
 {
     BRIDGE_BlockWait();
 
     return request.read.retval;
 }
 
-int BRIDGE_EventWrite(int file, void* ptr, int len, void *event)
+int BRIDGE_Write(int file, void* ptr, int len, void *event)
 {
     memset((void *)&request, 0, sizeof(bridge_req_t));
 
-    BRIDGE_Write(&request, file, ptr, len);
+    BRIDGE_SetWrite(&request, file, ptr, len);
 
     BRIDGE_PostReq(&request, NULL);
 
@@ -331,18 +331,18 @@ int BRIDGE_EventWrite(int file, void* ptr, int len, void *event)
     return request.write.retval;
 }
 
-int BRIDGE_EventWriteWait(void *event)
+int BRIDGE_WriteWait(void *event)
 {
     BRIDGE_BlockWait();
 
     return request.write.retval;
 }
 
-uint64_t BRIDGE_EventFBOpen(const char* name, int width, int height, bridge_fb_format_e format, void *event)
+uint64_t BRIDGE_FBOpen(const char* name, int width, int height, bridge_fb_format_e format, void *event)
 {
     memset((void *)&request, 0, sizeof(bridge_req_t));
 
-    BRIDGE_FBOpen(&request, strlen(name), name, width, height, format);
+    BRIDGE_SetFBOpen(&request, strlen(name), name, width, height, format);
 
     BRIDGE_PostReq(&request, NULL);
 
@@ -351,32 +351,32 @@ uint64_t BRIDGE_EventFBOpen(const char* name, int width, int height, bridge_fb_f
     return request.fb_open.screen;
 }
 
-uint64_t BRIDGE_EventFBOpenWait(void *event)
+uint64_t BRIDGE_FBOpenWait(void *event)
 {
     BRIDGE_BlockWait();
 
     return request.fb_open.screen;
 }
 
-void BRIDGE_EventFBUpdate(uint64_t fb, int addr, int posx, int posy, int width, int height, void *event)
+void BRIDGE_FBUpdate(uint64_t fb, int addr, int posx, int posy, int width, int height, void *event)
 {
     memset((void *)&request, 0, sizeof(bridge_req_t));
 
-    BRIDGE_FBUpdate(&request, fb, addr, posx, posy, width, height);
+    BRIDGE_SetFBUpdate(&request, fb, addr, posx, posy, width, height);
 
     BRIDGE_PostReq(&request, NULL);
 
     BRIDGE_BlockWait();
 }
 
-void BRIDGE_EventTargetStatusSync(void *event)
+void BRIDGE_TargetStatusSync(void *event)
 {
     bridge_t *bridge = BRIDGE_Get();
 
-    if ( BRIDGE_isConnected(bridge) ) {
+    if ( BRIDGE_IsConnected(bridge) ) {
         memset((void *)&request, 0, sizeof(bridge_req_t));
 
-        BRIDGE_TargetStatusSync(&request);
+        BRIDGE_SetTargetStatusSync(&request);
 
         BRIDGE_PostReq(&request, NULL);
 

@@ -143,7 +143,7 @@ extern "C" {
  * @brief Initilize binding software event BRIDGE, binding to notifyReqAddr, notifyReqValue
  *
  */
-void BRIDGE_EventInit();
+void BRIDGE_Init();
 
 /*!
  * @brief Connect to bridge.
@@ -151,14 +151,14 @@ void BRIDGE_EventInit();
  * @param wait_bridge  BRIDGE waiting flag.
  * @param event        BRIDGE Interrupt handler pointer.
  */
-int BRIDGE_EventConnect(int wait_bridge, void *event);
+int BRIDGE_Connect(int wait_bridge, void *event);
 
 /*!
  * @brief Disconnect to bridge.
  *
  * @param event  BRIDGE Interrupt handler pointer.
  */
-void BRIDGE_EventDisconnect(void *event);
+void BRIDGE_Disconnect(void *event);
 
 /*!
  * @brief Bridge open a file according to flags and mode.
@@ -169,7 +169,7 @@ void BRIDGE_EventDisconnect(void *event);
  * @param event        BRIDGE Interrupt handler pointer.
  * @retval             File open status
  */
-int BRIDGE_EventOpen(const char* name, int flags, int mode, void* event);
+int BRIDGE_Open(const char* name, int flags, int mode, void* event);
 
 /*!
  * @brief Bridge waiting openning a file.
@@ -177,7 +177,7 @@ int BRIDGE_EventOpen(const char* name, int flags, int mode, void* event);
  * @param event        BRIDGE Interrupt handler pointer.
  * @retval             File open status
  */
-int BRIDGE_EventOpenWait(void *event);
+int BRIDGE_OpenWait(void *event);
 
 /*!
  * @brief Bridge close a file.
@@ -186,7 +186,7 @@ int BRIDGE_EventOpenWait(void *event);
  * @param event        BRIDGE Interrupt handler pointer.
  * @retval             File close status
  */
-int BRIDGE_EventClose(int file, void *event);
+int BRIDGE_Close(int file, void *event);
 
 /*!
  * @brief Bridge waiting closing a file.
@@ -194,7 +194,7 @@ int BRIDGE_EventClose(int file, void *event);
  * @param event        BRIDGE Interrupt handler pointer.
  * @retval             File close status
  */
-int BRIDGE_EventCloseWait(void *event);
+int BRIDGE_CloseWait(void *event);
 
 /*!
  * @brief Bridge read a file.
@@ -205,7 +205,7 @@ int BRIDGE_EventCloseWait(void *event);
  * @param event       BRIDGE Interrupt handler pointer.
  * @retval            File read status
  */
-int BRIDGE_EventRead(int file, void* ptr, int len, void *event);
+int BRIDGE_Read(int file, void* ptr, int len, void *event);
 
 /*!
  * @brief Bridge waiting Reading a file.
@@ -213,7 +213,7 @@ int BRIDGE_EventRead(int file, void* ptr, int len, void *event);
  * @param event        BRIDGE Interrupt handler pointer.
  * @retval             File read status
  */
-int BRIDGE_EventReadWait(void *event);
+int BRIDGE_ReadWait(void *event);
 
 /*!
  * @brief Bridge Write a file.
@@ -224,7 +224,7 @@ int BRIDGE_EventReadWait(void *event);
  * @param event       BRIDGE Interrupt handler pointer.
  * @retval            File write status
  */
-int BRIDGE_EventWrite(int file, void* ptr, int len, void *event);
+int BRIDGE_Write(int file, void* ptr, int len, void *event);
 
 /*!
  * @brief Bridge waiting Writing a file.
@@ -232,7 +232,7 @@ int BRIDGE_EventWrite(int file, void* ptr, int len, void *event);
  * @param event        BRIDGE Interrupt handler pointer.
  * @retval             File write status
  */
-int BRIDGE_EventWriteWait(void *event);
+int BRIDGE_WriteWait(void *event);
 
 /*!
  * @brief Bridge open image frame buffer.
@@ -244,7 +244,7 @@ int BRIDGE_EventWriteWait(void *event);
  * @param event        BRIDGE Interrupt handler pointer.
  * @retval             Image frame open status
  */
-uint64_t BRIDGE_EventFBOpen(const char* name, int width, int height, bridge_fb_format_e format, void *event);
+uint64_t BRIDGE_FBOpen(const char* name, int width, int height, bridge_fb_format_e format, void *event);
 
 /*!
  * @brief Bridge Waiting openning image frame buffer.
@@ -252,7 +252,7 @@ uint64_t BRIDGE_EventFBOpen(const char* name, int width, int height, bridge_fb_f
  * @param event        BRIDGE Interrupt handler pointer.
  * @retval             Image frame open status
  */
-uint64_t BRIDGE_EventFbBOpenWait(void *event);
+uint64_t BRIDGE_FbBOpenWait(void *event);
 
 /*!
  * @brief Bridge open image frame buffer.
@@ -265,14 +265,14 @@ uint64_t BRIDGE_EventFbBOpenWait(void *event);
  * @param height       Image height.
  * @param event        BRIDGE Interrupt handler pointer.
  */
-void BRIDGE_EventFBUpdate(uint64_t fb, int addr, int posx, int posy, int width, int height, void *event);
+void BRIDGE_FBUpdate(uint64_t fb, int addr, int posx, int posy, int width, int height, void *event);
 
 /*!
  * @brief Bridge taget status synchronozation.
  *
  * @param event        BRIDGE Interrupt handler pointer.
  */
-void BRIDGE_EventTargetStatusSync(void *event);
+void BRIDGE_TargetStatusSync(void *event);
 
 /*!
  * @brief BRIDGE interrupt handler
