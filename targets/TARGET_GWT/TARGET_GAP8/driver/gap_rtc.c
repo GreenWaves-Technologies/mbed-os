@@ -212,7 +212,7 @@ static void RTC_APB_WAIT(void)
 {
     while (*(volatile uint8_t *)&rtc_apb_pending)
     {
-        EU_EVT_MaskWaitAndClr(1<<FC_SW_NOTIF_EVENT);
+        EU_EVT_MaskWaitAndClr(1<<FC_SW_NOTIFY_EVENT);
     }
 }
 

@@ -163,7 +163,7 @@ status_t DMACPY_NonBlockingTransfer(DMACPY_Type *base, uint32_t *src_addr, uint3
     return (status ? uStatus_Success : uDMACPY_Error);
 }
 
-void DMACPY_CreateHandler(dmacpy_handle_t *handle, dmacpy_callback_t callback, void *userData)
+void DMACPY_TransferCreateHandle(dmacpy_handle_t *handle, dmacpy_callback_t callback, void *userData)
 {
     assert(handle);
     handle->state = uDMACPY_Idle;

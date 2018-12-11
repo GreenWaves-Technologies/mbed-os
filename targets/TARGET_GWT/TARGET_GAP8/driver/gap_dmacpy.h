@@ -35,7 +35,7 @@
 #include "gap_udma.h"
 
 /*!
- * @addtogroup memcopy
+ * @addtogroup dmacopy
  * @{
  */
 
@@ -43,15 +43,15 @@
  * Variables, macros, structures,... definitions
  ******************************************************************************/
 
-/*! @brief Memcopy module status. */
+/*! @brief DMAcopy module status. */
 typedef enum
 {
-    uDMACPY_Idle  = 0x0,  /*!< Memcopy is idle. */
+    uDMACPY_Idle  = 0x0,  /*!< DMAcopy is idle. */
     uDMACPY_Error = 0x1,  /*!< Error during transfer. */
-    uDMACPY_Busy  = 0x2   /*!< Memcopy is busy with a transfer. */
+    uDMACPY_Busy  = 0x2   /*!< DMAcopy is busy with a transfer. */
 } dmacpy_status_t;
 
-/*! @brief Memcopy type of transfer. */
+/*! @brief DMAcopy type of transfer. */
 typedef enum
 {
     uDMACPY_L22L2 = 0x0, /*!< Transfer from L2 to L2. */
@@ -69,7 +69,7 @@ typedef enum
 typedef void (*dmacpy_callback_t)(void *useData);
 
 /*!
- * @brief Memcopy handler structure.
+ * @brief DMAcopy handler structure.
  *
  * This structure holds information to handle events from UDMA upon asynchronous transfers completion.
  * When asynchronous transfers are used, this structure should be filled.
@@ -90,14 +90,14 @@ extern "C" {
 #endif /* __cplusplus */
 
 /*!
- * @name Memcopy module configuration.
+ * @name DMAcopy module configuration.
  * @{
  */
 
 /*!
  * @brief Initialize the DMACPY module.
  *
- * This function intializes the Memcopy module for transfers between FC_TCDM/L2 and L2.
+ * This function intializes the DMAcopy module for transfers between FC_TCDM/L2 and L2.
  *
  * @param base         DMACPY base pointer.
  */
@@ -175,7 +175,7 @@ status_t DMACPY_NonBlockingTransfer(DMACPY_Type *base, uint32_t *src_addr, uint3
  * @param callback     Callback function.
  * @param userData     Parameter passed to the callback function.
  */
-void DMACPY_CreateHandler(dmacpy_handle_t *handle, dmacpy_callback_t callback, void *userData);
+void DMACPY_TransferCreateHandle(dmacpy_handle_t *handle, dmacpy_callback_t callback, void *userData);
 
 /*!
  * @brief DMACPY IRQ Handler.

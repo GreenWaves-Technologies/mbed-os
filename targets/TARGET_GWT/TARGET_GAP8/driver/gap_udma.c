@@ -172,9 +172,10 @@ void UDMA_BlockWait()
     int irq_en = NVIC_GetEnableIRQ(FC_SOC_EVENT_IRQn);
     NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
 
+    int event = 0;
     do {
-        EU_EVT_MaskWaitAndClr(1 << FC_SOC_EVENT_IRQn);
-    } while (!(EU_CORE_DEMUX->BUFFER & (1 << FC_SOC_EVENT_IRQn)));
+        event = EU_EVT_MaskWaitAndClr(1 << FC_SOC_EVENT_IRQn);
+    } while (!(event & (1 << FC_SOC_EVENT_IRQn)));
 
     /* Pop a event. */
     EU_SOC_EVENTS->CURRENT_EVENT;

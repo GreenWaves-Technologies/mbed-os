@@ -47,7 +47,7 @@ void FC_EventHandler()
 
     /* Trigger an event in case someone is waiting for it
        it will check the termination using the pending variable */
-    EU_FC_EVT_DemuxTrigSet(FC_SW_NOTIF_EVENT, 0);
+    EU_FC_EVT_DemuxTrigSet(FC_SW_NOTIFY_EVENT, 0);
     /* Now that we popped the element, we can clear the soc event FIFO event as the FIFO is
        generating an event as soon as the FIFO is not empty */
     EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SOC_EVENT_IRQn);

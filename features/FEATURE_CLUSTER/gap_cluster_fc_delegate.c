@@ -150,7 +150,7 @@ void CLUSTER_CL2FC_SendTask(uint32_t cid, fc_call_t *task)
     #if defined(__GAP8__)
     EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_IRQn, 0);
     #elif defined(__VEGA__)
-    FC_ITC->STATUS_SET = (1 << CLUSTER_NOTIFY_FC_IRQn);
+    ITC_SetIRQ(CLUSTER_NOTIFY_FC_IRQn);
     #endif
 }
 

@@ -105,7 +105,7 @@ static uint32_t PMU_ChangeRegulatorState(pmu_system_state_t prev_state, pmu_syst
 
         /* Wait for clock gate done event */
         while ((pmu_events_status & PMU_EVENT_SCU_OK) == 0) {
-            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIF_EVENT);
+            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
         }
         pmu_events_status = pmu_events_status & (~(PMU_EVENT_SCU_OK));
 
@@ -315,7 +315,7 @@ void PMU_ClusterPowerOn() {
             /* Wait for clock gate done event */
             while ((pmu_events_status & PMU_EVENT_CLUSTER_CLOCK_GATE) ==  0)
             {
-                EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIF_EVENT);
+                EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
             }
             pmu_events_status = pmu_events_status & (~(PMU_EVENT_CLUSTER_CLOCK_GATE));
         }
@@ -327,7 +327,7 @@ void PMU_ClusterPowerOn() {
 
         /* Wait for TRC OK event */
         while ((pmu_events_status & PMU_EVENT_CLUSTER_ON_OFF) == 0) {
-            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIF_EVENT);
+            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
         }
         pmu_events_status = pmu_events_status & (~(PMU_EVENT_CLUSTER_ON_OFF));
 
@@ -346,7 +346,7 @@ void PMU_ClusterPowerOn() {
 
         /* Wait for clock gate done event */
         while ((pmu_events_status & PMU_EVENT_CLUSTER_CLOCK_GATE) == 0) {
-            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIF_EVENT);
+            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
         }
         pmu_events_status = pmu_events_status & (~(PMU_EVENT_CLUSTER_CLOCK_GATE));
 
@@ -385,7 +385,7 @@ void PMU_ClusterPowerOff() {
         /* Wait for clock gate done event */
         while ((pmu_events_status & PMU_EVENT_CLUSTER_CLOCK_GATE) ==  0)
         {
-            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIF_EVENT);
+            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
         }
         pmu_events_status = pmu_events_status & (~(PMU_EVENT_CLUSTER_CLOCK_GATE));
 
@@ -403,7 +403,7 @@ void PMU_ClusterPowerOff() {
 
         /* Wait for TRC OK event */
         while ((pmu_events_status & PMU_EVENT_CLUSTER_ON_OFF) == 0) {
-            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIF_EVENT);
+            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
         }
         pmu_events_status = pmu_events_status & (~(PMU_EVENT_CLUSTER_ON_OFF));
 
@@ -422,5 +422,5 @@ void PMU_IRQHandler(uint32_t num)
 {
     pmu_events_status |= 1 << (num - PMU_EVENT_CLUSTER_POWER_ON);
 
-    EU_SW_EVENTS_DEMUX->TRIGGER_SET[FC_SW_NOTIF_EVENT] = 0xFFFFFFFF;
+    EU_SW_EVENTS_DEMUX->TRIGGER_SET[FC_SW_NOTIFY_EVENT] = 0xFFFFFFFF;
 }
