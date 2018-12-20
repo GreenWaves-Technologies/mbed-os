@@ -46,6 +46,7 @@ typedef struct {
 extern const PinMap PinMap_I2S_SCK[];
 extern const PinMap PinMap_I2S_SDI[];
 extern const PinMap PinMap_I2S_WS[];
+extern const PinMap PinMap_HYPERBUS_CLK[];
 
 /*******************************************************************************
  * Prototypes
@@ -112,6 +113,11 @@ void SAI_Init(I2S_Type *base, PinName sdi, PinName ws, PinName sck)
     pinmap_pinout(sck, PinMap_I2S_SCK);
     pinmap_pinout(ws, PinMap_I2S_WS);
     pinmap_pinout(sdi, PinMap_I2S_SDI);
+    /* Pin config in case I2S1 is used with alternate function 3. */
+    if(sdi == I2S1_SDI_B13)
+    {
+        pinmap_pinout(HYPERBUS_CLK, PinMap_HYPERBUS_CLK);
+    }
 
     /* UDMA I2S device on */
     UDMA_Init((UDMA_Type *)base);
