@@ -33,8 +33,6 @@ namespace mbed {
 
 using namespace mbed;
 
-using namespace mbed;
-
 static int fat_error_remap(FRESULT res)
 {
     switch (res) {

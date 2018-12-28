@@ -306,6 +306,7 @@ void serial_tx_abort_asynch(serial_t *obj);
  * @param obj The serial object
  */
 void serial_rx_abort_asynch(serial_t *obj);
+
 /**@}*/
 
 #endif

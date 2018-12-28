@@ -222,6 +222,7 @@ private:
      */
     NonCopyable &operator=(const NonCopyable &);
 #endif
+#endif
 };
 
 /**@}*/

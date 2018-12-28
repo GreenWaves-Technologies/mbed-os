@@ -270,13 +270,6 @@ static void test_other()
     }
 }
 
-static void test_disconnect()
-{
-    nsapi_connection_status_t st =  nw->get_connection_status();
-    TEST_ASSERT(st == NSAPI_STATUS_GLOBAL_UP);
-    TEST_ASSERT(nw->disconnect() == NSAPI_ERROR_OK);
-}
-
 static void test_detach()
 {
     // in PPP mode there is NO CARRIER waiting so flush it out

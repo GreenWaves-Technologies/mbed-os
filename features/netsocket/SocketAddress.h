@@ -57,8 +57,6 @@ public:
     }
 
     /** Create a SocketAddress from a raw IP address and port
-     * 
-     * To construct from a host name, use NetworkInterface::gethostbyname
      *
      * To construct from a host name, use NetworkInterface::gethostbyname
      *

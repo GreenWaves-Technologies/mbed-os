@@ -28,7 +28,6 @@
 
 - the first can be used to detect the maximum heap usage at runtime. It is
   activated by setting the configuration option MBED_HEAP_STATS_ENABLED to true.
-  activated by defining the MBED_HEAP_STATS_ENABLED macro.
 - the second can be used to trace each memory call by automatically invoking
   a callback on each memory operation (see hal/api/mbed_mem_trace.h). It is
   activated by setting the configuration option MBED_MEM_TRACING_ENABLED to true.

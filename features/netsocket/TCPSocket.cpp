@@ -34,17 +34,6 @@ TCPSocket::TCPSocket(TCPSocket *parent, nsapi_socket_t socket, SocketAddress add
     _stack->socket_attach(socket, &mbed::Callback<void()>::thunk, &_event);
 }
 
-TCPSocket::TCPSocket(TCPSocket* parent, nsapi_socket_t socket, SocketAddress address)
-{
-    _socket = socket,
-    _stack = parent->_stack;
-    _factory_allocated = true;
-    _remote_peer = address;
-
-    _event = mbed::Callback<void()>(this, &TCPSocket::event);
-    _stack->socket_attach(socket, &mbed::Callback<void()>::thunk, &_event);
-}
-
 TCPSocket::~TCPSocket()
 {
 }
