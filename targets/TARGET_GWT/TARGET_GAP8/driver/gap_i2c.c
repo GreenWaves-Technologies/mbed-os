@@ -122,6 +122,8 @@ void I2C_GetDefaultConfig(i2c_config_t *Config)
 
 void I2C_SetBaudRate(I2C_Type *base, uint32_t baudRate_Bps, uint32_t srcClock_Hz)
 {
+    assert(baudRate_Bps);
+
     int index = 0;
     uint32_t clkDivider = (srcClock_Hz >> 2) / baudRate_Bps;
 

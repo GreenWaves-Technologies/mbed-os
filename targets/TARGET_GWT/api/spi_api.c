@@ -155,19 +155,8 @@ int spi_master_cs(spi_t *obj, int status)
 {
     struct spi_s *spi_obj = SPI_S(obj);
 
-    int index = 0;
+    SPI_Master_CS(spi_address[spi_obj->instance], master_config.whichCsn, status);
 
-    if (status)
-        s_command_sequence[index++] = SPIM_CMD_EOT(1);
-    else
-        s_command_sequence[index++] = SPIM_CMD_SOT(master_config.whichCsn);
-
-
-    /* Blocking transfer */
-    SPI_MasterTransferBlocking(spi_address[spi_obj->instance],
-                               (uint32_t* )s_command_sequence,
-                               (index * sizeof(uint32_t)),
-                               NULL, 0, 32);
     return 0;
 }
 
@@ -175,18 +164,7 @@ int spi_master_write(spi_t *obj, int value)
 {
     struct spi_s *spi_obj = SPI_S(obj);
 
-    int index = 0;
-
-    s_command_sequence[index++] = SPIM_CMD_DUPLEX(spi_obj->bits, 0);
-    s_command_sequence[index++] = value;
-
-    /* Blocking transfer */
-    SPI_MasterTransferBlocking(spi_address[spi_obj->instance],
-                               (uint32_t* )s_command_sequence,
-                               (index * sizeof(uint32_t)),
-                               (uint8_t *)&spi_reg_value,
-                               (spi_obj->bits >> 3),
-                               32);
+    SPI_Master_DulpexTransfer(spi_address[spi_obj->instance], value, (void *)&spi_reg_value, spi_obj->bits);
 
     if(spi_obj->bits == 8)
         return spi_reg_value & 0xFF;

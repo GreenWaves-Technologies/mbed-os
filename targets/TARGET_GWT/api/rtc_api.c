@@ -70,7 +70,7 @@ void rtc_write(time_t t)
     struct tm *temp = localtime(&t);
 
     datetime.year   = temp->tm_year + 1900;
-    datetime.month  = temp->tm_mon;
+    datetime.month  = temp->tm_mon + 1;
     datetime.day    = temp->tm_mday;
     datetime.hour   = temp->tm_hour;
     datetime.minute = temp->tm_min;

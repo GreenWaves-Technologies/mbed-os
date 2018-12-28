@@ -121,7 +121,9 @@ void hyperbus_set_max_length(hyperbus_t *obj, int max_length_en, int max_length,
 
 void hyperbus_frequency(hyperbus_t *obj, int hz)
 {
-
+    #if !defined(__GAP8__)
+    HYPERBUS_MasterFrequencyConfig(hyperbus_address[obj->hyperbus.instance], hz, SystemCoreClock);
+    #endif
 }
 
 void hyperbus_set_timing(hyperbus_t *obj, int cshi, int css, int csh, int latency, int rd_wr, char device)

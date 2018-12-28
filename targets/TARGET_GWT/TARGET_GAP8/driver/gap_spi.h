@@ -326,6 +326,24 @@ void SPI_MasterDeInit(SPIM_Type *base);
  */
 /*Transactional APIs*/
 
+/*!
+ * @brief This function set SPI chip select.
+ *
+ * @param base SPI peripheral address.
+ * @param whichCsn which Chip select.
+ * @param status   Chip select status.
+ */
+void SPI_Master_CS(SPIM_Type *base, int whichCsn, int status);
+
+/*!
+ * @brief This function does duplex write and read for 32bits or less.
+ *
+ * @param base SPI peripheral address.
+ * @param tx_value  write value 32 bit or less.
+ * @param rx_buffer Udma rx buffer base address.
+ * @param bits      Udma tx rx bits, 32 bits or less.
+ */
+void SPI_Master_DulpexTransfer(SPIM_Type *base, int tx_value, void *rx_buffer, int bits);
 
 /*!
  * @brief This function does a read polling in SPI master transfer.

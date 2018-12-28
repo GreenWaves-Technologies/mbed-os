@@ -180,6 +180,40 @@ int SPI_MasterTransferCommandSequence(SPIM_Type *base, spi_command_sequence_t* s
     return (index * sizeof(uint32_t));
 }
 
+void SPI_Master_CS(SPIM_Type *base, int whichCsn, int status)
+{
+    int index = 0;
+
+    if (status)
+        s_command_sequence[index++] = SPIM_CMD_EOT(1);
+    else
+        s_command_sequence[index++] = SPIM_CMD_SOT(whichCsn);
+
+    /* Blocking transfer */
+    SPI_MasterTransferBlocking(base,
+                               (uint32_t* )s_command_sequence,
+                               (index * sizeof(uint32_t)),
+                               NULL, 0, 32);
+
+}
+
+void SPI_Master_DulpexTransfer(SPIM_Type *base, int tx_value, void *rx_buffer, int bits)
+{
+    int index = 0;
+
+    s_command_sequence[index++] = SPIM_CMD_DUPLEX(bits, 0);
+    s_command_sequence[index++] = tx_value;
+
+    /* Blocking transfer */
+    SPI_MasterTransferBlocking(base,
+                               (uint32_t* )s_command_sequence,
+                               (index * sizeof(uint32_t)),
+                               (uint8_t *)rx_buffer,
+                               (bits>> 3),
+                               32);
+
+}
+
 int SPI_Master_AutoPolling(SPIM_Type *base, spi_polling_config_t *conf)
 {
     int index = 0;

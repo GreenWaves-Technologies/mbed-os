@@ -184,7 +184,7 @@ int I2C_ByteWrite(I2C_Type *base, uint8_t data);
  *
  *
  * @param base I2C base pointer
- * @param address the baud rate value in bps
+ * @param address Target address
  * @param data The pointer to write buffer
  * @param length The length of read buffer
  * @param stop Send a stop in the end or not
@@ -196,7 +196,7 @@ int I2C_Write(I2C_Type *base, uint32_t address, const char *data, int length, in
  *
  *
  * @param base I2C base pointer
- * @param address the baud rate value in bps
+ * @param address Target address
  * @param data The pointer to read buffer
  * @param length The length of read buffer
  * @param stop Send a stop in the end or not

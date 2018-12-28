@@ -1074,6 +1074,57 @@ void HYPERBUS_MasterTransferCreateHandle(HYPERBUS_Type *base,
  *@}
 */
 
+/*!
+ * @name Busy state
+ * @{
+ */
+
+/*!
+ * @brief Get HYPERBUS TX channel busy state.
+ *
+ * @param base The HYPERBUS channel.
+ * @note .
+ */
+static inline int HYPERBUS_TXBusy(HYPERBUS_Type *base)
+{
+    return UDMA_TXBusy((UDMA_Type*)base);
+}
+
+/*!
+ * @brief Get HYPERBUS RX channel busy state.
+ *
+ * @param base The HYPERBUS channel.
+ * @note .
+ */
+static inline int HYPERBUS_RXBusy(HYPERBUS_Type *base)
+{
+    return UDMA_RXBusy((UDMA_Type*)base);
+}
+
+/*!
+ * @brief Get HYPERBUS TX channel pending state.
+ *
+ * @param base The HYPERBUS channel.
+ * @note .
+ */
+static inline int HYPERBUS_TXPending(HYPERBUS_Type *base)
+{
+    return UDMA_TXPending((UDMA_Type*)base);
+}
+
+/*!
+ * @brief Get HYPERBUS RX channel pending state.
+ *
+ * @param base The HYPERBUS channel.
+ * @note .
+ */
+static inline int HYPERBUS_RXPending(HYPERBUS_Type *base)
+{
+    return UDMA_RXPending((UDMA_Type*)base);
+}
+
+/* @} */
+
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
