@@ -97,7 +97,7 @@ static MBED_NORETURN void mbed_halt_system(void)
         core_util_critical_section_enter();
         __DSB();
         for (;;) {
-            __WFE(); // Not WFI, as don't want to wake for pending interrupts
+            __WFI(); // Not WFI, as don't want to wake for pending interrupts
         }
     }
 

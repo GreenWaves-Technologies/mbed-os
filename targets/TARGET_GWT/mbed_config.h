@@ -164,6 +164,7 @@
 // Macros
 #define NS_USE_EXTERNAL_MBED_TLS                                                                                                                                               // defined by library:nanostack
 #define UNITY_INCLUDE_CONFIG_H                                                                                                                                                 // defined by library:utest
+#define MBED_CONF_PLATFORM_CTHUNK_COUNT_MAX                                   16
 #define _RTE_                                                                                                                                                                  // defined by library:rtos
 
 #endif

@@ -65,7 +65,7 @@ void mbed_error_printf(const char *format, ...)
 void mbed_error_vprintf(const char *format, va_list arg)
 {
     char buffer[132];
-    int size = vsnprintf(buffer, sizeof buffer, format, arg);
+    unsigned int size = vsnprintf(buffer, sizeof buffer, format, arg);
     if (size >= sizeof buffer) {
         /* Output was truncated - indicate by overwriting tail of buffer
          * with ellipsis, newline and null terminator.
@@ -95,7 +95,7 @@ void mbed_error_puts(const char *str)
 #else
     write(STDERR_FILENO, str, strlen(str));
 #endif
-#else       
+#else
         #ifdef USE_UART
         {
 #if MBED_CONF_PLATFORM_STDIO_CONVERT_NEWLINES || MBED_CONF_PLATFORM_STDIO_CONVERT_TTY_NEWLINES
@@ -114,10 +114,10 @@ void mbed_error_puts(const char *str)
         }
         #else
         {
-            buffer[size] = 0;
-            puts(buffer);
+            //str[size] = 0;
+            puts(str);
         }
-     #endif
+        #endif
 #endif
     core_util_critical_section_exit();
 }
