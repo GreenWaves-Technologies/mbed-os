@@ -138,24 +138,20 @@ public:
     }
 
     /** Generate a break condition on the serial line
+     *  NOTE: Clear break needs to run at least one frame after set_break is called
+     */
+    void set_break();
+
+    /** Clear a break condition on the serial line
+     *  NOTE: Should be run at least one frame after set_break is called
+     */
+    void clear_break();
+
+    /** Generate a break condition on the serial line
      */
     void send_break();
 
-#if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
-    /** Get the remain size which has not been transferd in UDMA RX channel
-     *
-     * @param obj The serial object
-     */
-    int get_read_remain_size() const;
-
-
-    /** Get the remain size which has not been transferd in UDMA TX channel
-     *
-     * @param obj The serial object
-     */
-    int get_write_remain_size() const;
-#endif
-
+#if !defined(DOXYGEN_ONLY)
 protected:
 
     /** Acquire exclusive access to this serial port
@@ -165,7 +161,7 @@ protected:
     /** Release exclusive access to this serial port
      */
     virtual void unlock(void);
-
+#endif
 public:
 
 #if DEVICE_SERIAL_FC
@@ -250,12 +246,15 @@ public:
      */
     int set_dma_usage_rx(DMAUsage usage);
 
+#if !defined(DOXYGEN_ONLY)
 protected:
     void start_read(void *buffer, int buffer_size, char buffer_width, const event_callback_t &callback, int event, unsigned char char_match);
     void start_write(const void *buffer, int buffer_size, char buffer_width, const event_callback_t &callback, int event);
     void interrupt_handler_asynch(void);
 #endif
+#endif
 
+#if !defined(DOXYGEN_ONLY)
 protected:
     SerialBase(PinName tx, PinName rx, int baud);
     virtual ~SerialBase();
@@ -274,7 +273,7 @@ protected:
     serial_t         _serial;
     Callback<void()> _irq[IrqCnt];
     int              _baud;
-
+#endif
 };
 
 } // namespace mbed

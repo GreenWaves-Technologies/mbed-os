@@ -105,7 +105,7 @@ nsapi_error_t ATHandler::set_urc_handler(const char *urc, mbed::Callback<void()>
     return ATHandler_stub::nsapi_error_value;
 }
 
-void ATHandler::remove_urc_handler(const char *prefix, mbed::Callback<void()> callback)
+void ATHandler::remove_urc_handler(const char *prefix)
 {
 }
 
@@ -170,6 +170,7 @@ ssize_t ATHandler::read_string(char *buf, size_t size, bool read_even_stop_tag)
     if (ATHandler_stub::read_string_index == kRead_string_table_size) {
         if (ATHandler_stub::read_string_value && ATHandler_stub::ssize_value >= 0) {
             memcpy(buf, ATHandler_stub::read_string_value, ATHandler_stub::ssize_value + 1);
+            buf[ATHandler_stub::ssize_value] = '\0';
         }
         return ATHandler_stub::ssize_value;
     }
@@ -179,6 +180,7 @@ ssize_t ATHandler::read_string(char *buf, size_t size, bool read_even_stop_tag)
         const char *tmp = ATHandler_stub::read_string_table[ATHandler_stub::read_string_index];
         ssize_t len = strlen(tmp);
         memcpy(buf, tmp, len + 1);
+        buf[len] = '\0';
         return len;
     }
 
@@ -281,6 +283,13 @@ size_t ATHandler::write_bytes(const uint8_t *param, size_t len)
 
 void ATHandler::cmd_stop()
 {
+}
+
+void ATHandler::cmd_stop_read_resp()
+{
+    cmd_stop();
+    resp_start();
+    resp_stop();
 }
 
 device_err_t ATHandler::get_last_device_error() const

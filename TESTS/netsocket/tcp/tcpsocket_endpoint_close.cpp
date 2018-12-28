@@ -26,7 +26,7 @@ using namespace utest::v1;
 
 namespace {
 static const int SIGNAL_SIGIO = 0x1;
-static const int SIGIO_TIMEOUT = 5000; //[ms]
+static const int SIGIO_TIMEOUT = 20000; //[ms]
 }
 
 static void _sigio_handler(osThreadId id)
@@ -63,7 +63,7 @@ void TCPSOCKET_ENDPOINT_CLOSE()
         TEST_FAIL();
         return;
     }
-    sock.sigio(callback(_sigio_handler, Thread::gettid()));
+    sock.sigio(callback(_sigio_handler, ThisThread::get_id()));
 
     int recvd = 0;
     int recvd_total = 0;

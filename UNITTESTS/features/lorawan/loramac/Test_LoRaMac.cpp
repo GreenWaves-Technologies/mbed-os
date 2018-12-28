@@ -25,12 +25,15 @@
 
 using namespace events;
 
-class my_phy : public LoRaPHY
-{
+class my_phy : public LoRaPHY {
 public:
-    my_phy(){};
+    my_phy()
+    {
+    };
 
-    virtual ~my_phy(){};
+    virtual ~my_phy()
+    {
+    };
 };
 
 class Test_LoRaMac : public testing::Test {
@@ -212,6 +215,10 @@ void exp_cb()
 TEST_F(Test_LoRaMac, set_device_class)
 {
     object->set_device_class(CLASS_B, exp_cb);
+
+    my_phy phy;
+    object->bind_phy(phy);
+    object->set_device_class(CLASS_C, exp_cb);
 }
 
 TEST_F(Test_LoRaMac, setup_link_check_request)

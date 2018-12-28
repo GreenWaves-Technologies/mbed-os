@@ -41,6 +41,8 @@ volatile bool thread_should_continue = true;
 #define THREAD_STACK_SIZE   512
 #elif defined(__ARM_FM)
 #define THREAD_STACK_SIZE   512
+#elif defined(TARGET_FUTURE_SEQUANA_PSA)
+#define THREAD_STACK_SIZE   512
 #else
 #define THREAD_STACK_SIZE   256
 #endif
@@ -90,7 +92,7 @@ void test_multithread_allocation(void)
 
     // Give the test time to run
     while (test_time--) {
-        Thread::wait(1000);
+        ThisThread::sleep_for(1000);
     }
 
     // Join and delete all threads

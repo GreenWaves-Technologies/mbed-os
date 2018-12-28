@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include "device.h"
 #include "platform/mbed_application.h"
+#include "hal/mpu_api.h"
 
 #if MBED_APPLICATION_SUPPORT
 
@@ -45,7 +46,7 @@ static void powerdown_gic()
             GICDistributor->CPENDSGIR[i] = 0xFFFFFFFF;
         }
         for (j = 0; j < 8; j++) {
-            GICDistributor->IPRIORITYR[i*8+j] = 0x00000000;
+            GICDistributor->IPRIORITYR[i * 8 + j] = 0x00000000;
         }
     }
 }
@@ -67,6 +68,7 @@ void mbed_start_application(uintptr_t address)
     SysTick->CTRL = 0x00000000;
     powerdown_nvic();
     powerdown_scb(address);
+    mbed_mpu_free();
 
     sp = *((void **)address + 0);
     pc = *((void **)address + 1);

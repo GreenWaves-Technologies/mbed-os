@@ -99,8 +99,7 @@ template <uint32_t polynomial = POLY_32BIT_ANSI, uint8_t width = 32>
 class MbedCRC {
 
 public:
-    enum CrcMode
-    {
+    enum CrcMode {
 #ifdef DEVICE_CRC
         HARDWARE = 0,
 #endif
@@ -165,7 +164,7 @@ public:
 
         status = compute_partial_stop(crc);
         if (0 != status) {
-           *crc = 0;
+            *crc = 0;
         }
 
         return status;
@@ -303,6 +302,7 @@ public:
         return width;
     }
 
+#if !defined(DOXYGEN_ONLY)
 private:
     uint32_t _initial_value;
     uint32_t _final_xor;
@@ -313,7 +313,7 @@ private:
 
     /** Acquire exclusive access to CRC hardware/software.
      */
-     void lock()
+    void lock()
     {
 #ifdef DEVICE_CRC
         if (_mode == HARDWARE) {
@@ -484,8 +484,7 @@ private:
                     p_crc = (p_crc >> 4) ^ crc_table[(p_crc ^ (data[i] >> 0)) & 0xf];
                     p_crc = (p_crc >> 4) ^ crc_table[(p_crc ^ (data[i] >> 4)) & 0xf];
                 }
-            }
-            else {
+            } else {
                 for (crc_data_size_t byte = 0; byte < size; byte++) {
                     data_byte = reflect_bytes(data[byte]) ^ (p_crc >> (width - 8));
                     p_crc = crc_table[data_byte] ^ (p_crc << 8);
@@ -548,6 +547,7 @@ private:
         }
         _mode = (_crc_table != NULL) ? TABLE : BITWISE;
     }
+#endif
 };
 
 #if   defined ( __CC_ARM )

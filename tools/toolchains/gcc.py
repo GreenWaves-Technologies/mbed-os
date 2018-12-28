@@ -57,9 +57,18 @@ class GCC(mbedToolchain):
             self.flags["common"].append("-DMBED_RTOS_SINGLE_THREAD")
             self.flags["ld"].append("--specs=nano.specs")
 
-        if target.core == "IMXGAP8":
-            tool_path=TOOLCHAIN_PATHS['GCC_RISCV']
-            self.cpu = ["-march=rv32imcxgap8", "-mPE=8", "-mFC=1"]
+        if target.core == "Cortex-M0+":
+            self.cpu = ["-mcpu=cortex-m0plus"]
+        elif target.core.startswith("Cortex-M4"):
+            self.cpu = ["-mcpu=cortex-m4"]
+        elif target.core.startswith("Cortex-M7"):
+            self.cpu = ["-mcpu=cortex-m7"]
+        elif target.core.startswith("Cortex-M23"):
+            self.cpu = ["-mcpu=cortex-m23"]
+        elif target.core.startswith("Cortex-M33F"):
+            self.cpu = ["-mcpu=cortex-m33"]
+        elif target.core.startswith("Cortex-M33"):
+            self.cpu = ["-march=armv8-m.main"]
         else:
             tool_path=TOOLCHAIN_PATHS['GCC_ARM']
 
@@ -90,7 +99,7 @@ class GCC(mbedToolchain):
                 "-Wl,--cmse-implib",
                 "-Wl,--out-implib=%s" % join(build_dir, "cmse_lib.o")
             ])
-        elif target.core == "Cortex-M23-NS" or target.core == "Cortex-M33-NS" or target.core == "Cortex-M33F-NS":
+        elif target.core == "Cortex-M23-NS" or target.core == "Cortex-M33-NS":
              self.flags["ld"].append("-D__DOMAIN_NS=1")
 
         self.flags["common"] += self.cpu

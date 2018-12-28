@@ -9,7 +9,10 @@ set(unittest-sources
   ../features/netsocket/NetworkStack.cpp
   ../features/netsocket/NetworkInterface.cpp
   ../features/frameworks/nanostack-libservice/source/libip4string/ip4tos.c
+  ../features/frameworks/nanostack-libservice/source/libip6string/ip6tos.c
   ../features/frameworks/nanostack-libservice/source/libip4string/stoip4.c
+  ../features/frameworks/nanostack-libservice/source/libip6string/stoip6.c
+  ../features/frameworks/nanostack-libservice/source/libBits/common_functions.c  
 )
 
 # Test files
@@ -22,4 +25,5 @@ set(unittest-test-sources
   stubs/nsapi_dns_stub.cpp
   stubs/EventFlags_stub.cpp
   features/netsocket/NetworkInterface/test_NetworkInterface.cpp
+  stubs/SocketStats_Stub.cpp
 )

@@ -41,7 +41,7 @@ const uint8_t SMS_MAX_GSM7_CONCATENATED_SINGLE_SMS_SIZE = 153;
 #define NVAM '?' // Not Valid ascii, ISO-8859-1 mark
 
 // mapping table from 7-bit GSM to ascii (ISO-8859-1)
-static const int gsm_to_ascii[] = {
+static const char gsm_to_ascii[] = {
     64,     // 0
     163,    // 1
     36,     // 2
@@ -212,9 +212,7 @@ nsapi_error_t AT_CellularSMS::set_cnmi()
 {
     _at.lock();
     _at.cmd_start("AT+CNMI=2,1");
-    _at.cmd_stop();
-    _at.resp_start();
-    _at.resp_stop();
+    _at.cmd_stop_read_resp();
     return _at.unlock_return_error();
 }
 
@@ -223,9 +221,7 @@ nsapi_error_t AT_CellularSMS::set_cmgf(int msg_format)
     _at.lock();
     _at.cmd_start("AT+CMGF=");
     _at.write_int(msg_format);
-    _at.cmd_stop();
-    _at.resp_start();
-    _at.resp_stop();
+    _at.cmd_stop_read_resp();
     return _at.unlock_return_error();
 }
 
@@ -237,9 +233,7 @@ nsapi_error_t AT_CellularSMS::set_csmp(int fo, int vp, int pid, int dcs)
     _at.write_int(vp);
     _at.write_int(pid);
     _at.write_int(dcs);
-    _at.cmd_stop();
-    _at.resp_start();
-    _at.resp_stop();
+    _at.cmd_stop_read_resp();
     return _at.unlock_return_error();
 }
 
@@ -248,16 +242,14 @@ nsapi_error_t AT_CellularSMS::set_csdh(int show_header)
     _at.lock();
     _at.cmd_start("AT+CSDH=");
     _at.write_int(show_header);
-    _at.cmd_stop();
-    _at.resp_start();
-    _at.resp_stop();
+    _at.cmd_stop_read_resp();
     return _at.unlock_return_error();
 }
 
 nsapi_error_t AT_CellularSMS::initialize(CellularSMSMmode mode)
 {
     if (NSAPI_ERROR_OK != _at.set_urc_handler("+CMTI:", callback(this, &AT_CellularSMS::cmti_urc)) ||
-        NSAPI_ERROR_OK != _at.set_urc_handler("+CMT:", callback(this, &AT_CellularSMS::cmt_urc))) {
+            NSAPI_ERROR_OK != _at.set_urc_handler("+CMT:", callback(this, &AT_CellularSMS::cmt_urc))) {
         return NSAPI_ERROR_NO_MEMORY;
     }
 
@@ -302,11 +294,8 @@ char *AT_CellularSMS::create_pdu(const char *phone_number, const char *message, 
     // message 7-bit padded and it will be converted to hex so it will take twice as much space
     totalPDULength += (message_length - (message_length / 8)) * 2;
 
-    char *pdu = (char *)calloc(totalPDULength, sizeof(char));
-    if (!pdu) {
-        return NULL;
-    }
-
+    char *pdu = new char[totalPDULength];
+    memset(pdu, 0, totalPDULength);
     int x = 0;
     // See more how to create PDU from 3GPP specification 23040
     // first two define that we use service center number which is set with +CSCA
@@ -394,7 +383,7 @@ char *AT_CellularSMS::create_pdu(const char *phone_number, const char *message, 
         // we might need to send zero length sms
         if (message_length) {
             if (pack_7_bit_gsm_and_hex(message, message_length, pdu + x, paddingBits) == 0) {
-                free(pdu);
+                delete [] pdu;
                 return NULL;
             }
         }
@@ -509,7 +498,7 @@ nsapi_size_or_error_t AT_CellularSMS::send_sms(const char *phone_number, const c
                     _at.cmd_start(ESC);
                     _at.cmd_stop();
                     _at.unlock();
-                    free(pdu_str);
+                    delete [] pdu_str;
                     return msg_write_len;
                 }
 
@@ -519,7 +508,7 @@ nsapi_size_or_error_t AT_CellularSMS::send_sms(const char *phone_number, const c
                 _at.resp_start("+CMGS:");
                 _at.resp_stop();
             }
-            free(pdu_str);
+            delete [] pdu_str;
             remaining_len -= concatenated_sms_length;
             if (_at.get_last_error() != NSAPI_ERROR_OK) {
                 return _at.unlock_return_error();
@@ -546,9 +535,7 @@ nsapi_error_t AT_CellularSMS::set_cpms(const char *memr, const char *memw, const
     _at.write_string(memr);
     _at.write_string(memw);
     _at.write_string(mems);
-    _at.cmd_stop();
-    _at.resp_start();
-    _at.resp_stop();
+    _at.cmd_stop_read_resp();
 
     return _at.unlock_return_error();
 }
@@ -559,9 +546,7 @@ nsapi_error_t AT_CellularSMS::set_csca(const char *sca, int type)
     _at.cmd_start("AT+CSCA=");
     _at.write_string(sca);
     _at.write_int(type);
-    _at.cmd_stop();
-    _at.resp_start();
-    _at.resp_stop();
+    _at.cmd_stop_read_resp();
 
     return _at.unlock_return_error();
 }
@@ -571,9 +556,7 @@ nsapi_size_or_error_t AT_CellularSMS::set_cscs(const char *chr_set)
     _at.lock();
     _at.cmd_start("AT+CSCS=");
     _at.write_string(chr_set);
-    _at.cmd_stop();
-    _at.resp_start();
-    _at.resp_stop();
+    _at.cmd_stop_read_resp();
 
     return _at.unlock_return_error();
 }
@@ -584,9 +567,7 @@ nsapi_error_t AT_CellularSMS::delete_sms(sms_info_t *sms)
     for (int i = 0; i < sms->parts; i++) {
         _at.cmd_start("AT+CMGD=");
         _at.write_int(sms->msg_index[i]);
-        _at.cmd_stop();
-        _at.resp_start();
-        _at.resp_stop();
+        _at.cmd_stop_read_resp();
     }
 
     return _at.unlock_return_error();
@@ -600,9 +581,7 @@ nsapi_error_t AT_CellularSMS::delete_all_messages()
 {
     _at.lock();
     _at.cmd_start("AT+CMGD=1,4");
-    _at.cmd_stop();
-    _at.resp_start();
-    _at.resp_stop();
+    _at.cmd_stop_read_resp();
     return _at.unlock_return_error();
 }
 
@@ -643,7 +622,7 @@ nsapi_size_or_error_t AT_CellularSMS::read_sms_from_index(int msg_index, char *b
                     int len = _at.read_string(time_stamp, SMS_MAX_TIME_STAMP_SIZE);
                     if (len < (SMS_MAX_TIME_STAMP_SIZE - 2)) {
                         time_stamp[len++] = ',';
-                        _at.read_string(&time_stamp[len], SMS_MAX_TIME_STAMP_SIZE-len);
+                        _at.read_string(&time_stamp[len], SMS_MAX_TIME_STAMP_SIZE - len);
                     }
                 }
                 (void)_at.consume_to_stop_tag(); // consume until <CR><LF>
@@ -685,7 +664,8 @@ nsapi_size_or_error_t AT_CellularSMS::read_sms(sms_info_t *sms, char *buf, char 
                     msg_len = _at.read_int();
                     if (msg_len > 0) {
                         pduSize = msg_len * 2 + 20; // *2 as it's hex encoded and +20 as service center number is not included in size given by CMGR
-                        pdu = (char *)calloc(pduSize, sizeof(char));
+                        pdu = new char[pduSize];
+                        memset(pdu, 0, pduSize);
                         if (!pdu) {
                             _at.resp_stop();
                             return NSAPI_ERROR_NO_MEMORY;
@@ -696,12 +676,12 @@ nsapi_size_or_error_t AT_CellularSMS::read_sms(sms_info_t *sms, char *buf, char 
                             if (msg_len >= 0) { // we need to allow zero length messages
                                 index += msg_len;
                             } else {
-                                free(pdu);
+                                delete [] pdu;
                                 _at.resp_stop();
                                 return -1;
                             }
                         }
-                        free(pdu);
+                        delete [] pdu;
                     }
                 }
             }
@@ -1080,7 +1060,8 @@ nsapi_error_t AT_CellularSMS::list_messages()
             _at.skip_param(2); // <stat>,[<alpha>]
             length = _at.read_int();
             length = length * 2 + 20; // *2 as it's hex encoded and +20 as service center number is not included in size given by CMGL
-            pdu = (char *)calloc(length, sizeof(char));
+            pdu = new char[length];
+            memset(pdu, 0, length);
             if (!pdu) {
                 delete info;
                 _at.resp_stop();
@@ -1104,7 +1085,7 @@ nsapi_error_t AT_CellularSMS::list_messages()
             delete info;
             info = NULL;
         }
-        free(pdu);
+        delete [] pdu;
         pdu = NULL;
     }
 
@@ -1212,7 +1193,7 @@ uint16_t AT_CellularSMS::pack_7_bit_gsm_and_hex(const char *str, uint16_t len, c
         return 0;
     }
     // convert to 7bit gsm first
-    char *gsm_str = (char *)malloc(len);
+    char *gsm_str = new char[len];
     if (!gsm_str) {
         return 0;
     }
@@ -1254,7 +1235,7 @@ uint16_t AT_CellularSMS::pack_7_bit_gsm_and_hex(const char *str, uint16_t len, c
         i++;
     }
 
-    free(gsm_str);
+    delete [] gsm_str;
 
     return i;
 }

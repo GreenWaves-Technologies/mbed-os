@@ -66,6 +66,33 @@
 
 using namespace utest::v1;
 
+#if (defined(TARGET_PSA) && defined(COMPONENT_PSA_SRV_IPC) && defined(MBEDTLS_PSA_CRYPTO_C))
+#include "entropy.h"
+#include "entropy_poll.h"
+#include "crypto.h"
+#if !defined(MAX)
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#endif
+
+/* Calculating the minimum allowed entropy size in bytes */
+#define MBEDTLS_PSA_INJECT_ENTROPY_MIN_SIZE \
+            MAX(MBEDTLS_ENTROPY_MIN_PLATFORM, MBEDTLS_ENTROPY_BLOCK_SIZE)
+
+void inject_entropy_for_psa()
+{
+    if (psa_crypto_init() == PSA_ERROR_INSUFFICIENT_ENTROPY) {
+        uint8_t seed[MBEDTLS_PSA_INJECT_ENTROPY_MIN_SIZE] = {0};
+        /* inject some a seed for test*/
+        for (int i = 0; i < MBEDTLS_PSA_INJECT_ENTROPY_MIN_SIZE; ++i) {
+            seed[i] = i;
+        }
+
+        /* don't really care if this succeed this is just to make crypto init pass*/
+        mbedtls_psa_inject_entropy(seed, MBEDTLS_PSA_INJECT_ENTROPY_MIN_SIZE);
+    }
+}
+#endif // (defined(TARGET_PSA) && defined(COMPONENT_PSA_SRV_IPC) && defined(MBEDTLS_PSA_CRYPTO_C))
+
 static int fill_buffer_trng(uint8_t *buffer, trng_t *trng_obj, size_t trng_len)
 {
     size_t temp_size = 0, output_length = 0;
@@ -92,7 +119,7 @@ static int fill_buffer_trng(uint8_t *buffer, trng_t *trng_obj, size_t trng_len)
 
 void print_array(uint8_t *buffer, size_t size)
 {
-    for (size_t i=0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         utest_printf("%02x", buffer[i]);
     }
     utest_printf("\n");
@@ -120,7 +147,7 @@ static void compress_and_compare(char *key, char *value)
         uint32_t lengthWritten = 0;
         uint32_t charsProcessed = 0;
         result = trng_DecodeNBase64((const char *)value,
-                                    MSG_VALUE_LEN, 
+                                    MSG_VALUE_LEN,
                                     buffer,
                                     BUFFER_LEN,
                                     &lengthWritten,
@@ -143,11 +170,11 @@ static void compress_and_compare(char *key, char *value)
                                  (char *)out_comp_buf,
                                  OUT_COMP_BUF_SIZE,
                                  9);
-        if (comp_sz <= BUFFER_LEN){
-           print_array(buffer, BUFFER_LEN);
+        if (comp_sz <= BUFFER_LEN) {
+            print_array(buffer, BUFFER_LEN);
         }
         TEST_ASSERT_MESSAGE(comp_sz > BUFFER_LEN,
-                        "TRNG_TEST_STEP1: trng_get_bytes was able to compress thus not random");
+                            "TRNG_TEST_STEP1: trng_get_bytes was able to compress thus not random");
 
         /*pithy_Compress will try to compress the random data with a different buffer size*/
         result = fill_buffer_trng(temp_buf, &trng_obj, TEMP_BUF_SIZE);
@@ -158,11 +185,11 @@ static void compress_and_compare(char *key, char *value)
                                  (char *)out_comp_buf,
                                  OUT_COMP_BUF_SIZE,
                                  9);
-        if (comp_sz <= TEMP_BUF_SIZE){
-           print_array(temp_buf, TEMP_BUF_SIZE);
+        if (comp_sz <= TEMP_BUF_SIZE) {
+            print_array(temp_buf, TEMP_BUF_SIZE);
         }
         TEST_ASSERT_MESSAGE(comp_sz > TEMP_BUF_SIZE,
-                        "TRNG_TEST_STEP2: trng_get_bytes was able to compress thus not random");
+                            "TRNG_TEST_STEP2: trng_get_bytes was able to compress thus not random");
 
         memcpy(input_buf + BUFFER_LEN, temp_buf, TEMP_BUF_SIZE);
         /*pithy_Compress will try to compress the random data from before reset concatenated with new random data*/
@@ -171,11 +198,11 @@ static void compress_and_compare(char *key, char *value)
                                  (char *)out_comp_buf,
                                  OUT_COMP_BUF_SIZE,
                                  9);
-        if (comp_sz <= TEMP_BUF_SIZE + BUFFER_LEN){
-           print_array(input_buf, TEMP_BUF_SIZE + BUFFER_LEN);
+        if (comp_sz <= TEMP_BUF_SIZE + BUFFER_LEN) {
+            print_array(input_buf, TEMP_BUF_SIZE + BUFFER_LEN);
         }
         TEST_ASSERT_MESSAGE(comp_sz > TEMP_BUF_SIZE + BUFFER_LEN,
-                        "TRNG_TEST_STEP3: concatenated buffer after reset was able to compress thus not random");
+                            "TRNG_TEST_STEP3: concatenated buffer after reset was able to compress thus not random");
 
         greentea_send_kv(MSG_TRNG_TEST_SUITE_ENDED, MSG_VALUE_DUMMY);
     }
@@ -184,9 +211,9 @@ static void compress_and_compare(char *key, char *value)
     if (strcmp(key, MSG_TRNG_TEST_STEP1) == 0) {
         int result = 0;
         /*Using base64 to encode data sending from host*/
-        result = trng_EncodeBase64(buffer, 
-                                   BUFFER_LEN, 
-                                   (char *)out_comp_buf, 
+        result = trng_EncodeBase64(buffer,
+                                   BUFFER_LEN,
+                                   (char *)out_comp_buf,
                                    OUT_COMP_BUF_SIZE);
         TEST_ASSERT_EQUAL(RESULT_SUCCESS, result);
 
@@ -241,7 +268,13 @@ Specification specification(greentea_test_setup, cases, greentea_test_teardown_h
 
 int main()
 {
+#if (defined(TARGET_PSA) && defined(COMPONENT_PSA_SRV_IPC) && defined(MBEDTLS_PSA_CRYPTO_C))
+    inject_entropy_for_psa();
+#endif
     bool ret = !Harness::run(specification);
 
     return ret;
 }
+
+
+

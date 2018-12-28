@@ -23,16 +23,15 @@
 
 using namespace utest::v1;
 
-namespace
-{
-    NetworkInterface* net;
-    rtos::Semaphore status_semaphore;
-    int status_write_counter = 0;
-    int status_read_counter = 0;
-    const int repeats = 5;
-    const int status_buffer_size = 100;
-    nsapi_connection_status_t current_status = NSAPI_STATUS_ERROR_UNSUPPORTED;
-    nsapi_connection_status_t statuses[status_buffer_size];
+namespace {
+NetworkInterface *net;
+rtos::Semaphore status_semaphore;
+int status_write_counter = 0;
+int status_read_counter = 0;
+const int repeats = 5;
+const int status_buffer_size = 100;
+nsapi_connection_status_t current_status = NSAPI_STATUS_ERROR_UNSUPPORTED;
+nsapi_connection_status_t statuses[status_buffer_size];
 }
 
 void status_cb(nsapi_event_t event, intptr_t value)
@@ -90,7 +89,8 @@ void NETWORKINTERFACE_STATUS()
         }
         TEST_ASSERT_EQUAL(NSAPI_STATUS_GLOBAL_UP, status);
 
-        net->disconnect();
+        err = net->disconnect();
+        TEST_ASSERT_EQUAL(NSAPI_ERROR_OK, err);
 
         status = wait_status_callback();
         TEST_ASSERT_EQUAL(NSAPI_STATUS_DISCONNECTED, status);
@@ -124,7 +124,8 @@ void NETWORKINTERFACE_STATUS_NONBLOCK()
         }
         TEST_ASSERT_EQUAL(NSAPI_STATUS_GLOBAL_UP, status);
 
-        net->disconnect();
+        err = net->disconnect();
+        TEST_ASSERT_EQUAL(NSAPI_ERROR_OK, err);
 
         status = wait_status_callback();
         TEST_ASSERT_EQUAL(NSAPI_STATUS_DISCONNECTED, status);
@@ -151,7 +152,8 @@ void NETWORKINTERFACE_STATUS_GET()
             wait(0.5);
         }
 
-        net->disconnect();
+        err = net->disconnect();
+        TEST_ASSERT_EQUAL(NSAPI_ERROR_OK, err);
 
         TEST_ASSERT_EQUAL(NSAPI_STATUS_DISCONNECTED, net->get_connection_status());
     }

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include "mbed.h"
 #include "FileSystemHandle.h"
 #include <errno.h>
 
-int FileSystemHandle::open(DirHandle **dir, const char *path)
+namespace mbed {
+
+int FileSystemHandle::open(mbed::DirHandle **dir, const char *path)
 {
     return -ENOSYS;
 }
@@ -47,3 +48,5 @@ int FileSystemHandle::statvfs(const char *path, struct statvfs *buf)
 {
     return -ENOSYS;
 }
+
+} // namespace mbed

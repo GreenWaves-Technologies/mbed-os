@@ -28,23 +28,6 @@ QUECTEL_BG96_CellularNetwork::~QUECTEL_BG96_CellularNetwork()
 {
 }
 
-bool QUECTEL_BG96_CellularNetwork::get_modem_stack_type(nsapi_ip_stack_t requested_stack)
-{
-    if (requested_stack == IPV4_STACK) {
-        return true;
-    }
-
-    return false;
-}
-
-NetworkStack *QUECTEL_BG96_CellularNetwork::get_stack()
-{
-    if (!_stack) {
-        _stack = new QUECTEL_BG96_CellularStack(_at, _cid, _ip_stack_type);
-    }
-    return _stack;
-}
-
 nsapi_error_t QUECTEL_BG96_CellularNetwork::set_access_technology_impl(RadioAccessTechnology opsAct)
 {
     _at.lock();
@@ -52,58 +35,36 @@ nsapi_error_t QUECTEL_BG96_CellularNetwork::set_access_technology_impl(RadioAcce
     switch (opsAct) {
         case RAT_CATM1:
             _at.cmd_start("AT+QCFG=\"nwscanseq\",020301");
-            _at.cmd_stop();
-            _at.resp_start();
-            _at.resp_stop();
+            _at.cmd_stop_read_resp();
             _at.cmd_start("AT+QCFG=\"nwscanmode\",3,1");
-            _at.cmd_stop();
-            _at.resp_start();
-            _at.resp_stop();
+            _at.cmd_stop_read_resp();
             _at.cmd_start("AT+QCFG=\"iotopmode\",0,1");
-            _at.cmd_stop();
-            _at.resp_start();
-            _at.resp_stop();
+            _at.cmd_stop_read_resp();
             break;
         case RAT_NB1:
             _at.cmd_start("AT+QCFG=\"nwscanseq\",030201");
-            _at.cmd_stop();
-            _at.resp_start();
-            _at.resp_stop();
+            _at.cmd_stop_read_resp();
             _at.cmd_start("AT+QCFG=\"nwscanmode\",3,1");
-            _at.cmd_stop();
-            _at.resp_start();
-            _at.resp_stop();
+            _at.cmd_stop_read_resp();
             _at.cmd_start("AT+QCFG=\"iotopmode\",1,1");
-            _at.cmd_stop();
-            _at.resp_start();
-            _at.resp_stop();
+            _at.cmd_stop_read_resp();
             break;
         case RAT_GSM:
         case RAT_GSM_COMPACT:
         case RAT_UTRAN:
         case RAT_EGPRS:
             _at.cmd_start("AT+QCFG=\"nwscanseq\",010203");
-            _at.cmd_stop();
-            _at.resp_start();
-            _at.resp_stop();
+            _at.cmd_stop_read_resp();
             _at.cmd_start("AT+QCFG=\"nwscanmode\",1,1");
-            _at.cmd_stop();
-            _at.resp_start();
-            _at.resp_stop();
+            _at.cmd_stop_read_resp();
             break;
         default:
             _at.cmd_start("AT+QCFG=\"nwscanseq\",020301");
-            _at.cmd_stop();
-            _at.resp_start();
-            _at.resp_stop();
+            _at.cmd_stop_read_resp();
             _at.cmd_start("AT+QCFG=\"nwscanmode\",0,1"); //auto mode
-            _at.cmd_stop();
-            _at.resp_start();
-            _at.resp_stop();
+            _at.cmd_stop_read_resp();
             _at.cmd_start("AT+QCFG=\"iotopmode\",2,1"); //auto mode
-            _at.cmd_stop();
-            _at.resp_start();
-            _at.resp_stop();
+            _at.cmd_stop_read_resp();
             _at.unlock();
             _op_act = RAT_UNKNOWN;
             return NSAPI_ERROR_UNSUPPORTED;

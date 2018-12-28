@@ -26,7 +26,7 @@ using namespace utest::v1;
 
 namespace {
 static const int SIGNAL_SIGIO = 0x1;
-static const int SIGIO_TIMEOUT = 5000; //[ms]
+static const int SIGIO_TIMEOUT = 20000; //[ms]
 
 static const int BURST_CNT = 100;
 static const int BURST_SIZE = 1220;
@@ -41,7 +41,7 @@ void TCPSOCKET_ECHOTEST_BURST()
 {
     TCPSocket sock;
     tcpsocket_connect_to_echo_srv(sock);
-    sock.sigio(callback(_sigio_handler, Thread::gettid()));
+    sock.sigio(callback(_sigio_handler, ThisThread::get_id()));
 
     // TX buffer to be preserved for comparison
     fill_tx_buffer_ascii(tcp_global::tx_buffer, BURST_SIZE);
@@ -94,7 +94,7 @@ void TCPSOCKET_ECHOTEST_BURST_NONBLOCK()
     TCPSocket sock;
     tcpsocket_connect_to_echo_srv(sock);
     sock.set_blocking(false);
-    sock.sigio(callback(_sigio_handler, Thread::gettid()));
+    sock.sigio(callback(_sigio_handler, ThisThread::get_id()));
 
     // TX buffer to be preserved for comparison
     fill_tx_buffer_ascii(tcp_global::tx_buffer, BURST_SIZE);

@@ -2083,6 +2083,7 @@ PREDEFINED             = DOXYGEN_ONLY            \
                          DEVICE_INTERRUPTIN      \
                          DEVICE_ITM              \
                          DEVICE_LPTICKER         \
+                         DEVICE_MPU              \
                          DEVICE_PORTIN           \
                          DEVICE_PORTINOUT        \
                          DEVICE_PORTOUT          \
@@ -2098,6 +2099,8 @@ PREDEFINED             = DOXYGEN_ONLY            \
                          DEVICE_SPISLAVE         \
                          DEVICE_QSPI             \
                          DEVICE_STORAGE          \
+                         COMPONENT_SPE           \
+                         COMPONENT_SPM_MAILBOX   \
                          "MBED_DEPRECATED_SINCE(d, m)=" \
                          "MBED_ENABLE_IF_CALLBACK_COMPATIBLE(F, M)=" \
                          "MBED_DEPRECATED(s)="

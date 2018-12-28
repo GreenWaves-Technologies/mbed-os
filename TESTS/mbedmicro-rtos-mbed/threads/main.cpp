@@ -36,6 +36,8 @@
 #define PARALLEL_THREAD_STACK_SIZE 512
 #elif defined(__ARM_FM)
 #define PARALLEL_THREAD_STACK_SIZE 512
+#elif defined(TARGET_FUTURE_SEQUANA_PSA)
+#define PARALLEL_THREAD_STACK_SIZE   512
 #else
 #define PARALLEL_THREAD_STACK_SIZE 384
 #endif
@@ -474,7 +476,7 @@ void test_thread_wait()
     Timer timer;
     timer.start();
 
-    Thread::wait(150);
+    ThisThread::sleep_for(150);
 
     TEST_ASSERT_UINT32_WITHIN(50000, 150000, timer.read_us());
 }
@@ -528,7 +530,7 @@ void test_deleted()
 
 void test_delay_thread()
 {
-    Thread::wait(50);
+    ThisThread::sleep_for(50);
 }
 
 /** Testing thread states: wait delay
