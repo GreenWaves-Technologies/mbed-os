@@ -7733,6 +7733,6 @@
         "default_toolchain": "GCC_RISCV",
         "supported_toolchains": ["GCC_RISCV"],
         "device_has": ["I2C", "I2C_ASYNCH", "INTERRUPTIN", "PORTIN", "PORTINOUT", "PORTOUT", "PWMOUT", "SERIAL", "SERIAL_ASYNCH", "STDIO_MESSAGES", "SLEEP", "SPI", "SPI_ASYNCH", "HYPERBUS", "HYPERBUS_ASYNCH", "SPISLAVE"],
-        "device_name": [ "GAP8"]
+        "device_name": "GAP8"
     }
 }
