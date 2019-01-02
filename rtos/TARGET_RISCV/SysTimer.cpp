@@ -25,6 +25,13 @@
  - Change #include "rtos/TARGET_CORTEX/SysTimer.h" inside DEVICE_LOWPOWERTIMER macro
  - Add SysTimer.h including support for GAP architecture
  */
+
+#ifdef __RISCV_ARCH_GAP__
+#include "rtos/TARGET_RISCV/SysTimer.h"
+#else
+#include "rtos/TARGET_CORTEX/SysTimer.h"
+#endif
+
 #if DEVICE_LPTICKER
 
 #include "hal/lp_ticker_api.h"
@@ -34,13 +41,6 @@
 #else//Cortex-M
 #include "rtx_core_cm.h"
 #endif
-
-#ifdef __RISCV_ARCH_GAP__
-#include "rtos/TARGET_RISCV/SysTimer.h"
-#else
-#include "rtos/TARGET_CORTEX/SysTimer.h"
-#endif
-
 extern "C" {
 #include "rtx_lib.h"
 #if defined(TARGET_CORTEX_A)
@@ -65,7 +65,7 @@ namespace rtos {
 namespace internal {
 
 SysTimer::SysTimer() :
-        TimerEvent(get_lp_ticker_data()), _start_time(0), _tick(0)
+    TimerEvent(get_lp_ticker_data()), _start_time(0), _tick(0)
 {
     _start_time = ticker_read_us(_ticker_data);
     _suspend_time_passed = true;
@@ -73,7 +73,7 @@ SysTimer::SysTimer() :
 }
 
 SysTimer::SysTimer(const ticker_data_t *data) :
-        TimerEvent(data), _start_time(0), _tick(0)
+    TimerEvent(data), _start_time(0), _tick(0)
 {
     _start_time = ticker_read_us(_ticker_data);
 }
