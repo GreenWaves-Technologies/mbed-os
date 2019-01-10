@@ -64,7 +64,7 @@ Reset_Handler:
 
   /* Stack initialization */
   // FC should take its own stack
-  la   sp, __fc_stack_start__
+  li   sp, 0x1c07ffff
 
   /* Initial mstatus and current stack = master stack */
   csrw 0x300, 0

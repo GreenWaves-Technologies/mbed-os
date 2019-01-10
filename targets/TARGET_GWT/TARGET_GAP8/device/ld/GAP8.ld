@@ -52,8 +52,6 @@ MEMORY
 
 __L1_STACK_SIZE      = 0x400;
 
-__FC_STACK_SIZE      = 0x1000;
-
 /* We have to align each sector to word boundaries as our current s19->slm
  * conversion scripts are not able to handle non-word aligned sections. */
 
@@ -248,9 +246,7 @@ SECTIONS
         __fc_bss_start__ = .;
         *(.fcbss)
         *(.fcbss.*)
-        __fc_stack_end__ = .;
-        __fc_stack_start__ = . + __FC_STACK_SIZE;
-        __fc_bss_end__ = . + __FC_STACK_SIZE;
+        __fc_bss_end__ = .;
      } > FC_tcdm_aliased
 
      __fc_bss_size__ = __fc_bss_end__ - __fc_bss_start__;
@@ -338,8 +334,19 @@ SECTIONS
         __heapl2ram_start = .;
     } > L2
 
-    __heapl2ram_size = LENGTH(L2) + ORIGIN(L2) - __heapl2ram_start;
+    __l2Stack_size = 1024;
+
+    __heapl2ram_size = LENGTH(L2) + ORIGIN(L2) - __heapl2ram_start - __l2Stack_size;
     __heapl2ram_limit = __heapl2ram_size + __heapl2ram_start;
+
+    .l2Stack :
+    {
+      __l2Stack_limit = ORIGIN(L2) + LENGTH(L2) - __l2Stack_size;
+      __l2Stack =  __l2Stack_limit + __l2Stack_size;
+      PROVIDE(l2Stack = __l2Stack);
+    } > L2
+
+    ASSERT(__l2Stack_limit >= __heapl2ram_start, "Region L2 overflowed with stack and heap")
 
     .stab  0 (NOLOAD) :
     {
