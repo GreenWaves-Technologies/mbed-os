@@ -267,7 +267,7 @@ static inline void CPI_Filter(CPI_Type *base, image_filter_t *filter) {
  */
 static inline void CPI_ImageExtract(CPI_Type *base, cpi_config_t *masterConfig, image_slice_t *slicer) {
     base->CFG_LL = (CPI_CFG_LL_FRAMESLICE_LLX(slicer->slice_ll.x ) | CPI_CFG_LL_FRAMESLICE_LLY(slicer->slice_ll.y ));
-    base->CFG_UR = (CPI_CFG_UR_FRAMESLICE_URX((slicer->slice_ur.x-1) ) | CPI_CFG_UR_FRAMESLICE_URY((slicer->slice_ll.y-1) ));
+    base->CFG_UR = (CPI_CFG_UR_FRAMESLICE_URX((slicer->slice_ur.x-1) ) | CPI_CFG_UR_FRAMESLICE_URY((slicer->slice_ur.y-1) ));
 
     masterConfig->slice_en = 1;
 }
@@ -280,13 +280,13 @@ static inline void CPI_ImageExtract(CPI_Type *base, cpi_config_t *masterConfig, 
  *
  */
 static inline void CPI_Enable(CPI_Type *base, cpi_config_t *masterConfig) {
-    base->CFG_SIZE = CPI_CFG_SIZE(masterConfig->row_len);
-    base->CFG_GLOB = ( CPI_CFG_GLOB_FRAMEDROP_EN(masterConfig->frameDrop_en)     |
-                       CPI_CFG_GLOB_FRAMEDROP_VAL(masterConfig->frameDrop_value) |
-                       CPI_CFG_GLOB_FRAMESLICE_EN(masterConfig->slice_en)        |
-                       CPI_CFG_GLOB_FORMAT(masterConfig->format)                 |
-                       CPI_CFG_GLOB_SHIFT(masterConfig->shift)                   |
-                       CPI_CFG_GLOB_EN(1));
+    base->CFG_SIZE = CPI_CFG_SIZE(masterConfig->row_len - 1);
+    base->CFG_GLOB = (CPI_CFG_GLOB_FRAMEDROP_EN(masterConfig->frameDrop_en)     |
+                      CPI_CFG_GLOB_FRAMEDROP_VAL(masterConfig->frameDrop_value) |
+                      CPI_CFG_GLOB_FRAMESLICE_EN(masterConfig->slice_en)        |
+                      CPI_CFG_GLOB_FORMAT(masterConfig->format)                 |
+                      CPI_CFG_GLOB_SHIFT(masterConfig->shift)                   |
+                      CPI_CFG_GLOB_EN(1));
 }
 
 /*!

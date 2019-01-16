@@ -144,6 +144,8 @@ void CPI_Init(CPI_Type *base, PinName pclk, PinName hsync, PinName vsync,
 
 void CPI_Deinit(CPI_Type *base)
 {
+    CPI_Disable(base);
+
     /* UDMA CPI device off */
     UDMA_Deinit((UDMA_Type *)base);
 }
@@ -159,7 +161,6 @@ void CPI_GetDefaultConfig(cpi_config_t *masterConfig)
     masterConfig->shift = 0;
     masterConfig->frameDrop_en = 0;
     masterConfig->frameDrop_value = 0;
-/* masterConfig->wordWidth = */
 }
 
 static status_t CPI_ReceptionStart(CPI_Type *base, cpi_transfer_t *transfer) {
