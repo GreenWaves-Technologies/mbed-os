@@ -435,6 +435,10 @@ void UDMA_EventHandler(uint32_t index, int abort)
     udma_channel_t *channel = &udma_channels[index >> 1];
     udma_req_t *first = channel->first;
 
+    /* If abort from a synchronous transfer, just return */
+    if (abort && !channel->first)
+        return;
+
     if (first->info.repeat.size) {
         UDMA_RepeatTransfer(first);
         return;
