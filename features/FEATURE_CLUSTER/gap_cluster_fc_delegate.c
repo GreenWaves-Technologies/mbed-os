@@ -147,11 +147,7 @@ void CLUSTER_CL2FC_SendTask(uint32_t cid, fc_call_t *task)
     fc_task.arg[3]   = task->arg[3];
 
     /* Cluster Notify FC to send a task back to FC by HW IRQ */
-    #if defined(__GAP8__)
     EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_IRQn, 0);
-    #elif defined(__VEGA__)
-    ITC_SetIRQ(CLUSTER_NOTIFY_FC_IRQn);
-    #endif
 }
 
 

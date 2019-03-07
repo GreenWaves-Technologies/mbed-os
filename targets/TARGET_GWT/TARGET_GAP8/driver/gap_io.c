@@ -95,7 +95,7 @@ static void tfp_putc(void *data, char c) {
     if (__is_U_Mode()) {
         osPutChar(c);
     } else {
-        #ifdef USE_UART
+        #ifdef PRINTF_UART
         #ifdef FEATURE_CLUSTER
         if(!__is_FC()) {
             fc_call_t task;
@@ -111,7 +111,7 @@ static void tfp_putc(void *data, char c) {
 
         /* When boot form FLASH, always use internal printf, you can only see printf in UART */
         if (DEBUG_GetDebugStruct()->useInternalPrintf) {
-            #ifndef USE_UART
+            #ifdef PRINTF_RTL
             /* This is for core internal printf in Simulation */
             if(__cluster_ID() == FC_CLUSTER_ID) {
                 FC_STDOUT->PUTC[__core_ID() << 1] = c;

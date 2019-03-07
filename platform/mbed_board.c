@@ -96,7 +96,7 @@ void mbed_error_puts(const char *str)
     write(STDERR_FILENO, str, strlen(str));
 #endif
 #else
-        #ifdef USE_UART
+        #ifdef PRINTF_UART
         {
 #if MBED_CONF_PLATFORM_STDIO_CONVERT_NEWLINES || MBED_CONF_PLATFORM_STDIO_CONVERT_TTY_NEWLINES
     char stdio_out_prev = '\0';

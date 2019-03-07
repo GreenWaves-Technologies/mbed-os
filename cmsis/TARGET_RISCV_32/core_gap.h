@@ -515,7 +515,6 @@ typedef union
 /**
   \brief  Structure type to access the Nested Vectored Interrupt Controller (NVIC).
  */
-#if defined(__GAP8__)
 typedef struct
 {
   __IOM  uint32_t MASK;                    /**< EU_DEMUX mask register, offset: 0x00 */
@@ -526,20 +525,6 @@ typedef struct
   __IOM  uint32_t MASK_IRQ_OR;             /**< EU_DEMUX mask irq or register, offset: 0x14 */
   __IOM  uint32_t STATUS;                  /**< EU_DEMUX Status register, offset: 0x18 */
 }  NVIC_Type;
-#elif defined(__VEGA__)
-typedef struct {
-  __IO  uint32_t MASK;           /**< FC_ITC Mask register, offset: 0x00 */
-  __IO  uint32_t MASK_SET;       /**< FC_ITC Mask set register, offset: 0x04 */
-  __IO  uint32_t MASK_CLR;       /**< FC_ITC Mask clean register, offset: 0x08 */
-  __IO  uint32_t STATUS;         /**< FC_ITC Status register, offset: 0x0C */
-  __IO  uint32_t STATUS_SET;     /**< FC_ITC Status set register, offset: 0x10 */
-  __IO  uint32_t STATUS_CLR;     /**< FC_ITC Status clean register, offset: 0x14 */
-  __IO  uint32_t ACK;            /**< FC_ITC ACK register, offset: 0x18 */
-  __IO  uint32_t ACK_SET;        /**< FC_ITC ACK set register, offset: 0x1C */
-  __IO  uint32_t ACK_CLR;        /**< FC_ITC ACK clean register, offset: 0x20 */
-  __IO  uint32_t FIFO;           /**< FC_ITC FIFO register, offset: 024 */
-} NVIC_Type;
-#endif
 /*@} end of group CMSIS_NVIC */
 
 
@@ -1083,28 +1068,12 @@ typedef struct
 
 #define CORE_SysTick_BASE   (CORE_PERI_BASE +  0x0400UL)               /*!< RISC Core SysTick Base Address */
 
-#if defined(__GAP8__)
 #define NVIC_BASE           (CORE_EU_CORE_DEMUX_BASE)                  /*!< RISC NVIC Base Address */
 #define CORE_MCHAN_BASE     (CORE_EU_DEMUX_BASE + 0x0400UL)            /*!< RISC Core DMAMCHAN Base Address between L2 and Cluster TCDM */
 
-#elif defined(__VEGA__)
-#define TIMER0_BASE         (SOC_PERI_BASE  +  0xB000UL)               /*!< RISC Peripheral TIMER0 Base Address */
-#define TIMER1_BASE         (SOC_PERI_BASE  +  0xB800UL)               /*!< RISC Peripheral TIMER1 Base Address */
-#define NVIC_BASE           (SOC_PERI_BASE  +  0x9000UL)               /*!< RISC NVIC Base Address */
-
-#define CORE_MCHAN_CL_BASE  (CORE_PERI_BASE +  0x1800UL)               /*!< RISC Core DMAMCHAN Cluster control Base Address between L2 and Cluster TCDM */
-#define CORE_MCHAN_FC_BASE  (CORE_PERI_BASE +  0x1C00UL)               /*!< RISC Core DMAMCHAN FC control Base Address between L2 and Cluster TCDM */
-#define CORE_MCHAN_COMPRESSOR_BASE   (CORE_PERI_BASE + 0x2000UL)       /*!< RISC Core DMAMCHAN Compressor control Base Address between L2 and Cluster TCDM */
-#define CORE_MCHAN_BASE      CORE_MCHAN_CL_BASE
-#endif
-
 /* FC core Memory map */
 #define FC_SCBC_BASE        (FC_BASE + CORE_SCBC_BASE)                 /*!< FC System Control Block Cache Base Address */
-#if defined(__GAP8__)
 #define FC_SysTick_BASE     (FC_BASE + CORE_SysTick_BASE)              /*!< FC SysTick Base Address */
-#elif defined(__VEGA__)
-#define FC_SysTick_BASE     (TIMER0_BASE)                              /*!< FC SysTick Base Address */
-#endif
 
 #define FC_EU_BARRIER_BASE         (FC_BASE + CORE_EU_BARRIER_BASE)    /*!< FC Event Unit HW Barrier Base Address */
 #define FC_EU_SW_EVENTS_BASE       (FC_BASE + CORE_EU_SW_EVENTS_BASE)  /*!< FC Event Unit SW Events Base Address */
@@ -1152,11 +1121,7 @@ typedef struct
 #define FC_EU_SW_EVENTS      ((EU_SW_EVENTS_DEMUX_Type   *)  FC_EU_SW_EVENTS_BASE)            /*!< EU_SW_EVENTS_DEMUX configuration struct */
 
 /** FC_CLUSTER_ID Definitions */
-#if defined(__GAP8__)
 #define FC_CLUSTER_ID                 32                /**< FC CLuster ID */
-#elif defined(__VEGA__)
-#define FC_CLUSTER_ID                 31                /**< FC CLuster ID */
-#endif
 /*@} */
 
 
@@ -1221,11 +1186,7 @@ typedef struct
 __STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
 {
   /* U mode does not has the right */
-  #if defined(__GAP8__)
   NVIC->MASK_IRQ_OR = (1UL << IRQn);
-  #elif defined(__VEGA__)
-  NVIC->MASK_SET = (1UL << IRQn);
-  #endif
 }
 
 /**
@@ -1239,11 +1200,7 @@ __STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
 __STATIC_INLINE uint32_t __NVIC_GetEnableIRQ(IRQn_Type IRQn)
 {
   /* U mode does not has the right */
-  #if defined(__GAP8__)
   return ((uint32_t)((NVIC->MASK_IRQ & (1UL << IRQn)) ? 1UL : 0UL));
-  #elif defined(__VEGA__)
-  return ((uint32_t)((NVIC->MASK & (1UL << IRQn)) ? 1UL : 0UL));
-  #endif
 }
 
 
@@ -1256,11 +1213,7 @@ __STATIC_INLINE uint32_t __NVIC_GetEnableIRQ(IRQn_Type IRQn)
 __STATIC_INLINE void __NVIC_DisableIRQ(IRQn_Type IRQn)
 {
   /* U mode does not has the right */
-  #if defined(__GAP8__)
   NVIC->MASK_IRQ_AND = (1UL << IRQn);
-  #elif defined(__VEGA__)
-  NVIC->MASK_CLR = (1UL << IRQn);
-  #endif
 }
 
 
@@ -1352,11 +1305,7 @@ __STATIC_INLINE void __NVIC_SetVector(IRQn_Type IRQn, uint32_t vector)
   if((__get_CPRIV() & CPRIV_PRIV_Msk) != 0U) {
     vectors = (uint32_t *)(__builtin_pulp_spr_read(0x305));
   } else {
-#if defined(__GAP8__)
     vectors = (uint32_t *)(0x1C000000);
-#elif defined(__VEGA__)
-    vectors = (uint32_t *)(__builtin_pulp_spr_read(0x005));
-#endif
   }
   vectors[IRQn] = __NVIC_ForgeItVect((uint32_t)vectors, IRQn, vector);
 }
@@ -1375,11 +1324,7 @@ __STATIC_INLINE uint32_t __NVIC_GetVector(IRQn_Type IRQn)
   if((__get_CPRIV() & CPRIV_PRIV_Msk) != 0U) {
     vectors = (uint32_t *)(__builtin_pulp_spr_read(0x305));
   } else {
-#if defined(__GAP8__)
     vectors = (uint32_t *)(0x1C000000);
-#elif defined(__VEGA__)
-    vectors = (uint32_t *)(__builtin_pulp_spr_read(0x005));
-#endif
   }
   return vectors[IRQn];
 }

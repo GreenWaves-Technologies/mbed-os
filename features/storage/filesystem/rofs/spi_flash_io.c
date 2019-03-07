@@ -15,14 +15,10 @@ static void SPI_FLASH_Pin_Init( PinName mosi, PinName miso, PinName sclk, PinNam
     SPI_MasterGetDefaultConfig( &master_config );
 
     /* determine the SPI to use */
-    #if defined(__GAP8__)
     if(ssel == SPI0_CSN1 || ssel == SPI1_CSN1_B2 || ssel == SPI1_CSN1_B15)
         master_config.whichCsn = uSPI_csn1;
     else
         master_config.whichCsn = uSPI_csn0;
-    #elif defined(__VEGA__)
-        master_config.whichCsn = uSPI_csn0;
-    #endif
 }
 /*-----------------------------------------------------------*/
 
@@ -185,8 +181,6 @@ int32_t SPI_FLASH_Init( PinName mosi, PinName miso, PinName sclk, PinName ssel,
     /* Flash Configuration. */
     SPI_FLASH_Conf( qspi );
     syncPolling = polling;
-    if( qspi && !master_config.whichCsn )
-        printf("SPI Flash ID = %x\n", SPI_FLASH_Id());
 
     return 0;
 }

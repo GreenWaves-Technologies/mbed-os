@@ -15,7 +15,6 @@ Ecall_Handler:
         sw   a0, 0*4(sp)      // Store function return values
         sw   a1, 1*4(sp)      // Store function return values
 
-
   .global SVC_Context
 SVC_Context:
         la  t0, osRtxInfo+I_T_RUN_OFS     // Load address of osRtxInfo.run

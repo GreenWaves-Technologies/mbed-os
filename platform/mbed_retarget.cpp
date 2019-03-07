@@ -187,7 +187,7 @@ DirectSerial::DirectSerial(PinName tx, PinName rx, int baud)
 ssize_t DirectSerial::write(const void *buffer, size_t size)
 {
     const unsigned char *buf = static_cast<const unsigned char *>(buffer);
-    #ifdef USE_UART
+    #ifdef PRINTF_UART
     {
         for (size_t i = 0; i < size; i++) {
             serial_putc(&stdio_uart, buf[i]);
