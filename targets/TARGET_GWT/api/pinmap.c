@@ -25,9 +25,14 @@ static GPIO_Type *const gpio_addrs[] = GPIO_BASE_PTRS;
 void pin_function(PinName pin, int function)
 {
     MBED_ASSERT(pin != (PinName)NC);
-    int pin_num = (pin & 0xFF) - GAP_PIN_OFFSET;
 
-    if (0<= pin_num && pin_num < GAP_PORT_PIN_NUM )
+    int pin_num = (pin & 0xFF);
+
+    /* Fix uart rx */
+    if (!(pin_num == 38 && function == 0))
+        pin_num -= GAP_PIN_OFFSET;
+
+    if (0 <= pin_num && pin_num < GAP_PORT_PIN_NUM )
         PORT_SetPinMux(port_addrs[GET_GPIO_PORT(pin)], pin_num, (port_mux_t)function);
 }
 
