@@ -274,9 +274,9 @@ typedef enum {
 
     // UART Pins
     USBTX = A7,
-    USBRX = B6,
+    USBRX = B7,
     UART_TX = A7,
-    UART_RX = B6,
+    UART_RX = B7,
 
     // PWM0 Pins
     PWM0_CH0 = B11,

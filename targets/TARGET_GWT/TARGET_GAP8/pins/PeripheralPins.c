@@ -327,7 +327,7 @@ const PinMap PinMap_UART_TX[] = {
 };
 
 const PinMap PinMap_UART_RX[] = {
-    {B6, UART_0, 0},
+    {B7, UART_0, 0},
     {NC  ,  NC    , 0}
 };
 
