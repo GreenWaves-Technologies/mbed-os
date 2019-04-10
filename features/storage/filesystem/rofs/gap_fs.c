@@ -119,7 +119,7 @@ fs_file_t *fs_open( fs_handle_t *fs_handle, const char *file, uint8_t mode )
 
         if( strcmp( desc->name, file ) == 0 )
         {
-            fs_file_t *file = ( fs_file_t * ) FC_Malloc( sizeof( fs_file_t ) );
+            fs_file_t *file = ( fs_file_t * ) malloc( sizeof( fs_file_t ) );
             if( file == NULL )
                 return NULL;
             file->offset = 0;
@@ -138,7 +138,7 @@ fs_file_t *fs_open( fs_handle_t *fs_handle, const char *file, uint8_t mode )
 void fs_close( fs_file_t *file )
 {
     if( file != NULL )
-        FC_MallocFree( file, sizeof( fs_file_t ) );
+        free( file );
 }
 
 int fs_read( fs_file_t *file, uint32_t size, void *buffer )

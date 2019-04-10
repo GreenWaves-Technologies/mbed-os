@@ -224,7 +224,12 @@ void hyperbus_master_transfer(hyperbus_t *obj, const int addr, const void *tx, s
     masterXfer.reg_access  = uHYPERBUS_Mem_Access;
 
     /* Busy transferring */
-    obj->hyperbus.status = uHYPERBUS_Busy;
+    if(tx_length && !(HYPERBUS_TXPending(hyperbus_address[obj->hyperbus.instance])))
+        obj->hyperbus.status = uHYPERBUS_Idle;
+    else if(rx_length && (!HYPERBUS_RXPending(hyperbus_address[obj->hyperbus.instance])))
+        obj->hyperbus.status = uHYPERBUS_Idle;
+    else
+        obj->hyperbus.status = uHYPERBUS_Busy;
 
     if(HYPERBUS_MasterTransferNonBlocking(hyperbus_address[obj->hyperbus.instance],
                                           &obj->hyperbus.hyperbus_master_handle,

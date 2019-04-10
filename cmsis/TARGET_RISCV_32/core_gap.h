@@ -573,8 +573,9 @@ typedef struct
   __IOM uint32_t ICACHE_FLUSH;             /*!< Offset: 0x04 (R/W)  Cluster Icache Flush Register */
   __IOM uint32_t ICACHE_LX_SEL_FLUSH;      /*!< Offset: 0x08 (R/W)  Cluster Icache Level-X Flush Register or FC Flush Selected Address Register*/
   __IOM uint32_t ICACHE_SEL_FLUSH_STATUS;  /*!< Offset: 0x0C (R/W)  Cluster Icache Flush Selected Address Register or FC ICACHE status */
-  __IOM uint32_t ICACHE_CNTS_CLEAR;        /*!< Offset: 0x10 (R/W)  Cluster Icache is private Icache */
-  __IOM uint32_t ICACHE_CNTS_ENABLE;       /*!< Offset: 0x10 (R/W)  Cluster Icache is private Icache */
+  __IOM uint32_t ICACHE_CNTS_CLEAR;        /*!< Offset: 0x10 (R/W)  Cluster Icache status counter clean */
+  __IOM uint32_t ICACHE_CNTS_ENABLE;       /*!< Offset: 0x14 (R/W)  Cluster Icache status counter enable */
+  __IOM uint32_t ICACHE_SEPERATION;        /*!< Offset: 0x18 (R/W)  */
 } SCBC_Type;
 
 /* SCBC Registers Definitions */
@@ -1303,9 +1304,9 @@ __STATIC_INLINE void __NVIC_SetVector(IRQn_Type IRQn, uint32_t vector)
   volatile uint32_t *vectors;
 
   if((__get_CPRIV() & CPRIV_PRIV_Msk) != 0U) {
-    vectors = (uint32_t *)(__builtin_pulp_spr_read(0x305));
+    vectors = (uint32_t *)(__builtin_pulp_spr_read(0x305) & ~MTVEC_MODE_Msk);
   } else {
-    vectors = (uint32_t *)(0x1C000000);
+    vectors = (uint32_t *)(0x1C000000 & ~MTVEC_MODE_Msk);
   }
   vectors[IRQn] = __NVIC_ForgeItVect((uint32_t)vectors, IRQn, vector);
 }

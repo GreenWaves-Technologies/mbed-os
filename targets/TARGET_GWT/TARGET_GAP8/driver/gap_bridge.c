@@ -32,6 +32,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "gap_soc_eu.h"
 #include "gap_bridge.h"
 #include "gap_handler_wrapper.h"
 
@@ -55,11 +56,7 @@ static inline bridge_t *BRIDGE_Get()
 }
 
 static inline int BRIDGE_IsConnected(debug_struct_t *bridge) {
-#ifdef GAP_USE_NEW_REQLOOP
     return *(volatile uint32_t *)&bridge->bridge.connected;
-#else
-    return *(volatile uint32_t *)&bridge->bridgeConnected;
-#endif
 }
 
 static inline void BRIDGE_SetConnect(bridge_req_t *req)
@@ -178,6 +175,8 @@ static void BRIDGE_PostReq(bridge_req_t *req, void *event)
     bridge->lastReq = (uint32_t)req;
     req->next = 0;
 
+    BRIDGE_SendNotif();
+
     BRIDGE_CheckBridgeReq();
 }
 
@@ -198,34 +197,29 @@ static void BRIDGE_HandleNotify(bridge_t* bridge)
 
 void BRIDGE_BlockWait()
 {
-    /* Disable IRQ */
-    int irq_en = NVIC_GetEnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
-    NVIC_DisableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
+    if (__is_FC()) {
+        /* Disable IRQ */
+        int irq_en = NVIC_GetEnableIRQ(FC_SOC_EVENT_IRQn);
+        NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
 
-    int event = 0;
-    do {
-        event = EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_BRIDGE_EVENT);
-    } while (!(event & (1 << FC_SW_NOTIFY_BRIDGE_EVENT)));
+        SOC_EU_SetFCMask(REF32K_CLK_RISE_EVENT);
 
-    EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SW_NOTIFY_BRIDGE_EVENT);
+        int event = 0;
+        do {
+            event = EU_EVT_MaskWaitAndClr(1 << FC_SOC_EVENT_IRQn);
+        } while (!(event & (1 << FC_SOC_EVENT_IRQn)));
 
-    /* Restore IRQ */
-    if (irq_en)
-        NVIC_EnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
+        EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SOC_EVENT_IRQn);
+
+        SOC_EU_ClearFCMask(REF32K_CLK_RISE_EVENT);
+        /* Restore IRQ */
+        if (irq_en)
+            NVIC_EnableIRQ(FC_SOC_EVENT_IRQn);
+    }
 }
 
 void BRIDGE_Init()
 {
-    bridge_t* bridge = BRIDGE_Get();
-
-    /* Tell debug bridge which address to trigger software event */
-    bridge->notifyReqAddr  = (uint32_t)(&FC_EU_SW_EVENTS->TRIGGER_SET[FC_SW_NOTIFY_BRIDGE_EVENT]);
-    bridge->notifyReqValue = 1;
-
-    /* Bind software event handle */
-    NVIC_SetVector(FC_SW_NOTIFY_BRIDGE_EVENT, (uint32_t)__handler_wrapper_light_BRIDGE_IRQHandler);
-    /* Activate interrupt handler for soc event */
-    NVIC_EnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
 }
 
 int BRIDGE_Connect(int wait_bridge, void *event)
@@ -381,6 +375,123 @@ void BRIDGE_TargetStatusSync(void *event)
         BRIDGE_PostReq(&request, NULL);
 
         BRIDGE_BlockWait();
+    }
+}
+
+void BRIDGE_CheckConnection()
+{
+    debug_struct_t *debug_struct = DEBUG_GetDebugStruct();
+
+    if (!debug_struct->bridge.connected)
+    {
+        if (READ_SOC_CTRL_JTAG_EXT_BT_MD(SOC_CTRL->JTAG) == 7)
+        {
+            debug_struct->bridge.connected = 1;
+
+            SOC_CTRL->JTAG = SOC_CTRL_JTAG_INT_BT_MD(1);
+
+            while(READ_SOC_CTRL_JTAG_EXT_BT_MD(SOC_CTRL->JTAG) == 7)
+            {
+                BRIDGE_BlockWait();
+            }
+        }
+    }
+}
+
+static void BRIDGE_SetAvailable()
+{
+    debug_struct_t *debug_struct = DEBUG_GetDebugStruct();
+
+    if (!debug_struct->bridge.connected)
+        SOC_CTRL->JTAG = SOC_CTRL_JTAG_INT_BT_MD(4);
+    else
+        SOC_CTRL->JTAG = SOC_CTRL_JTAG_INT_BT_MD(1);
+}
+
+void BRIDGE_PrintfFlush()
+{
+    debug_struct_t *debug_struct = DEBUG_GetDebugStruct();
+
+    BRIDGE_CheckConnection();
+
+    if (debug_struct->bridge.connected)
+    {
+        if (DEBUG_IsBusy(DEBUG_GetDebugStruct()) || !DEBUG_IsEmpty(DEBUG_GetDebugStruct()))
+        {
+            // Notify the bridge that he should look for requests
+            BRIDGE_SendNotif();
+
+            // We now also have to wait until it is handled so that we can clear
+            // the notification
+            while(DEBUG_IsBusy(DEBUG_GetDebugStruct()))
+            {
+                BRIDGE_BlockWait();
+            }
+            BRIDGE_ClearNotif();
+        }
+    }
+}
+
+void BRIDGE_SendNotif()
+{
+    debug_struct_t *debug_struct = DEBUG_GetDebugStruct();
+
+    BRIDGE_CheckConnection();
+
+    if (debug_struct->bridge.connected)
+    {
+        SOC_CTRL->JTAG = SOC_CTRL_JTAG_INT_BT_MD(3);
+    }
+}
+
+void BRIDGE_ClearNotif()
+{
+    debug_struct_t *debug_struct = DEBUG_GetDebugStruct();
+
+    BRIDGE_CheckConnection();
+
+    if (debug_struct->bridge.connected)
+    {
+        BRIDGE_SetAvailable();
+    }
+}
+
+void BRIDGE_ReqShutDown()
+{
+    debug_struct_t *debug_struct = DEBUG_GetDebugStruct();
+
+    BRIDGE_CheckConnection();
+
+    if (debug_struct->bridge.connected)
+    {
+        // We have to flush pending requests before sending shutdown request
+        // otherwise the bridge may never see them.
+        BRIDGE_PrintfFlush();
+
+        // It can happen that the bridge is still in a state where he haven't
+        // seen that we became available. Wait until this is the case.
+        while(READ_SOC_CTRL_JTAG_EXT_BT_MD(SOC_CTRL->JTAG) == 7)
+        {
+            BRIDGE_BlockWait();
+        }
+
+        // Send the request for shutdown
+        SOC_CTRL->JTAG = SOC_CTRL_JTAG_INT_BT_MD(2);
+
+        // And wait until it is acknowledged
+        while(READ_SOC_CTRL_JTAG_EXT_BT_MD(SOC_CTRL->JTAG) != 7)
+        {
+            BRIDGE_BlockWait();
+        }
+
+        // Update the status so that the bridge knows that we got the aknowledgement
+        SOC_CTRL->JTAG = SOC_CTRL_JTAG_INT_BT_MD(0);
+
+        // And wait until it knows it
+        while(READ_SOC_CTRL_JTAG_EXT_BT_MD(SOC_CTRL->JTAG) == 7)
+        {
+            BRIDGE_BlockWait();
+        }
     }
 }
 

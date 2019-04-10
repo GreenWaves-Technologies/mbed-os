@@ -39,28 +39,26 @@
 #define HAL_DEBUG_STRUCT_NAME_STR "Debug_Struct"
 
 #define GAP_USE_DEBUG_STRUCT 1
-#define GAP_USE_NEW_REQLOOP  1
 #define PRINTF_BUF_SIZE 128
 
 #ifdef GAP_USE_DEBUG_STRUCT
 
-#ifdef GAP_USE_NEW_REQLOOP
 typedef struct {
   volatile int32_t available;
-} target_state_t;
+} __attribute__((packed)) target_state_t;
 
 typedef struct {
   volatile int32_t connected;
-} bridge_state_t;
-#endif
+} __attribute__((packed)) bridge_state_t;
 
 /* This structure can be used to interact with the host loader */
 typedef struct _debug_struct {
-#ifdef GAP_USE_NEW_REQLOOP
+    uint32_t version;
+
     target_state_t target;
 
     bridge_state_t bridge;
-#endif
+
     /* Used by external debug bridge to get exit status when using the board */
     uint32_t exitStatus;
 
@@ -78,15 +76,13 @@ typedef struct _debug_struct {
     uint32_t firstReq;
     uint32_t lastReq;
     uint32_t firstBridgeReq;
+    uint32_t firstBridgeFreeReq;
+    uint32_t targetReq;
 
     uint32_t notifyReqAddr;
     uint32_t notifyReqValue;
 
-#ifndef GAP_USE_NEW_REQLOOP
-    uint32_t bridgeConnected;
-#endif
-
-} debug_struct_t;
+} __attribute__((packed)) debug_struct_t;
 #endif
 
 extern debug_struct_t HAL_DEBUG_STRUCT_NAME;
@@ -100,11 +96,7 @@ static inline debug_struct_t* DEBUG_GetDebugStruct()
 #endif
 }
 
-#ifdef GAP_USE_NEW_REQLOOP
-#define GAP_DEBUG_STRUCT_INIT { {0}, {0}, 0, 1, 0 ,0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, 0}
-#else
-#define GAP_DEBUG_STRUCT_INIT {0, 1, 0 ,0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, 0, 0}
-#endif
+#define GAP_DEBUG_STRUCT_INIT { PROTOCOL_VERSION, {0}, {0}, 0, 1, 0 ,0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 static inline void DEBUG_FlushPrintf(debug_struct_t *debugStruct) {
   while(*(volatile uint32_t *)&debugStruct->putcharPending);
@@ -114,6 +106,24 @@ static inline void DEBUG_Exit(debug_struct_t *debugStruct, int status) {
   *(volatile uint32_t *)&debugStruct->exitStatus = 0x80000000 | status;
 }
 
+static inline int DEBUG_IsEmpty(debug_struct_t *debugStruct)
+{
+  return *(volatile uint32_t *)&debugStruct->putcharCurrent == 0;
+}
+
+static inline int DEBUG_IsBusy(debug_struct_t *debugStruct)
+{
+  return *(volatile uint32_t *)&debugStruct->putcharPending;
+}
+
+static inline void DEBUG_SendPrintf(debug_struct_t *debugStruct) {
+  if (debugStruct->putcharCurrent)
+  {
+    *(volatile uint32_t *)&debugStruct->putcharPending = debugStruct->putcharCurrent;
+    *(volatile uint32_t *)&debugStruct->putcharCurrent = 0;
+  }
+}
+
 static inline void DEBUG_Putchar(debug_struct_t *debugStruct, char c) {
   DEBUG_FlushPrintf(debugStruct);
   *(volatile uint8_t *)&(debugStruct->putcharBuffer[debugStruct->putcharCurrent++]) = c;
@@ -121,6 +131,17 @@ static inline void DEBUG_Putchar(debug_struct_t *debugStruct, char c) {
     *(volatile uint32_t *)&debugStruct->putcharPending = debugStruct->putcharCurrent;
     *(volatile uint32_t *)&debugStruct->putcharCurrent = 0;
   }
+}
+
+static inline int DEBUG_PutcharNoPoll(debug_struct_t *debugStruct, char c) {
+  if (*(volatile uint32_t *)&debugStruct->putcharPending)
+    return -1;
+
+  *(volatile uint8_t *)&(debugStruct->putcharBuffer[debugStruct->putcharCurrent++]) = c;
+  if (*(volatile uint32_t *)&debugStruct->putcharCurrent == PRINTF_BUF_SIZE || c == '\n') {
+    DEBUG_SendPrintf(debugStruct);
+  }
+  return 0;
 }
 
 static inline void DEBUG_Step(debug_struct_t *debugStruct, uint32_t value) {

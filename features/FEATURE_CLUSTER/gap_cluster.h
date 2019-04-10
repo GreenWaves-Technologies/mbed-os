@@ -72,9 +72,11 @@ extern "C" {
  *
  * @param  cid      The cluster ID - 0 if only one cluster
  * @param  nbCores  The number of cores we want to use
+ * @param  int control_icache_seperation  The flag to indicate the control core's icache
+                                          is seperated with other task cores' shared icache
  * @note .
  */
-void CLUSTER_Start(int cid, int nbCores);
+void CLUSTER_Start(int cid, int nbCores, int control_icache_seperation);
 
 /*!
  * @brief Isolate cluster domain clock and do de-initialization.

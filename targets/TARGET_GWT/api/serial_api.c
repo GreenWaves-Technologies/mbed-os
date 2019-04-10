@@ -106,6 +106,7 @@ void serial_free(serial_t *obj)
 void serial_baud(serial_t *obj, int baudrate)
 {
     MBED_ASSERT(baudrate);
+
     UART_SetBaudRate(uart_addrs[obj->serial.index], (uint32_t)baudrate, SystemCoreClock);
 }
 
@@ -115,7 +116,8 @@ void serial_format(serial_t *obj, int data_bits, SerialParity parity, int stop_b
     uint32_t temp = base->SETUP;
 
     /* Set bit count and parity mode. */
-    temp &= ~(UART_SETUP_STOP_BITS_MASK | UART_SETUP_BIT_LENGTH_MASK | UART_SETUP_PARITY_ENA_MASK);
+    temp &= ~(UART_SETUP_STOP_BITS_MASK | UART_SETUP_BIT_LENGTH_MASK | UART_SETUP_PARITY_ENA_MASK |
+              UART_SETUP_TX_ENA_MASK | UART_SETUP_RX_ENA_MASK);
 
     if (parity != ParityNone)
     {
@@ -142,7 +144,7 @@ void serial_format(serial_t *obj, int data_bits, SerialParity parity, int stop_b
         MBED_ASSERT(0);
     }
 
-    base->SETUP = temp;
+    base->SETUP = temp | UART_SETUP_TX_ENA(1) | UART_SETUP_RX_ENA(1);
 }
 
 /******************************************************************************
@@ -188,17 +190,17 @@ void serial_irq_set(serial_t *obj, SerialIrq irq, uint32_t enable)
     if (enable)
     {
         if (irq == RxIrq) {
-            fc_handler_vector[UDMA_EVENT_UART_RX] = (uint32_t)&uart0_irq_rx;
+            //fc_handler_vector[UDMA_EVENT_UART_RX] = (uint32_t)&uart0_irq_rx;
         } else if (irq == TxIrq) {
-            fc_handler_vector[UDMA_EVENT_UART_TX] = (uint32_t)&uart0_irq_tx;
+            //fc_handler_vector[UDMA_EVENT_UART_TX] = (uint32_t)&uart0_irq_tx;
         }
     }
     else
     {
         if (irq == RxIrq) {
-            fc_handler_vector[UDMA_EVENT_UART_RX] = (uint32_t)NULL;
+            //fc_handler_vector[UDMA_EVENT_UART_RX] = (uint32_t)NULL;
         } else if (irq == TxIrq) {
-            fc_handler_vector[UDMA_EVENT_UART_TX] = (uint32_t)NULL;
+            //fc_handler_vector[UDMA_EVENT_UART_TX] = (uint32_t)NULL;
         }
     }
 }

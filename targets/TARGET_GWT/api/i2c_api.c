@@ -43,9 +43,6 @@
 
 static I2C_Type *const i2c_address[] = I2C_BASE_PTRS;
 
-/* Array of I2C peripheral base address. */
-static uint8_t s_command_sequence[32];
-
 /* I2C read return value */
 static uint8_t i2c_reg_value;
 
@@ -153,64 +150,6 @@ void i2c_abort_asynch(i2c_t *obj){}
 
 #endif
 /**@}*/
-
-
-/*
- *  GWT I2C Extention functions
- */
-int i2c_write_command_sequence(i2c_t *obj, int address, const char *data, int length, uint32_t event)
-{
-    int index = 0;
-    int32_t status = 0;
-
-    slave_address = address;
-    s_command_sequence[index++] = I2C_CMD_START;
-    s_command_sequence[index++] = I2C_CMD_WR;
-    s_command_sequence[index++] = address;
-    for (int i=0; i<length; i++){
-        s_command_sequence[index++] = I2C_CMD_WR;
-        s_command_sequence[index++] = data[i];
-    }
-    s_command_sequence[index++] = I2C_CMD_STOP;
-    s_command_sequence[index++] = I2C_CMD_WAIT;
-    s_command_sequence[index++] = 0x1;
-    status = I2C_TransferBlocking(i2c_address[obj->i2c.instance], (const uint8_t*)&s_command_sequence, index, NULL, 0, 8);
-    index = 0;
-    if(status) return length;
-    else return -1;
-    return 0;
-}
-
-int i2c_read_command_sequence(i2c_t *obj, int address, char *data, int length, int stop)
-{
-    int index = 0;
-    int status = 0;
-
-    slave_address = address;
-    s_command_sequence[index++] = I2C_CMD_START;
-    s_command_sequence[index++] = I2C_CMD_WR;
-    s_command_sequence[index++] = address;
-    for (int i=0; i<length; i++){
-        s_command_sequence[index++] = I2C_CMD_WR;
-        s_command_sequence[index++] = data[i];
-    }
-    s_command_sequence[index++] = I2C_CMD_START;
-    s_command_sequence[index++] = I2C_CMD_WR;
-    s_command_sequence[index++] = address|0x1;
-    s_command_sequence[index++] = I2C_CMD_RPT;
-    s_command_sequence[index++] = length-1;
-    s_command_sequence[index++] = I2C_CMD_RD_ACK;
-    s_command_sequence[index++] = I2C_CMD_RD_NACK;
-    s_command_sequence[index++] = I2C_CMD_STOP;
-    s_command_sequence[index++] = I2C_CMD_WAIT;
-    s_command_sequence[index++] = 0x1;
-    status = I2C_TransferBlocking(i2c_address[obj->i2c.instance], (const uint8_t*)&s_command_sequence, index, data, length, 8);
-    index = 0;
-    if (status)
-        return length;
-    else
-        return 0;
-}
 
 #endif
 

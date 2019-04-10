@@ -25,10 +25,9 @@ static GPIO_Type *const gpio_addrs[] = GPIO_BASE_PTRS;
 void pin_function(PinName pin, int function)
 {
     MBED_ASSERT(pin != (PinName)NC);
-
     int pin_num = (pin & 0xFF) - GAP_PIN_OFFSET;
 
-    if (0 <= pin_num && pin_num < GAP_PORT_PIN_NUM )
+    if (0<= pin_num && pin_num < GAP_PORT_PIN_NUM )
         PORT_SetPinMux(port_addrs[GET_GPIO_PORT(pin)], pin_num, (port_mux_t)function);
 }
 
@@ -48,7 +47,7 @@ void pin_mode(PinName pin, PinMode mode)
         GPIO_Type *base = gpio_addrs[instance];
         switch (mode) {
         case PullNone:
-            /* Write 0 to the PullUp bits */
+            /* Write 0 to the PullUp and PullDown Enable bits */
             base->PADCFG[reg_num] &= ~(1U << pos);
             break;
         case PullUp:
@@ -69,7 +68,7 @@ void pin_mode(PinName pin, PinMode mode)
 
             switch (mode) {
             case PullNone:
-                /* Write 0 to the PullUp bits */
+                /* Write 0 to the PullUp and PullDown Enable bits */
                 base->PADCFG[reg_num] &= ~(1U << pos);
                 break;
             case PullUp:

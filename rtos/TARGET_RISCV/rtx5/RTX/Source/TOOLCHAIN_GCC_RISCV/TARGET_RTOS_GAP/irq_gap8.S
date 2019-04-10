@@ -4,10 +4,13 @@
 
 .section .text
 
+Ill_Ins_Handler:
+        j Ill_Ins_Handler
+
   .global Ecall_Handler
 Ecall_Handler:
         addi sp, sp, -18*4
-        sw   ra,  15*4(sp)                   // Save ra here
+        sw   ra, 15*4(sp)                   // Save ra here
         jal  Exception_handler
 
         jalr t0  // Call service function
@@ -74,8 +77,6 @@ SVC_Exit:
         lw     a0,  16*4(sp)    //mepc
         csrw   0x341, a0
 
-        //lw    a0,  17*4(sp) // mstatus
-        //csrw   0x300, a0
         lw    a0,  0*4(sp)
         lw    a1,  1*4(sp)
         lw    a2,  2*4(sp)
@@ -95,14 +96,15 @@ SVC_Exit:
         lw    ra, %tiny(currentStack)(x0)
         bne   ra, x0, .LC1
 
-        lw    ra,  15*4(sp)
         addi  sp, sp, 18*4
         sw    sp, %tiny(kernelStack)(x0) // Return from Machine mode
+        lw    ra,  -3*4(sp)
         mret
+
 .LC1:
-        lw    ra,  15*4(sp)
         addi  sp, sp, 18*4
         sw    sp, %tiny(userStack)(x0)   // Return from User mode
+        lw    ra,  -3*4(sp)
         mret
 
        .global Exception_handler
@@ -112,6 +114,7 @@ Exception_handler:                       // exception handler should called for 
         lw    a0, %tiny(currentStack)(x0)
         bne   a0, x0, .LC2
         sw    sp, %tiny(kernelStack)(x0) // Use kernel SP
+
 .LC2:
         sw    sp, %tiny(userStack)(x0)   // Use User SP
 
@@ -131,17 +134,19 @@ Exception_handler:                       // exception handler should called for 
         sw    t4,  12*4(sp)
         sw    t5,  13*4(sp)
         sw    t6,  14*4(sp)
-        // sw    ra,  15*4(sp)
 
         csrr  t2,  0x341
         csrr  t3,  0x342
         srli  t3,  t3, 31
         bnez  t3,  .LC3
         addi  t2,  t2, 4   // Exception mepc + 4
+
+        li    t3, 2
+        csrr  t4, 0x342
+        beq   t3, t4, Ill_Ins_Handler
+
 .LC3:
         sw    t2,  16*4(sp) // mepc
-        //csrr  t2,  0x300
-        //sw    t2,  17*4(sp) // mstatus
         ret
 
 

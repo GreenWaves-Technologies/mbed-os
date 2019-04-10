@@ -8,6 +8,7 @@
  * Authors: Germain Haugou (germain.haugou@gmail.com)
  */
 #include <stdarg.h>
+#include "gap_bridge.h"
 #include "gap_common.h"
 #include "rtx_core_c.h"
 #include "tinyprintf.h"
@@ -91,6 +92,22 @@ void uart_putc(char c) {
     UART_WriteByte(UART, c);
 }
 
+static void putc_debug_bridge(char c)
+{
+    // Iter until we can push the character.
+    while (DEBUG_PutcharNoPoll(DEBUG_GetDebugStruct(), c))
+    {
+        BRIDGE_BlockWait();
+    }
+
+    // If the buffer has been flushed to the bridge, we now need to send him
+    // a notification
+    if (DEBUG_IsEmpty(DEBUG_GetDebugStruct()))
+    {
+        BRIDGE_PrintfFlush();
+    }
+}
+
 static void tfp_putc(void *data, char c) {
     if (__is_U_Mode()) {
         osPutChar(c);
@@ -111,6 +128,7 @@ static void tfp_putc(void *data, char c) {
 
         /* When boot form FLASH, always use internal printf, you can only see printf in UART */
         if (DEBUG_GetDebugStruct()->useInternalPrintf) {
+            #ifndef PRINTF_UART
             #ifdef PRINTF_RTL
             /* This is for core internal printf in Simulation */
             if(__cluster_ID() == FC_CLUSTER_ID) {
@@ -122,14 +140,16 @@ static void tfp_putc(void *data, char c) {
             }
             #endif
             #endif
+            #endif
         } else {
             /* Only use for JTAG */
-            DEBUG_Putchar(DEBUG_GetDebugStruct(), c);
+            putc_debug_bridge(c);
         }
     }
 }
 
 int GAP_EXPORT printf(const char *fmt, ...) {
+    #ifndef __DISABLE_PRINTF__
     va_list va;
     va_start(va, fmt);
     /* Only lock the printf if the cluster is up to avoid mixing FC and cluster output */
@@ -137,6 +157,8 @@ int GAP_EXPORT printf(const char *fmt, ...) {
     tfp_format(NULL, tfp_putc, fmt, va);
     _io_unlock(irq);
     va_end(va);
+    #endif
+
     return 0;
 }
 

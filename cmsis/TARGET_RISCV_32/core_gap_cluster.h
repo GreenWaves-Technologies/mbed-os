@@ -84,6 +84,7 @@ typedef struct {
 #define CLUSTER_BASE                    (0x10000000UL)        /*!< CLUSTER Base Address */
 
 #define CLUSTER_SCB_BASE                (CLUSTER_BASE + CORE_SCB_BASE)                  /*!< CLUSTER System Control Block Base Address */
+#define CLUSTER_SCBC_BASE               (CLUSTER_BASE + CORE_SCBC_BASE)                 /*!< CLUSTER System Control Block Cache Base Address */
 #define CLUSTER_SysTick_BASE            (CLUSTER_BASE + CORE_SysTick_BASE)              /*!< CLUSTER SysTick Base Address */
 
 #define CLUSTER_EU_BARRIER_BASE         (CLUSTER_BASE + CORE_EU_BARRIER_BASE)    /*!< CLUSTER Event Unit HW Barrier Base Address */
@@ -105,6 +106,7 @@ typedef struct {
 #define CLUSTER_EU_SW_EVENTS      ((EU_SW_EVENTS_DEMUX_Type   *)  CLUSTER_EU_SW_EVENTS_BASE)            /*!< EU_SW_EVENTS_DEMUX configuration struct */
 #define EU_CORES    ((CLUSTER_EU_CORES_Type   *)   CORE_EU_BASE)              /*!< CLUSTER_EU_CORES configuration struct */
 #define SCB         ((SCB_Type   *)    CLUSTER_SCB_BASE )                     /*!< CLUSTER SCB configuration struct */
+#define CLUSTER_SCBC  ((SCBC_Type   *)  CLUSTER_SCBC_BASE )                    /*!< CLUSTER SCBC configuration struct */
 
 #define CLUSTER_SysTick             ((SysTick_Type   *)     CLUSTER_SysTick_BASE  )   /*!< SysTick configuration struct */
 #define CLUSTER_TIMERL              ((TimerL_Type    *)     CLUSTER_SysTick_BASE  )   /*!< SysTick configuration struct */

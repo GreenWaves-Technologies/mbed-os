@@ -1672,7 +1672,7 @@ typedef struct {
   __IO  uint32_t _reserved1[23];      /**< reserved, offset: 0x10 */
   __IO  uint32_t CLUSTER_BUSY;        /**< SOC_CTRL Busy register, offset: 0x6C */
   __IO  uint32_t CLUSTER_BYPASS;      /**< SOC_CTRL Cluster PMU bypass register, offset: 0x70 */
-  __IO  uint32_t JTAG_REG;            /**< SOC_CTRL Jtag register, offset: 0x74 */
+  __IO  uint32_t JTAG;                /**< SOC_CTRL Jtag register, offset: 0x74 */
   __IO  uint32_t L2_SLEEP;            /**< SOC_CTRL L2 memory sleep register, offset: 0x78 */
   __IO  uint32_t SLEEP_CTRL;          /**< SOC_CTRL Slepp control register, offset: 0x7C */
   __IO  uint32_t CLKDIV0;             /**< SOC_CTRL Slepp control register, offset: 0x80 */
@@ -1745,6 +1745,27 @@ typedef struct {
 #define SOC_CTRL_CLUSTER_BYPASS_PW_ISO_SHIFT          (15U)
 #define SOC_CTRL_CLUSTER_BYPASS_PW_ISO(x)             (((uint32_t)(((uint32_t)(x)) << SOC_CTRL_CLUSTER_BYPASS_PW_ISO_SHIFT)) & SOC_CTRL_CLUSTER_BYPASS_PW_ISO_MASK)
 #define READ_SOC_CTRL_CLUSTER_BYPASS_PW_ISO(x)        (((uint32_t)(((uint32_t)(x)) & SOC_CTRL_CLUSTER_BYPASS_PW_ISO_MASK)) >> SOC_CTRL_CLUSTER_BYPASS_PW_ISO_SHIFT)
+
+/*! @name JTAG - SOC_CTRL jtag control register */
+#define SOC_CTRL_JTAG_INT_SYNC_MASK          (0x1U)
+#define SOC_CTRL_JTAG_INT_SYNC_SHIFT         (0U)
+#define SOC_CTRL_JTAG_INT_SYNC(x)            (((uint32_t)(((uint32_t)(x)) /* << SOC_CTRL_JTAG_INT_SYNC_SHIFT*/)) & SOC_CTRL_JTAG_INT_SYNC_MASK)
+#define READ_SOC_CTRL_JTAG_INT_SYNC(x)       (((uint32_t)(((uint32_t)(x)) & SOC_CTRL_JTAG_INT_SYNC_MASK)) /* >> SOC_CTRL_JTAG_INT_SYNC_SHIFT*/)
+
+#define SOC_CTRL_JTAG_INT_BT_MD_MASK         (0xEU)
+#define SOC_CTRL_JTAG_INT_BT_MD_SHIFT        (1U)
+#define SOC_CTRL_JTAG_INT_BT_MD(x)           (((uint32_t)(((uint32_t)(x)) << SOC_CTRL_JTAG_INT_BT_MD_SHIFT)) & SOC_CTRL_JTAG_INT_BT_MD_MASK)
+#define READ_SOC_CTRL_JTAG_INT_BT_MD(x)      (((uint32_t)(((uint32_t)(x)) & SOC_CTRL_JTAG_INT_BT_MD_MASK)) >> SOC_CTRL_JTAG_INT_BT_MD_SHIFT)
+
+#define SOC_CTRL_JTAG_EXT_SYNC_MASK          (0x100U)
+#define SOC_CTRL_JTAG_EXT_SYNC_SHIFT         (8U)
+#define SOC_CTRL_JTAG_EXT_SYNC(x)            (((uint32_t)(((uint32_t)(x)) << SOC_CTRL_JTAG_EXT_SYNC_SHIFT)) & SOC_CTRL_JTAG_EXT_SYNC_MASK)
+#define READ_SOC_CTRL_JTAG_EXT_SYNC(x)       (((uint32_t)(((uint32_t)(x)) & SOC_CTRL_JTAG_EXT_SYNC_MASK)) >> SOC_CTRL_JTAG_EXT_SYNC_SHIFT)
+
+#define SOC_CTRL_JTAG_EXT_BT_MD_MASK         (0xE00U)
+#define SOC_CTRL_JTAG_EXT_BT_MD_SHIFT        (9U)
+#define SOC_CTRL_JTAG_EXT_BT_MD(x)           (((uint32_t)(((uint32_t)(x)) << SOC_CTRL_JTAG_EXT_BT_MD_SHIFT)) & SOC_CTRL_JTAG_EXT_BT_MD_MASK)
+#define READ_SOC_CTRL_JTAG_EXT_BT_MD(x)      (((uint32_t)(((uint32_t)(x)) & SOC_CTRL_JTAG_EXT_BT_MD_MASK)) >> SOC_CTRL_JTAG_EXT_BT_MD_SHIFT)
 
 /*! @name STATUS - SOC_CTRL status register */
 #define SOC_CTRL_CORE_STATUS_EOC_MASK                 (0x80000000U)

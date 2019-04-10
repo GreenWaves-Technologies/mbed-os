@@ -117,8 +117,9 @@ void Platform_Exit(int code)
     if (__is_FC()) {
         /* Flush the pending messages to the debug tools
            Notify debug tools about the termination */
-        DEBUG_FlushPrintf(DEBUG_GetDebugStruct());
+        BRIDGE_PrintfFlush();
         DEBUG_Exit(DEBUG_GetDebugStruct(), code);
+        BRIDGE_SendNotif();
 
         /* Write return value to APB device */
         SOC_CTRL->CORE_STATUS = SOC_CTRL_CORE_STATUS_EOC(1) | code;

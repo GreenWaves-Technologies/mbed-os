@@ -43,8 +43,11 @@
  ******************************************************************************/
 /*! @name Driver version */
 /*@{*/
+
+#define PROTOCOL_VERSION  4    // Added field "bridge_to_target" in requests as they are now released by the target
+
 /*! @brief BRIDGE driver version 1.0.0. */
-#define GAP_BRIDGE_DRIVER_VERSION (MAKE_VERSION(1, 0, 0))
+#define GAP_BRIDGE_DRIVER_VERSION (MAKE_VERSION(PROTOCOL_VERSION, 0, 0))
 /*@}*/
 
 typedef enum {
@@ -56,25 +59,32 @@ typedef enum {
   BRIDGE_REQ_CLOSE = 5,
   BRIDGE_REQ_FB_OPEN = 6,
   BRIDGE_REQ_FB_UPDATE = 7,
-#ifdef GAP_USE_NEW_REQLOOP
   BRIDGE_REQ_TARGET_STATUS_SYNC = 8,
-  BRIDGE_REQ_FIRST_USER = 9
-#else
-  BRIDGE_REQ_FIRST_USER = 8
-#endif
+  BRIDGE_REQ_REPLY = 9,
+  BRIDGE_REQ_EFUSE_ACCESS = 10,
+  BRIDGE_REQ_EEPROM_ACCESS = 11,
+  BRIDGE_REQ_BUFFER_ALLOC = 12,
+  BRIDGE_REQ_BUFFER_FREE = 13,
+  BRIDGE_REQ_FLASH_ACCESS = 14,
+  BRIDGE_REQ_FLASH_ERASE_CHIP = 15,
+  BRIDGE_REQ_FLASH_ERASE_SECTOR = 16,
+  BRIDGE_REQ_FIRST_USER = 17
 } bridge_req_e;
 
 typedef enum {
-  HAL_BRIDGE_REQ_FB_FORMAT_GRAY = 1
+  HAL_BRIDGE_REQ_FB_FORMAT_GRAY = 1,
+  HAL_BRIDGE_REQ_FB_FORMAT_RGB = 2,
+  HAL_BRIDGE_REQ_FB_FORMAT_RAW = 3
 } bridge_fb_format_e;
 
 typedef struct _bridge_req_s {
+  uint64_t bridge_data;
   uint32_t next;
   uint32_t size;
   uint32_t type;
   uint32_t done;
   uint32_t popped;
-  uint32_t padding;
+  uint32_t bridge_to_target;
   union {
     struct {
       uint32_t name_len;
@@ -115,10 +125,57 @@ typedef struct _bridge_req_s {
       uint32_t width;
       uint32_t height;
     } fb_update;
-#ifdef GAP_USE_NEW_REQLOOP
+    struct {
+      uint32_t is_write;
+      uint32_t index;
+      uint32_t value;
+      uint32_t mask;
+    } efuse_access;
+    struct {
+      uint8_t itf;
+      uint8_t cs;
+      uint8_t is_write;
+      uint8_t padding;
+      uint32_t addr;
+      uint32_t buffer;
+      uint32_t size;
+      uint32_t retval;
+    } eeprom_access;
+    struct {
+      uint8_t type;
+      uint8_t itf;
+      uint8_t cs;
+      uint8_t is_write;
+      uint32_t addr;
+      uint32_t buffer;
+      uint32_t size;
+      uint32_t retval;
+    } flash_access;
+    struct {
+      uint8_t type;
+      uint8_t itf;
+      uint8_t cs;
+      uint8_t padding;
+      uint32_t retval;
+    } flash_erase_chip;
+    struct {
+      uint8_t type;
+      uint8_t itf;
+      uint8_t cs;
+      uint8_t padding;
+      uint32_t addr;
+      uint32_t retval;
+    } flash_erase_sector;
+    struct {
+      uint32_t size;
+      uint32_t buffer;
+    } buffer_alloc;
+    struct {
+      uint32_t size;
+      uint32_t buffer;
+    } buffer_free;
     struct {
     } target_status_sync;
-#endif
   };
 } bridge_req_t;
 
@@ -235,6 +292,12 @@ int BRIDGE_Write(int file, void* ptr, int len, void *event);
 int BRIDGE_WriteWait(void *event);
 
 /*!
+ * @brief Bridge waiting reference clock rising edge.
+ *
+ */
+void BRIDGE_BlockWait();
+
+/*!
  * @brief Bridge open image frame buffer.
  *
  * @param name         Image name.
@@ -273,6 +336,24 @@ void BRIDGE_FBUpdate(uint64_t fb, int addr, int posx, int posy, int width, int h
  * @param event        BRIDGE Interrupt handler pointer.
  */
 void BRIDGE_TargetStatusSync(void *event);
+
+/*!
+ * @brief Bridge pirntf flush.
+ *
+ */
+void BRIDGE_PrintfFlush();
+
+/*!
+ * @brief Bridge Send notification.
+ *
+ */
+void BRIDGE_SendNotif();
+
+/*!
+ * @brief Bridge clear notification.
+ *
+ */
+void BRIDGE_ClearNotif();
 
 /*!
  * @brief BRIDGE interrupt handler

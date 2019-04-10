@@ -34,7 +34,6 @@
 #define _GAP_RO_FS_H_
 
 /* GAP specific includes. */
-#include "gap_fc_malloc.h"
 #include "hyperbus_io.h"
 
 /*!
