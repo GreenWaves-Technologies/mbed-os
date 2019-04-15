@@ -195,7 +195,7 @@ static void BRIDGE_HandleNotify(bridge_t* bridge)
     BRIDGE_CheckBridgeReq();
 }
 
-void BRIDGE_BlockWait()
+void BRIDGE_Delay()
 {
     if (__is_FC()) {
         /* Disable IRQ */
@@ -218,8 +218,35 @@ void BRIDGE_BlockWait()
     }
 }
 
+void BRIDGE_BlockWait() {
+    /* Disable IRQ */
+    int irq_en = NVIC_GetEnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
+    NVIC_DisableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
+
+    int event = 0;
+    do {
+        event = EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_BRIDGE_EVENT);
+    } while (!(event & (1 << FC_SW_NOTIFY_BRIDGE_EVENT)));
+
+    EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SW_NOTIFY_BRIDGE_EVENT);
+
+    /* Restore IRQ */
+    if (irq_en)
+        NVIC_EnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
+}
+
 void BRIDGE_Init()
 {
+    bridge_t* bridge = BRIDGE_Get();
+
+    /* Tell debug bridge which address to trigger software event */
+    bridge->notifyReqAddr  = (uint32_t)(&FC_EU_SW_EVENTS->TRIGGER_SET[FC_SW_NOTIFY_BRIDGE_EVENT]);
+    bridge->notifyReqValue = 1;
+
+    /* Bind software event handle */
+    NVIC_SetVector(FC_SW_NOTIFY_BRIDGE_EVENT, (uint32_t)__handler_wrapper_light_BRIDGE_IRQHandler);
+    /* Activate interrupt handler for soc event */
+    NVIC_EnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
 }
 
 int BRIDGE_Connect(int wait_bridge, void *event)
@@ -233,6 +260,8 @@ int BRIDGE_Connect(int wait_bridge, void *event)
     request.next = 0;
 
     BRIDGE_SetConnect(&request);
+
+    bridge->target.connected = 1;
 
     BRIDGE_PostReq(&request, NULL);
 
@@ -392,7 +421,7 @@ void BRIDGE_CheckConnection()
 
             while(READ_SOC_CTRL_JTAG_EXT_BT_MD(SOC_CTRL->JTAG) == 7)
             {
-                BRIDGE_BlockWait();
+                BRIDGE_Delay();
             }
         }
     }
@@ -425,7 +454,7 @@ void BRIDGE_PrintfFlush()
             // the notification
             while(DEBUG_IsBusy(DEBUG_GetDebugStruct()))
             {
-                BRIDGE_BlockWait();
+                BRIDGE_Delay();
             }
             BRIDGE_ClearNotif();
         }
@@ -472,7 +501,7 @@ void BRIDGE_ReqShutDown()
         // seen that we became available. Wait until this is the case.
         while(READ_SOC_CTRL_JTAG_EXT_BT_MD(SOC_CTRL->JTAG) == 7)
         {
-            BRIDGE_BlockWait();
+            BRIDGE_Delay();
         }
 
         // Send the request for shutdown
@@ -481,7 +510,7 @@ void BRIDGE_ReqShutDown()
         // And wait until it is acknowledged
         while(READ_SOC_CTRL_JTAG_EXT_BT_MD(SOC_CTRL->JTAG) != 7)
         {
-            BRIDGE_BlockWait();
+            BRIDGE_Delay();
         }
 
         // Update the status so that the bridge knows that we got the aknowledgement
@@ -490,7 +519,7 @@ void BRIDGE_ReqShutDown()
         // And wait until it knows it
         while(READ_SOC_CTRL_JTAG_EXT_BT_MD(SOC_CTRL->JTAG) == 7)
         {
-            BRIDGE_BlockWait();
+            BRIDGE_Delay();
         }
     }
 }

@@ -292,10 +292,10 @@ int BRIDGE_Write(int file, void* ptr, int len, void *event);
 int BRIDGE_WriteWait(void *event);
 
 /*!
- * @brief Bridge waiting reference clock rising edge.
+ * @brief Bridge delay for an reference clock rising edge.
  *
  */
-void BRIDGE_BlockWait();
+void BRIDGE_Delay();
 
 /*!
  * @brief Bridge open image frame buffer.

@@ -97,7 +97,7 @@ static void putc_debug_bridge(char c)
     // Iter until we can push the character.
     while (DEBUG_PutcharNoPoll(DEBUG_GetDebugStruct(), c))
     {
-        BRIDGE_BlockWait();
+        BRIDGE_Delay();
     }
 
     // If the buffer has been flushed to the bridge, we now need to send him

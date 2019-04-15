@@ -44,7 +44,7 @@
 #ifdef GAP_USE_DEBUG_STRUCT
 
 typedef struct {
-  volatile int32_t available;
+  volatile int32_t connected;
 } __attribute__((packed)) target_state_t;
 
 typedef struct {
