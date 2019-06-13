@@ -1,6 +1,5 @@
-/******************************************************************************************
- *
- * Copyright (c) 2018 , GreenWaves Technologies, Inc.
+/*
+ * Copyright (c) 2018, GreenWaves Technologies, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -27,16 +26,17 @@
  * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *******************************************************************************************/
+ */
 
-#ifndef _GAP_HYPERBUS_IO_H_
-#define _GAP_HYPERBUS_IO_H_
+#ifndef __GAP_HYPERBUS_IO_H__
+#define __GAP_HYPERBUS_IO_H__
 
 #include "stdlib.h"
 #include "stdarg.h"
 #include "gap_common.h"
 #include "pinmap.h"
 #include "PeripheralPins.h"
+#include "gap_malloc.h"
 
 /*
  * HYPERFLASH S26KL256S
@@ -62,41 +62,22 @@
  * @addtogroup hyperbus_IO
  * @{
  */
+
 /*******************************************************************************
- * Definitions
+ * Variables, macros, structures,... definitions
  ******************************************************************************/
+
 /* Error codes. */
 #define HYPERBUS_IO_OK        0x0
 #define HYPERBUS_IO_ERROR     0x1
 #define HYPERBUS_IO_BUSY      0x2
 
-#define DEVICE_READY_OFFSET     7
-
-/* Write and read address */
-#define SA                      0x0000
-
-typedef struct {
-    uint16_t data;
-    uint16_t addr;
+/*! @brief HyperFlash command sequence structure. */
+typedef struct
+{
+    uint16_t data;              /*!< Command data. */
+    uint16_t addr;              /*!< Commad address. */
 } cmdSeq;
-
-/* Sector erase sequence */
-static cmdSeq Erase_Seq[6] = {{0xAA, 0x555}, {0x55, 0x2AA}, {0x80, 0x555},
-                              {0xAA, 0x555}, {0x55, 0x2AA}, {0x30, SA}};
-
-/* Configure register0 sequence */
-static cmdSeq VCR_Seq[4]   = {{0xAA, 0x555}, {0x55, 0x2AA}, {0x38, 0x555}, {0x8e0b, 0x0}};
-
-/* Read status register sequence */
-static cmdSeq Reg_Seq      = {0x70, 0x555};
-
-/* Write 512/4 = 128 word to Sector addr 0x4xxx */
-static cmdSeq WP_Seq[3]    = {{0xAA, 0x555}, {0x55, 0x2AA}, {0xA0, 0x555}};
-
-static uint32_t read_val   = 0;
-static uint32_t write_val  = 0;
-
-static hyperbus_transfer_t masterXfer;
 
 /*******************************************************************************
  * APIs
@@ -161,10 +142,45 @@ int32_t HYPERBUS_IO_Read( uint32_t addr, uint32_t size, void *buf, uint8_t devic
  */
 int32_t HYPERBUS_IO_Sync( void );
 
+/*!
+ * @brief Initialize external memory allocation in HyperRam.
+ *
+ * @param addr           Base address for the memory allocator.
+ * @param size           Size of the memory allocator.
+ *
+ * @return uStatus_Success if a memory allocator is initialized, uStatus_Fail otherwise.
+ */
+uint32_t HYPERBUS_IO_Malloc_Init( void *addr, uint32_t size );
+
+/*! @brief Free the memory bloc usedby the memory allocator. */
+void HYPERBUS_IO_Malloc_Deinit();
+
+/*!
+ * @brief Allocate memory from external memory HyperRam.
+ *
+ * @param size           Size of the memory to allocate.
+ *
+ * @return Pointer to the allocated memory chunk if memory has been allocated else NULL.
+ */
+void *HYPERBUS_IO_Malloc( uint32_t size );
+
+/*!
+ * @brief Free an allocated memory chunk of external memory HyperRam.
+ *
+ * This function needs the pointer to allocated memory chunk and its size
+ * in order to free the memory chunk.
+ *
+ * @param chunk          Pointer to the allocated memory chunk to free.
+ * @param size           Size of the chunk.
+ *
+ * @return uStatus_Success if the memory chunk has been freed, uStatus_Fail otherwise.
+ */
+uint32_t HYPERBUS_IO_MallocFree( void *chunk, uint32_t size );
+
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
 
 /*! @} */
 
-#endif /*_GAP_HYPERBUS_IO_H_*/
+#endif /* __GAP_HYPERBUS_IO_H__ */

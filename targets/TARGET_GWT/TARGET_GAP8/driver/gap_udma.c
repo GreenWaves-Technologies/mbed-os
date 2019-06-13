@@ -166,34 +166,43 @@ void UDMA_Deinit(UDMA_Type *base)
     udmaInit--;
 }
 
-void UDMA_BlockWait()
+void UDMA_BlockWait(int32_t evt)
 {
-    /* Disable IRQ */
-    int irq_en = NVIC_GetEnableIRQ(FC_SOC_EVENT_IRQn);
-    NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
+    /* Disable UDMA IRQ */
+    int irq = EU_DisableUDMAIRQ();
 
     int event = 0;
-    do {
-        event = EU_EVT_MaskWaitAndClr(1 << FC_SOC_EVENT_IRQn);
-    } while (!(event & (1 << FC_SOC_EVENT_IRQn)));
+    int32_t cur_event = 0;
+    do
+    {
+        do
+        {
+            event = EU_EVT_MaskWaitAndClr(1 << FC_SOC_EVENT_IRQn);
+        } while (!(event & (1 << FC_SOC_EVENT_IRQn)));
 
-    /* Pop a event. */
-    EU_SOC_EVENTS->CURRENT_EVENT;
+        /* Pop an event. */
+        cur_event = (EU_SOC_EVENTS->CURRENT_EVENT & 0xFF);
 
-    /* Now that we popped the element, we can clear the soc event FIFO event as the FIFO is
-       generating an event as soon as the FIFO is not empty */
-    EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SOC_EVENT_IRQn);
+        /* Now that we popped the element, we can clear the soc event FIFO event as the FIFO is
+           generating an event as soon as the FIFO is not empty */
+        EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SOC_EVENT_IRQn);
+
+        /* When there is asynchronous transfer during block transfer, execute the callback */
+        if (evt != cur_event)
+            UDMA_EventHandler(cur_event, 0);
+    } while (evt != cur_event);
 
     /* Restore IRQ */
-    if (irq_en)
-        NVIC_EnableIRQ(FC_SOC_EVENT_IRQn);
+    EU_RestoreUDMAIRQ(irq);
 }
 
 status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hint)
 {
-    /* Disable IRQ */
-    int irq_en = NVIC_GetEnableIRQ(FC_SOC_EVENT_IRQn);
-    NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
+    /* Disable UDMA IRQ */
+    int irq = EU_DisableUDMAIRQ();
+
+    uint32_t index = UDMA_GetInstance(base);
+    int32_t event = index << 1;
 
     if (info->isTx) {
         assert(!UDMA_TXBusy(base));
@@ -211,23 +220,24 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
         hyperbus_ptr->EXT_ADDR = ext_addr;
 
         /* If RAM register access */
-#if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
+        #if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
         if (ext_addr < uHYPERBUS_Flash_Address) {
             /* hyperbus_crt0_set */
             HYPERBUS_SetCRT0(reg_mem_access);
         }
-#else
+        #else
         if (ext_addr >= uHYPERBUS_Ram_Address) {
             /* hyperbus_crt1_set */
             HYPERBUS_SetCRT1(reg_mem_access);
         }
-#endif
+        #endif
     }
 
     if (info->isTx) {
         base->TX_SADDR = info->dataAddr;
         base->TX_SIZE  = info->dataSize;
         base->TX_CFG   = info->configFlags;
+        event += 1;
     } else {
         base->RX_SADDR = info->dataAddr;
         base->RX_SIZE  = info->dataSize;
@@ -237,18 +247,17 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
 
     if (hint == UDMA_WAIT) {
         /* Wait TX/RX finished */
-        UDMA_BlockWait();
+        UDMA_BlockWait(event);
     } else if (hint == UDMA_WAIT_RX) {
         /* Wait TX finished */
-        UDMA_BlockWait();
+        UDMA_BlockWait(event-1);
 
         /* Wait util previous RX is finished */
-        UDMA_BlockWait();
+        UDMA_BlockWait(event);
     }
 
     /* Restore IRQ */
-    if (irq_en)
-        NVIC_EnableIRQ(FC_SOC_EVENT_IRQn);
+    EU_RestoreUDMAIRQ(irq);
 
     return uStatus_Success;
 }
@@ -265,17 +274,17 @@ static void UDMA_StartTransfer(UDMA_Type *base, udma_req_info_t *info) {
         hyperbus_ptr->EXT_ADDR = ext_addr;
 
         /* If RAM register access */
-#if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
+        #if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
         if (ext_addr < uHYPERBUS_Flash_Address) {
             /* hyperbus_crt0_set */
             HYPERBUS_SetCRT0(reg_mem_access);
         }
-#else
+        #else
         if (ext_addr >= uHYPERBUS_Ram_Address) {
             /* hyperbus_crt1_set */
             HYPERBUS_SetCRT1(reg_mem_access);
         }
-#endif
+        #endif
     }
     else if(info->ctrl == 3) {
         /* For other special IP */
@@ -303,9 +312,8 @@ static void UDMA_StartTransfer(UDMA_Type *base, udma_req_info_t *info) {
  */
 static status_t UDMA_EnqueueRequest(UDMA_Type *base, udma_req_t *req)
 {
-    /* Disable IRQ */
-    int irq_en = NVIC_GetEnableIRQ(FC_SOC_EVENT_IRQn);
-    NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
+    /* Disable UDMA IRQ */
+    int irq = EU_DisableUDMAIRQ();
 
     /* Special calculation for I2S and CPI -- TODO */
     udma_channel_t *channel = &udma_channels[(req->info.channelId >> 1)];
@@ -356,8 +364,7 @@ static status_t UDMA_EnqueueRequest(UDMA_Type *base, udma_req_t *req)
     }
 
     /* Restore IRQ */
-    if (irq_en)
-        NVIC_EnableIRQ(FC_SOC_EVENT_IRQn);
+    EU_RestoreUDMAIRQ(irq);
 
     return 1;
 }
@@ -436,7 +443,7 @@ void UDMA_EventHandler(uint32_t index, int abort)
     udma_req_t *first = channel->first;
 
     /* If abort from a synchronous transfer, just return */
-    if (abort && !channel->first)
+    if (abort || !channel->first)
         return;
 
     if (first->info.repeat.size) {

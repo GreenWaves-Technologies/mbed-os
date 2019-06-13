@@ -111,7 +111,7 @@ void UART_GetDefaultConfig(uart_config_t *config)
 {
     assert(config);
 
-    config->baudRate_Bps = 115200U;
+    config->baudRate_Bps = 9600U;
     config->parityMode   = uUART_ParityDisabled;
 
     config->stopBitCount = uUART_OneStopBit;

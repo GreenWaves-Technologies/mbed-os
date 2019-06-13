@@ -419,7 +419,7 @@ typedef struct {
  * @{
  */
 /*! @name RX_SADDR - RX TX UDMA buffer transfer address register */
-#define UDMA_SADDR_ADDR_MASK                 (0xFFFFU)
+#define UDMA_SADDR_ADDR_MASK                 (0x7FFFFU)
 #define UDMA_SADDR_ADDR_SHIFT                (0U)
 #define UDMA_SADDR_ADDR(x)                   (((uint32_t)(((uint32_t)(x)) /*<< UDMA_SADDR_ADDR_SHIFT*/)) & UDMA_SADDR_ADDR_MASK)
 

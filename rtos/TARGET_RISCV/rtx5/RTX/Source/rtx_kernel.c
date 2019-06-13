@@ -32,9 +32,9 @@
 #include "rtx_lib.h"
 
 #if   (__RISCV_ARCH_GAP__   == 1U)
-GAP_FC_TINY_DATA uint32_t currentStack;
-GAP_FC_TINY_DATA uint32_t kernelStack;
-GAP_FC_TINY_DATA uint32_t userStack;
+uint32_t currentStack;
+uint32_t kernelStack;
+uint32_t userStack;
 #endif
 
 //  OS Runtime Information
@@ -79,6 +79,9 @@ static void KernelUnblock (void) {
 /// Initialize the RTOS Kernel.
 /// \note API identical to osKernelInitialize
 static osStatus_t svcRtxKernelInitialize (void) {
+
+    /* Retentive sleep wake up, Re-initial OS */
+  osRtxInfo.kernel.state = osRtxKernelInactive;
 
   if (osRtxInfo.kernel.state == osRtxKernelReady) {
     EvrRtxKernelInitialized();

@@ -70,7 +70,9 @@ SVC_ContextRestore:
         lw    s11, 11*4(a0)
 
         addi  sp,  a0, 12*4
-        sw    sp, %tiny(userStack)(x0)
+
+        la    a0,  userStack
+        sw    sp, (a0)
 
         .global SVC_Exit
 SVC_Exit:
@@ -93,17 +95,20 @@ SVC_Exit:
         lw    t5,  13*4(sp)
         lw    t6,  14*4(sp)
 
-        lw    ra, %tiny(currentStack)(x0)
+        la    ra,  currentStack
+        lw    ra, (ra)
         bne   ra, x0, .LC1
 
         addi  sp, sp, 18*4
-        sw    sp, %tiny(kernelStack)(x0) // Return from Machine mode
+        la    ra,  kernelStack
+        sw    sp, (ra)
         lw    ra,  -3*4(sp)
         mret
 
 .LC1:
         addi  sp, sp, 18*4
-        sw    sp, %tiny(userStack)(x0)   // Return from User mode
+        la    ra,  userStack
+        sw    sp, (ra)
         lw    ra,  -3*4(sp)
         mret
 
@@ -111,12 +116,15 @@ SVC_Exit:
 Exception_handler:                       // exception handler should called for each exception and interruption
         sw    a0,  0*4(sp)
 
-        lw    a0, %tiny(currentStack)(x0)
+        la    a0,  currentStack
+        lw    a0, (a0)
         bne   a0, x0, .LC2
-        sw    sp, %tiny(kernelStack)(x0) // Use kernel SP
+        la    a0,  kernelStack
+        sw    sp, (a0)         // Use kernel SP
 
 .LC2:
-        sw    sp, %tiny(userStack)(x0)   // Use User SP
+        la    a0,  userStack
+        sw    sp, (a0)         // Use User SP
 
         lw    a0,  0*4(sp)
         sw    a1,  1*4(sp)

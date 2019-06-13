@@ -27,8 +27,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+#include <stdlib.h>
 #include "gap_pmu.h"
+#include "gap_dmacpy.h"
+
 
 /*******************************************************************************
  * Definitions
@@ -142,6 +144,28 @@ static void PMU_FLLSInit()
     #endif
 }
 
+uint32_t fc_data_save_l2_addr = 0x1c000000;
+extern uint32_t __fc_data_start;
+extern uint32_t __fc_data_size;
+
+static void PMU_RetentiveSaveFCData()
+{
+    if (((uint32_t)&__fc_data_size) > 0)
+    {
+        fc_data_save_l2_addr = (uint32_t) malloc ((uint32_t)&__fc_data_size);
+        memcpy ((char *)fc_data_save_l2_addr, (char *)&__fc_data_start, (size_t)&__fc_data_size);
+    }
+}
+
+static void PMU_RetentiveRestoreFCData()
+{
+    if (((uint32_t)&__fc_data_size) > 0)
+    {
+        memcpy ((char *)&__fc_data_start, (char *)fc_data_save_l2_addr, (size_t)&__fc_data_size);
+        free((void*)fc_data_save_l2_addr);
+    }
+}
+
 void PMU_Init()
 {
     #if !defined( __PLATFORM_FPGA__)
@@ -183,6 +207,12 @@ void PMU_Init()
 
     /* Clear PICL_OK and SCU_OK interrupts in case they are set */
     PMU_DLC->DLC_IFR = (PMU_DLC_IFR_PICL_OK_FLAG(1) | PMU_DLC_IFR_SCU_OK_FLAG(1));
+
+    if (PMU_WakeupState() == uPMU_RETENTIVE_SLEEP_BOOT)
+    {
+        PMU_RetentiveRestoreFCData();
+    }
+
     #endif
 }
 
@@ -219,9 +249,14 @@ int PMU_StateSwitch(pmu_switch_state_t state, pmu_switch_mode_t mode) {
 
     /* Need retentive or not */
     if (state == uPMU_SWITCH_DEEP_SLEEP)
+    {
         retentive = 0;
+    }
     else if (state == uPMU_SWITCH_RETENTIVE_SLEEP)
+    {
         retentive = 1;
+        PMU_RetentiveSaveFCData();
+    }
 
     /* PMU shutdown, change state and set wakeup state */
     if (mode == uPMU_SWITCH_FAST) {

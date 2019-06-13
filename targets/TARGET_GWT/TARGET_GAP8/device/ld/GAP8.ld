@@ -45,9 +45,7 @@ MEMORY
 {
   L2                : ORIGIN = 0x1C000000, LENGTH = 0x80000
   L1_sram           : ORIGIN = 0x10000000, LENGTH = 0x10000
-  L1_sram_aliased   : ORIGIN = 0x00000000, LENGTH = 0x10000
   FC_tcdm           : ORIGIN = 0x1B000000, LENGTH = 0x4000
-  FC_tcdm_aliased   : ORIGIN = 0x00000000, LENGTH = 0x4000
 }
 
 __L1_STACK_SIZE      = 0x400;
@@ -211,121 +209,85 @@ SECTIONS
         __l1_preload_start_inL2 = .;
     } > L2
 
-    .l1FcTiny (ORIGIN(FC_tcdm_aliased)) : AT(ORIGIN(FC_tcdm))
-    {
-        /* Due to limitations on FPGA loader, loadable sections must have base and size aligned on 4 bytes */
+     .fcdata (ORIGIN(FC_tcdm)) :
+     {
         . = ALIGN(4);
-        __l1FcShared_start = .;
-        *(.l1FcTiny)
-        *(.l1FcTiny.*)
+        __fc_data_start = .;
+       *(.fcdata)
+       *(.fcdata.*)
         . = ALIGN(4);
-        __l1FcShared_end = .;
-    } > FC_tcdm_aliased
-
-    __l1FcShared_size = __l1FcShared_end - __l1FcShared_start;
-
-     .fcTcdmTiny (ORIGIN(FC_tcdm_aliased) + SIZEOF(.l1FcTiny)) : AT(ORIGIN(FC_tcdm) + SIZEOF(.l1FcTiny))
-     {
-       *(.fcTcdmTiny)
-       *(.fcTcdmTiny.*)
-     } > FC_tcdm_aliased
-
-     .fcTcdm (ORIGIN(FC_tcdm_aliased) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny)) : AT(ORIGIN(FC_tcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny))
-     {
-       *(.fcTcdm)
-       *(.fcTcdm.*)
-     } > FC_tcdm_aliased
-
-     .fcTcdm_g (ORIGIN(FC_tcdm) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny)) :
-     {
-       *(.fcTcdm_g)
-       *(.fcTcdm_g.*)
+        __fc_data_end = .;
      } > FC_tcdm
 
-    .fcbss (ORIGIN(FC_tcdm) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny)) :
+    __fc_data_size = __fc_data_end - __fc_data_start;
+
+    .fcbss (ORIGIN(FC_tcdm) + SIZEOF(.fcdata)) :
     {
         . = ALIGN(4);
         __fc_bss_start__ = .;
+        *(.l1FcTiny)
+        *(.l1FcTiny*)
         *(.fcbss)
         *(.fcbss.*)
-        __fc_stack_end__ = .;
-        __fc_stack_start__ = . + __FC_STACK_SIZE;
-        __fc_bss_end__ = . + __FC_STACK_SIZE;
+        __fc_bss_end__ = .;
      } > FC_tcdm
 
      __fc_bss_size__ = __fc_bss_end__ - __fc_bss_start__;
 
-    .heapfcram (ORIGIN(FC_tcdm_aliased) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny) + __fc_bss_size__ ) : AT(ORIGIN(FC_tcdm) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny) + __fc_bss_size__)
+    .heapfcram (ORIGIN(FC_tcdm) + SIZEOF(.fcdata) + SIZEOF(.fcbss)) :
     {
         . = ALIGN(4);
         *(.heapfcram)
 
         . = ALIGN(4);
         __heapfcram_start = .;
-    } > FC_tcdm_aliased
+    } > FC_tcdm
 
-     __heapfcram_size = LENGTH(FC_tcdm_aliased) + ORIGIN(FC_tcdm_aliased) - __heapfcram_start;
+    __heapfcram_size = LENGTH(FC_tcdm) + ORIGIN(FC_tcdm) - __heapfcram_start - __FC_STACK_SIZE;
 
-    .libgomp (ORIGIN(L1_sram_aliased) ): AT(__l1_preload_start_inL2)
+    .fcStack :
+    {
+      __fcStack_limit = ORIGIN(FC_tcdm) + LENGTH(FC_tcdm) - __FC_STACK_SIZE;
+      __fc_stack_start__ =  ORIGIN(FC_tcdm) + LENGTH(FC_tcdm);
+      PROVIDE(fcStack = __fcStack);
+    } > FC_tcdm
+
+    ASSERT(__fcStack_limit >= __heapfcram_start, "Region FC overflowed with stack and heap")
+
+    .l1cluster_g (ORIGIN(L1_sram)) : AT(__l1_preload_start_inL2)
     {
         /* Due to limitations on FPGA loader, loadable sections must have base and size aligned on 4 bytes */
         . = ALIGN(4);
         __l1_preload_start = .;
-        *(.libgomp)
-        *(.libgomp.*)
-        . = ALIGN(4);
-    } > L1_sram_aliased
-
-    .l1clusterTiny (ORIGIN(L1_sram_aliased)  + SIZEOF(.libgomp) + SIZEOF(.l1FcTiny)) : AT(__l1_preload_start_inL2 + SIZEOF(.libgomp) + SIZEOF(.l1FcTiny))
-    {
-        /* Due to limitations on FPGA loader, loadable sections must have base and size aligned on 4 bytes */
-        . = ALIGN(4);
         *(.l1clusterTiny)
         *(.l1clusterTiny.*)
-
+        *(.l1cluster_g)
+        *(.l1cluster_g.*)
+        *(.data_l1)
+        *(.data_l1.*)
         . = ALIGN(4);
-    } > L1_sram_aliased
+        __l1_preload_end = .;
+     } > L1_sram
 
-    .tls (ORIGIN(L1_sram_aliased)  + SIZEOF(.libgomp) + SIZEOF(.l1FcTiny) + SIZEOF(.l1clusterTiny)) : AT(__l1_preload_start_inL2 + SIZEOF(.libgomp) + SIZEOF(.l1FcTiny) + SIZEOF(.l1clusterTiny))
-    {
-        . = ALIGN(4);
-        __tls_start = .;
-        *(.tls)
-        *(.tls.*)
-        . = ALIGN(4);
-        __tls_end = .;
-    } > L1_sram_aliased
+     __l1_preload_size = __l1_preload_end - ORIGIN(L1_sram);
 
-    .heapsram (ORIGIN(L1_sram_aliased)  + SIZEOF(.libgomp) + SIZEOF(.l1FcTiny) + SIZEOF(.l1clusterTiny) + SIZEOF(.tls) * 8) : AT(__l1_preload_start_inL2 + SIZEOF(.libgomp) + SIZEOF(.l1FcTiny) + SIZEOF(.l1clusterTiny) + SIZEOF(.tls) * 8)
+    .heapsram (ORIGIN(L1_sram)  + SIZEOF(.l1cluster_g)) : AT(__l1_preload_start_inL2 + SIZEOF(l1cluster_g))
     {
         /* Due to limitations on FPGA loader, loadable sections must have base and size aligned on 4 bytes */
         . = ALIGN(4);
         *(.heapsram)
         *(.heapsram.*)
         . = ALIGN(4);
-    } > L1_sram_aliased
-
-    .l1cluster_g (ORIGIN(L1_sram)  + SIZEOF(.libgomp) + SIZEOF(.l1FcTiny) + SIZEOF(.l1clusterTiny) + SIZEOF(.tls) * 8 + SIZEOF(.heapsram)) : AT(__l1_preload_start_inL2 + SIZEOF(.libgomp) + SIZEOF(.l1FcTiny) + SIZEOF(.l1clusterTiny) + SIZEOF(.tls) * 8 + SIZEOF(.heapsram))
-    {
-        /* Due to limitations on FPGA loader, loadable sections must have base and size aligned on 4 bytes */
-        . = ALIGN(4);
-        *(.l1cluster_g)
-        *(.l1cluster_g.*)
-        *(.data_l1)
-        *(.data_l1.*)
-        . = ALIGN(4);
         __heapsram_start = .;
     } > L1_sram
 
      __heapsram_size = LENGTH(L1_sram) + ORIGIN(L1_sram) - __heapsram_start - __L1_STACK_SIZE;
-     __l1_preload_size = __heapsram_start - ORIGIN(L1_sram);
 
-     .stacks (ORIGIN(L1_sram_aliased) + LENGTH(L1_sram_aliased) - __L1_STACK_SIZE) : AT(ORIGIN(L1_sram) + LENGTH(L1_sram) - __L1_STACK_SIZE)
+     .stacks (ORIGIN(L1_sram) + LENGTH(L1_sram) - __L1_STACK_SIZE) :
      {
        . = ALIGN(4);
        stacks = . + __L1_STACK_SIZE;
-     } > L1_sram_aliased
-
+     } > L1_sram
 
     .heapl2ram (__l1_preload_start_inL2 + __l1_preload_size) :
     {

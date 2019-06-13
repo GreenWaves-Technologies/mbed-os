@@ -64,12 +64,13 @@ Reset_Handler:
 
   /* Stack initialization */
   // FC should take its own stack
-  la   sp, __fc_stack_start__
+  li   sp, 0x1B003FFF
 
   /* Initial mstatus and current stack = master stack */
   csrw 0x300, 0
   csrw 0x000, 0
-  sw   x0, %tiny(currentStack)(x0)
+  la   a0, currentStack
+  sw   x0, (a0)
 
 #define __STARTUP_CLEAR_BSS 1
 

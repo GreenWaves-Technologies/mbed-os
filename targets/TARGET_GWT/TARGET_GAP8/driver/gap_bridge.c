@@ -45,7 +45,7 @@ bridge_req_t request;
  * Prototypes
  ******************************************************************************/
 /* handler wrapper  */
-Handler_Wrapper_Light(BRIDGE_IRQHandler);
+Handler_Wrapper(BRIDGE_IRQHandler);
 
 /*******************************************************************************
  * Code
@@ -198,9 +198,8 @@ static void BRIDGE_HandleNotify(bridge_t* bridge)
 void BRIDGE_Delay()
 {
     if (__is_FC()) {
-        /* Disable IRQ */
-        int irq_en = NVIC_GetEnableIRQ(FC_SOC_EVENT_IRQn);
-        NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
+        /* Disable UDMA IRQ */
+        int irq = EU_DisableUDMAIRQ();
 
         SOC_EU_SetFCMask(REF32K_CLK_RISE_EVENT);
 
@@ -213,15 +212,13 @@ void BRIDGE_Delay()
 
         SOC_EU_ClearFCMask(REF32K_CLK_RISE_EVENT);
         /* Restore IRQ */
-        if (irq_en)
-            NVIC_EnableIRQ(FC_SOC_EVENT_IRQn);
+        EU_RestoreUDMAIRQ(irq);
     }
 }
 
 void BRIDGE_BlockWait() {
-    /* Disable IRQ */
-    int irq_en = NVIC_GetEnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
-    NVIC_DisableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
+    /* Disable UDMA IRQ */
+    int irq = EU_DisableUDMAIRQ();
 
     int event = 0;
     do {
@@ -231,8 +228,7 @@ void BRIDGE_BlockWait() {
     EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SW_NOTIFY_BRIDGE_EVENT);
 
     /* Restore IRQ */
-    if (irq_en)
-        NVIC_EnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
+    EU_RestoreUDMAIRQ(irq);
 }
 
 void BRIDGE_Init()
@@ -244,7 +240,7 @@ void BRIDGE_Init()
     bridge->notifyReqValue = 1;
 
     /* Bind software event handle */
-    NVIC_SetVector(FC_SW_NOTIFY_BRIDGE_EVENT, (uint32_t)__handler_wrapper_light_BRIDGE_IRQHandler);
+    NVIC_SetVector(FC_SW_NOTIFY_BRIDGE_EVENT, (uint32_t)__handler_wrapper_BRIDGE_IRQHandler);
     /* Activate interrupt handler for soc event */
     NVIC_EnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
 }

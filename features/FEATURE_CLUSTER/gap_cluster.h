@@ -46,7 +46,6 @@
  * Definitions
  ******************************************************************************/
 /* Compilor error relocation truncated to fit: */
-#define  GAP_CLUSTER_TINY_DATA(id, addr)          (CLUSTER_BASE + 0x400000*(id) + (addr & 0xFFF))
 #define  GAP_CLUSTER_CORE0_MASK                   0x00000001
 #define  GAP_CLUSTER_WITHOUT_CORE0_MASK           0xFFFFFFFE
 

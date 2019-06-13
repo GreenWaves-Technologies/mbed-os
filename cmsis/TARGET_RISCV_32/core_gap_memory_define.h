@@ -38,25 +38,19 @@
 /*! @brief Data will be put inside fabric L2 memory. */
 #define GAP_L2_DATA       __attribute__((section(".data")))
 
-/*! @brief Data will be put by the linker in FC TCDM or in cluster L1 if there is no FC. */
-#define GAP_FC_DATA       __attribute__((section(".fcTcdm")))
-/*! @brief Data will be put by the linker at the beginning of the FC TCDM or in cluster L1 if there is no FC. */
-#define GAP_FC_TINY_DATA  __attribute__((section(".fcTcdmTiny")))
-/*! @brief Data will be put in FC TCDM through global address. */
-#define GAP_FC_GLOBAL_DATA  __attribute__((section(".fcTcdm_g")))
+/*! @brief Data will be put by the linker in FC TCDM .data. */
+#define GAP_FC_DATA       __attribute__((section(".fcdata")))
+/*! @brief Data will be put by the linker in FC TCDM .bss, will be initialized to 0. */
+#define GAP_FC_VAR        __attribute__((section(".fcbss")))
 
 #define GAP_EXPORT        __attribute__ ((export))
 #define GAP_IMPORT        __attribute__ ((import))
 
 #ifdef FEATURE_CLUSTER
-/*! @brief Data will be put by the linker in both FC TCDM and in cluster L1 at the same aliased address
- * This can be used to instantiate the same variable on both side which can then be used transparently
- * by the code on both side
- */
-#define GAP_L1_TINY_DATA  __attribute__ ((tiny)) __attribute__ ((section(".l1clusterTiny")))
-#define GAP_L1_FC_DATA    __attribute__ ((tiny)) __attribute__((section(".l1FcTiny")))
 /*! @brief Data will be put inside cluster L1 memory through global address. */
 #define GAP_L1_GLOBAL_DATA  __attribute__((section(".l1cluster_g")))
+#define GAP_L1_TINY_DATA    GAP_L1_GLOBAL_DATA
+#define GAP_L1_FC_DATA      __attribute__((section(".l1FcTiny")))
 #endif
 
 #define FC_L1_MEM          GAP_FC_DATA

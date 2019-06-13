@@ -65,7 +65,6 @@ int sprintf(char *str, const char *format, ...);
 void uart_putc(char  c);
 void abort();
 
-
 /* @} */
 
 #if defined(__cplusplus)

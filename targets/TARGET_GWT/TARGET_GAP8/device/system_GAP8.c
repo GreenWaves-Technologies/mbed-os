@@ -76,36 +76,39 @@ uint32_t SystemCoreClock = DEFAULT_SYSTEM_CLOCK;
    -- SystemInit()
    ---------------------------------------------------------------------------- */
 /* handler wrapper  */
-Handler_Wrapper_Light(FC_EventHandler);
+Handler_Wrapper(FC_EventHandler);
 
 void SystemInit (void) {
 
-  /* Deactivate all soc events as they are active by default */
-  SOCEU->FC_MASK_MSB = 0xFFFFFFFF;
-  SOCEU->FC_MASK_LSB = 0xFFFFFFFF;
+    /* Deactivate all soc events as they are active by default */
+    SOCEU->FC_MASK_MSB = 0xFFFFFFFF;
+    SOCEU->FC_MASK_LSB = 0xFFFFFFFF;
 
-  /* PMU Init */
-  PMU_Init();
+    /* PMU Init */
+    PMU_Init();
 
-  /* FC Icache Enable*/
-  SCBC->ICACHE_ENABLE = 0xFFFFFFFF;
+    /* FC Icache Enable*/
+    SCBC->ICACHE_ENABLE = 0xFFFFFFFF;
 
-  /* Here we bind same Handler in M and U mode vector table, TODO, security problem */
-  /* If we need to protect the access to peripheral IRQ, we need do as SysTick_Handler */
-  /* by using ecall form U mode to M mode */
-  NVIC_SetVector(FC_SOC_EVENT_IRQn, (uint32_t)__handler_wrapper_light_FC_EventHandler);
+    /* Here we bind same Handler in M and U mode vector table, TODO, security problem */
+    /* If we need to protect the access to peripheral IRQ, we need do as SysTick_Handler */
+    /* by using ecall form U mode to M mode */
+    NVIC_SetVector(FC_SOC_EVENT_IRQn, (uint32_t)__handler_wrapper_FC_EventHandler);
 
-  /* Activate interrupt handler for soc event */
-  NVIC_EnableIRQ(FC_SOC_EVENT_IRQn);
+    /* Activate interrupt handler for soc event */
+    NVIC_EnableIRQ(FC_SOC_EVENT_IRQn);
 
-  /* Initialize malloc functions */
-  FC_MallocInit();
+    /* Initialize malloc functions */
+    FC_MallocInit();
 
-  __enable_irq();
+    __enable_irq();
 }
 
 void SystemCoreClockUpdate () {
     SystemCoreClock = FLL_GetFrequency(uFLL_SOC);
+
+    /* Need to update clock divider for each peripherals */
+    uart_is_init     = 0;
 }
 
 void Boot_Deinit()
@@ -114,18 +117,14 @@ void Boot_Deinit()
 
 void Platform_Exit(int code)
 {
-    if (__is_FC()) {
-        /* Flush the pending messages to the debug tools
-           Notify debug tools about the termination */
-        BRIDGE_PrintfFlush();
-        DEBUG_Exit(DEBUG_GetDebugStruct(), code);
-        BRIDGE_SendNotif();
+    /* Flush the pending messages to the debug tools
+       Notify debug tools about the termination */
+    BRIDGE_PrintfFlush();
+    DEBUG_Exit(DEBUG_GetDebugStruct(), code);
+    BRIDGE_SendNotif();
 
-        /* Write return value to APB device */
-        SOC_CTRL->CORE_STATUS = SOC_CTRL_CORE_STATUS_EOC(1) | code;
-    } else {
-
-    }
+    /* Write return value to APB device */
+    SOC_CTRL->CORE_STATUS = SOC_CTRL_CORE_STATUS_EOC(1) | code;
 
     /* In case the platform does not support exit or this core is not allowed to exit the platform ... */
     EU_EVT_MaskClr(0xffffffff);

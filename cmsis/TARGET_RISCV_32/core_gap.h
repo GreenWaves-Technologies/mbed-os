@@ -575,7 +575,7 @@ typedef struct
   __IOM uint32_t ICACHE_SEL_FLUSH_STATUS;  /*!< Offset: 0x0C (R/W)  Cluster Icache Flush Selected Address Register or FC ICACHE status */
   __IOM uint32_t ICACHE_CNTS_CLEAR;        /*!< Offset: 0x10 (R/W)  Cluster Icache status counter clean */
   __IOM uint32_t ICACHE_CNTS_ENABLE;       /*!< Offset: 0x14 (R/W)  Cluster Icache status counter enable */
-  __IOM uint32_t ICACHE_SEPERATION;        /*!< Offset: 0x18 (R/W)  */
+  __IOM uint32_t ICACHE_SEPERATION;        /*!< Offset: 0x18 (R/W)  Cluster Icache 9th core use private icache (=1) or shared with other cores(=0). */
 } SCBC_Type;
 
 /* SCBC Registers Definitions */
@@ -1021,7 +1021,7 @@ typedef struct
 #define DMAMCHAN_CMD_TYP_Msk                    (1UL << DMAMCHAN_CMD_TYP_Pos)    /*!< DMAMCHAN CMD Type Mask */
 
 #define DMAMCHAN_CMD_LEN_Pos                    0U                               /*!< DMAMCHAN CMD Length Position */
-#define DMAMCHAN_CMD_LEN_Msk                    (0xFFUL /*<< DMAMCHAN_EOC_Pos*/) /*!< DMAMCHAN CMD Length Mask */
+#define DMAMCHAN_CMD_LEN_Msk                    (0xFFFFUL /*<< DMAMCHAN_EOC_Pos*/) /*!< DMAMCHAN CMD Length Mask */
 
 #define DMAMCHAN_CMD_2D_STRIDE_Pos              16U                               /*!< DMAMCHAN CMD 2D STRIDE Position */
 #define DMAMCHAN_CMD_2D_STRIDE_Msk              (0xFFUL << DMAMCHAN_CMD_2D_STRIDE_Pos) /*!< DMAMCHAN CMD 2D STRIDE Mask */

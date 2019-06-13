@@ -323,6 +323,43 @@ static inline void EU_MutexInit(uint32_t mutexID)
 
 //!@}
 
+/** @name Disable UDMA Peripherals' Interrupt.
+ *  Function for manage UDMA Interrupt, for UDMA peripheral transfer, every UDMA peripheral's transfer is depend on its event and
+ *  this event can be delivered to FC core to be an interrupt if FC_SOC_EVENT_IRQn is enable, so if user want the UDMA
+ * peripherals' interrupt to be masked while allows system interrupt (SYSTICK etc.) to continue, this function should be used.
+ */
+/**@{*/
+static inline int EU_DisableUDMAIRQ()
+{
+    int ret = NVIC_GetEnableIRQ(FC_SOC_EVENT_IRQn);
+    /* Disable IRQ */
+    NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
+    return ret;
+}
+
+/** @name Restore UDMA Peripherals' Interrupt.
+ *  Function for manage UDMA Interrupt, for UDMA peripheral transfer, every UDMA peripheral's transfer is depend on its event and
+ *  this event can be delivered to FC core to be an interrupt if FC_SOC_EVENT_IRQn is enable, so if user want the UDMA
+ *  peripherals' interrupt to be masked while allows system interrupt (SYSTICK etc.) to continue,
+ *  the disble function should be used. To restore the interrupt status, use this function
+ *  param enable  previous UDAM Interrupt status to restore
+ */
+static inline void EU_RestoreUDMAIRQ(int enable)
+{
+    /* Restore IRQ */
+    if (enable)
+        NVIC_EnableIRQ(FC_SOC_EVENT_IRQn);
+}
+
+/** @name Put FC core in sleep and wake until next UDMA peripheral's event
+ *
+ */
+static inline void EU_UDMASleep()
+{
+    EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
+}
+
+//!@}
 
 
 /** @name Hardware dispatcher.

@@ -77,8 +77,16 @@ char osPutChar(char c) {
   return __svcPutChar(c);
 }
 
-void uart_putc(char c) {
-    if (!uart_is_init) {
+static inline void uart_flush_printf(void *buffer, uint32_t size)
+{
+    UART_TransferSendBlocking(UART,  (uint8_t *) buffer, size);
+    HAL_DEBUG_STRUCT_NAME.putcharCurrent = 0;
+}
+
+void uart_putc(char c)
+{
+    if (!uart_is_init)
+    {
         uart_config_t config;
 
         UART_GetDefaultConfig(&config);
@@ -89,7 +97,13 @@ void uart_putc(char c) {
         UART_Init(UART, &config, SystemCoreClock);
     }
 
-    UART_WriteByte(UART, c);
+    /* Enqueue in debug struct buffer before flushing when buffer is full. */
+    HAL_DEBUG_STRUCT_NAME.putcharBuffer[HAL_DEBUG_STRUCT_NAME.putcharCurrent] = c;
+    HAL_DEBUG_STRUCT_NAME.putcharCurrent++;
+    if ((HAL_DEBUG_STRUCT_NAME.putcharCurrent == PRINTF_BUF_SIZE) || (c == '\n'))
+    {
+        uart_flush_printf(HAL_DEBUG_STRUCT_NAME.putcharBuffer, HAL_DEBUG_STRUCT_NAME.putcharCurrent);
+    }
 }
 
 static void putc_debug_bridge(char c)
@@ -108,43 +122,52 @@ static void putc_debug_bridge(char c)
     }
 }
 
-static void tfp_putc(void *data, char c) {
-    if (__is_U_Mode()) {
+static void tfp_putc(void *data, char c)
+{
+    if (__is_U_Mode())
+    {
         osPutChar(c);
-    } else {
+    }
+    else
+    {
         #ifdef PRINTF_UART
+        /* When boot form FLASH, always use internal printf, you can only see printf in UART */
         #ifdef FEATURE_CLUSTER
-        if(!__is_FC()) {
+        if (!__is_FC())
+        {
             fc_call_t task;
             task.id     = UDMA_EVENT_UART_TX;
             task.arg[0] = c;
             CLUSTER_CL2FC_SendTask(0, &task);
-        } else
-        #endif
+        }
+        else
+        #endif  /* FEATURE_CLUSTER */
         {
             uart_putc(c);
         }
-        #endif
-
-        /* When boot form FLASH, always use internal printf, you can only see printf in UART */
-        if (DEBUG_GetDebugStruct()->useInternalPrintf) {
-            #ifndef PRINTF_UART
+        #else  /* PRINTF_UART */
+        if (DEBUG_GetDebugStruct()->useInternalPrintf)
+        {
             #ifdef PRINTF_RTL
             /* This is for core internal printf in Simulation */
-            if(__cluster_ID() == FC_CLUSTER_ID) {
-                FC_STDOUT->PUTC[__core_ID() << 1] = c;
-            }
             #ifdef FEATURE_CLUSTER
-            else {
+            if (!__is_FC())
+            {
                 CLUSTER_STDOUT->PUTC[__core_ID() << 1] = c;
             }
-            #endif
-            #endif
-            #endif
-        } else {
+            else
+            #endif  /* FEATURE_CLUSTER */
+            {
+                FC_STDOUT->PUTC[__core_ID() << 1] = c;
+            }
+            #endif  /* PRINTF_RTL */
+        }
+        else
+        {
             /* Only use for JTAG */
             putc_debug_bridge(c);
         }
+        #endif  /* PRINTF_UART */
     }
 }
 

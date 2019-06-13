@@ -1,6 +1,5 @@
-/******************************************************************************************
- *
- * Copyright (c) 2018 , GreenWaves Technologies, Inc.
+/*
+ * Copyright (c) 2018, GreenWaves Technologies, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -27,8 +26,43 @@
  * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *******************************************************************************************/
+ */
+
 #include "hyperbus_io.h"
+
+/*******************************************************************************
+ * Variables, macros, structures,... definitions
+ ******************************************************************************/
+
+static malloc_t __hyperram_malloc; /* HyperRam memory allocator. */
+
+/* HyperFlash status register device ready offset. */
+#define DEVICE_READY_OFFSET     7
+/* Write and read address */
+#define SA                      0x0000
+
+/* Sector erase sequence */
+static cmdSeq Erase_Seq[6] = {{0xAA, 0x555}, {0x55, 0x2AA}, {0x80, 0x555},
+                              {0xAA, 0x555}, {0x55, 0x2AA}, {0x30, SA}};
+
+/* Configure register0 sequence */
+static cmdSeq VCR_Seq[4]   = {{0xAA, 0x555}, {0x55, 0x2AA}, {0x38, 0x555}, {0x8e0b, 0x0}};
+
+/* Read status register sequence */
+static cmdSeq Reg_Seq      = {0x70, 0x555};
+
+/* Write 512/4 = 128 word to Sector addr 0x4xxx */
+static cmdSeq WP_Seq[3]    = {{0xAA, 0x555}, {0x55, 0x2AA}, {0xA0, 0x555}};
+
+/* Variables used to set/read values in/from HyperFlash registers. */
+static uint32_t read_val = 0, write_val = 0;
+
+/* Structure holding information about HyperFlash transfers. */
+static hyperbus_transfer_t masterXfer;
+
+/*******************************************************************************
+ * Function definition
+ ******************************************************************************/
 
 static void HYPERBUS_IO_Pin_Init( uint32_t nbArgs, ... )
 {
@@ -224,3 +258,24 @@ int32_t HYPERBUS_IO_Sync( void )
     return 0;
 }
 
+uint32_t HYPERBUS_IO_Malloc_Init( void *addr, uint32_t size )
+{
+    __hyperram_malloc.first_free = NULL;
+    __hyperram_malloc.type = EXTERNAL_MALLOC;
+    return __malloc_extern_init( &__hyperram_malloc, addr, size );
+}
+
+void HYPERBUS_IO_Malloc_Deinit()
+{
+    __malloc_extern_deinit( &__hyperram_malloc );
+}
+
+void *HYPERBUS_IO_Malloc( uint32_t size )
+{
+    return __malloc_extern( &__hyperram_malloc, size );
+}
+
+uint32_t HYPERBUS_IO_MallocFree( void *chunk, uint32_t size )
+{
+    return __malloc_extern_free( &__hyperram_malloc, chunk, size );
+}

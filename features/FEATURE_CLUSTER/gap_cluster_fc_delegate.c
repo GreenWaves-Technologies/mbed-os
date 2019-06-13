@@ -37,7 +37,7 @@
  * Prototypes
  ******************************************************************************/
 /* handler wrapper  */
-Handler_Wrapper_Light(CLUSTER_CL2FC_Handler);
+Handler_Wrapper(CLUSTER_CL2FC_Handler);
 
 /*******************************************************************************
  * Variables
@@ -52,7 +52,7 @@ void CLUSTER_FC_Delegate_Init(){
     memset(&fc_task, 0, sizeof(fc_task));
 
     /* Activate interrupt handler for FC when cluster want to push a task to FC */
-    NVIC_SetVector(CLUSTER_NOTIFY_FC_IRQn, (uint32_t)__handler_wrapper_light_CLUSTER_CL2FC_Handler);
+    NVIC_SetVector(CLUSTER_NOTIFY_FC_IRQn, (uint32_t)__handler_wrapper_CLUSTER_CL2FC_Handler);
     NVIC_EnableIRQ(CLUSTER_NOTIFY_FC_IRQn);
 }
 

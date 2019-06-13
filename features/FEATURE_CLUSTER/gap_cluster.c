@@ -50,16 +50,13 @@ uint32_t cluster_is_on = 0;
 uint32_t cluster_is_init = 0;
 
 /*! @brief Cluster Stack Variables */
-GAP_L1_TINY_DATA uint32_t cluster_stacks_start;
-GAP_L1_TINY_DATA uint32_t cluster_core_stack_size;
-GAP_L1_TINY_DATA uint32_t cluster_core_mask;
+uint32_t cluster_stacks_start;
+uint32_t cluster_core_stack_size;
+uint32_t cluster_core_mask;
 
 extern char  __l1_preload_start;
 extern char  __l1_preload_start_inL2;
 extern char  __l1_preload_size;
-
-extern char  __l1FcShared_start;
-extern char  __l1FcShared_size;
 
 extern char  __heapsram_start;
 extern char  __heapsram_size;
@@ -113,9 +110,9 @@ static inline void CLUSTER_FC2CL_StackInit(int cid, int nbCores, uint32_t stacks
 {
     uint32_t coreMask = (1 << nbCores) - 1;
 
-    *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&cluster_core_mask) = coreMask;
-    *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&cluster_core_stack_size) = coreStackSize;
-    *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&cluster_stacks_start) = stacksPtr;
+    cluster_core_mask       = coreMask;
+    cluster_core_stack_size = coreStackSize;
+    cluster_stacks_start    = stacksPtr;
 
     /* FC calls cluster */
     EU_CLUSTER_EVT_TrigSet(FC_NOTIFY_CLUSTER_EVENT, 0);
@@ -139,10 +136,7 @@ void CLUSTER_Start(int cid, int nbCores, int control_icache_seperation) {
 
         /* Now do the runtime initializations */
         /* In case the chip does not support L1 preloading, the initial L1 data are in L2, we need to copy them to L1 */
-        memcpy((char *)GAP_CLUSTER_TINY_DATA(0, (int)&__l1_preload_start), &__l1_preload_start_inL2, (size_t)&__l1_preload_size);
-
-        /* Copy the FC / clusters shared data as the linker can only put it in one section (the cluster one) */
-        memcpy((char *)GAP_CLUSTER_TINY_DATA(0, (int)&__l1FcShared_start), &__l1FcShared_start, (size_t)&__l1FcShared_size);
+        memcpy(&__l1_preload_start, &__l1_preload_start_inL2, (size_t)&__l1_preload_size);
 
         /* Initialize malloc heap */
         L1_MallocInit();
@@ -162,7 +156,7 @@ void CLUSTER_Start(int cid, int nbCores, int control_icache_seperation) {
 void CLUSTER_Wait(int cid)
 {
     /* If Cluster has not finished previous task, wait */
-    while(*(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&master_task.entry))
+    while(master_task.entry)
     {
         EU_EVT_MaskWaitAndClr(1 << CLUSTER_NOTIFY_FC_EVENT);
 
@@ -177,13 +171,13 @@ static inline void CLUSTER_FC2CL_StackDeInit()
     CLUSTER_Wait(0);
 
     /* Set stack size = 0 */
-    *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&cluster_core_stack_size) = 0;
+    cluster_core_stack_size = 0;
 
     /* FC calls cluster */
     EU_CLUSTER_EVT_TrigSet(FC_NOTIFY_CLUSTER_EVENT, 0);
 
     /* Wait response from cluster cores */
-    while(*(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&cluster_core_stack_size) == 0)
+    while(cluster_core_stack_size == 0)
     {
         EU_EVT_MaskWaitAndClr(1 << CLUSTER_NOTIFY_FC_EVENT);
     }
@@ -316,7 +310,7 @@ void CLUSTER_TaskFinish(){
 }
 
 uint8_t CLUSTER_GetCoreMask() {
-    return *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&cluster_core_mask);
+    return cluster_core_mask;
 }
 
 void CLUSTER_CoresFork(void (*entry)(void *), void* arg) {
@@ -337,15 +331,14 @@ void CLUSTER_CoresFork(void (*entry)(void *), void* arg) {
 void CLUSTER_SendTask(uint32_t cid, void *entry, void* arg, cluster_task_t *end) {
 
     /* If Cluster has not finished previous task, wait */
-    while(!cluster_is_init ||
-          *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&master_task.entry))
+    while(!cluster_is_init || master_task.entry)
     {
         EU_EVT_MaskWaitAndClr(1 << CLUSTER_NOTIFY_FC_EVENT);
     }
 
-    *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&master_task.entry) = (uint32_t) entry;
-    *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&master_task.arg)   = (uint32_t) arg;
-    *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&master_task.end)   = (uint32_t) end;
+    master_task.entry = entry;
+    master_task.arg   = arg;
+    master_task.end   = end;
 
     EU_CLUSTER_EVT_TrigSet(FC_NOTIFY_CLUSTER_EVENT, 0);
 }

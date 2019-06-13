@@ -65,7 +65,6 @@ status_t DMACPY_BlockingTransfer(DMACPY_Type *base, uint32_t *src_addr, uint32_t
         UDMA_BlockTransfer((UDMA_Type *) base, &req_info, UDMA_NO_WAIT);
         req_info.isTx              = 1;
         req_info.dataAddr          = UDMA_SADDR_ADDR(src_addr);
-        return UDMA_BlockTransfer((UDMA_Type *) base, &req_info, UDMA_WAIT_RX);
         break;
     case uDMACPY_FC2L2 :
         req_info.isTx              = 0;
