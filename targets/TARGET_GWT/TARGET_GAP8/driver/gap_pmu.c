@@ -153,7 +153,15 @@ static void PMU_RetentiveSaveFCData()
     if (((uint32_t)&__fc_data_size) > 0)
     {
         fc_data_save_l2_addr = (uint32_t) malloc ((uint32_t)&__fc_data_size);
+        #ifdef GAP8_V2
+        DMACPY_Init( DMACPY );
+
+        DMACPY_BlockingTransfer( DMACPY, &__fc_data_start, (uint32_t *)fc_data_save_l2_addr, (uint32_t)&__fc_data_size, uDMACPY_FC2L2 );
+
+        DMACPY_Deinit( DMACPY );
+        #else
         memcpy ((char *)fc_data_save_l2_addr, (char *)&__fc_data_start, (size_t)&__fc_data_size);
+        #endif
     }
 }
 
@@ -161,7 +169,15 @@ static void PMU_RetentiveRestoreFCData()
 {
     if (((uint32_t)&__fc_data_size) > 0)
     {
+        #ifdef GAP8_V2
+        DMACPY_Init( DMACPY );
+
+        DMACPY_BlockingTransfer( DMACPY, (uint32_t *)fc_data_save_l2_addr, &__fc_data_start, (uint32_t)&__fc_data_size, uDMACPY_L22FC );
+
+        DMACPY_Deinit( DMACPY );
+        #else
         memcpy ((char *)&__fc_data_start, (char *)fc_data_save_l2_addr, (size_t)&__fc_data_size);
+        #endif
         free((void*)fc_data_save_l2_addr);
     }
 }

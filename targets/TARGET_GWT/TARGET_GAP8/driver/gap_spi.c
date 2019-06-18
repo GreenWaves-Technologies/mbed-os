@@ -250,7 +250,7 @@ int SPI_Master_AutoPolling(SPIM_Type *base, spi_polling_config_t *conf)
                                0, 0, 32);
 
     /* Wait the polling end */
-    UDMA_BlockWait();
+    UDMA_BlockWait(UDMA_EVENT_SPIM0_EOT >> 1);
 
     /* Disallow reference Clock propagating to UDMA */
     SOC_EU_ClearPRMask( REF32K_CLK_RISE_EVENT );

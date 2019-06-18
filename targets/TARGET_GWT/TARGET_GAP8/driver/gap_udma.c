@@ -166,7 +166,7 @@ void UDMA_Deinit(UDMA_Type *base)
     udmaInit--;
 }
 
-void UDMA_BlockWait(int32_t evt)
+void UDMA_BlockWait(int32_t index)
 {
     /* Disable UDMA IRQ */
     int irq = EU_DisableUDMAIRQ();
@@ -188,9 +188,9 @@ void UDMA_BlockWait(int32_t evt)
         EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SOC_EVENT_IRQn);
 
         /* When there is asynchronous transfer during block transfer, execute the callback */
-        if (evt != cur_event)
+        if ((cur_event >> 1) != index)
             UDMA_EventHandler(cur_event, 0);
-    } while (evt != cur_event);
+    } while ((cur_event >> 1) != index);
 
     /* Restore IRQ */
     EU_RestoreUDMAIRQ(irq);
@@ -200,9 +200,6 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
 {
     /* Disable UDMA IRQ */
     int irq = EU_DisableUDMAIRQ();
-
-    uint32_t index = UDMA_GetInstance(base);
-    int32_t event = index << 1;
 
     if (info->isTx) {
         assert(!UDMA_TXBusy(base));
@@ -237,23 +234,23 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
         base->TX_SADDR = info->dataAddr;
         base->TX_SIZE  = info->dataSize;
         base->TX_CFG   = info->configFlags;
-        event += 1;
     } else {
         base->RX_SADDR = info->dataAddr;
         base->RX_SIZE  = info->dataSize;
         base->RX_CFG   = info->configFlags;
     }
 
+    uint32_t index = UDMA_GetInstance(base);
 
     if (hint == UDMA_WAIT) {
         /* Wait TX/RX finished */
-        UDMA_BlockWait(event);
+        UDMA_BlockWait(index);
     } else if (hint == UDMA_WAIT_RX) {
         /* Wait TX finished */
-        UDMA_BlockWait(event-1);
+        UDMA_BlockWait(index);
 
         /* Wait util previous RX is finished */
-        UDMA_BlockWait(event);
+        UDMA_BlockWait(index);
     }
 
     /* Restore IRQ */
