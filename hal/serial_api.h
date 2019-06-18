@@ -3,6 +3,7 @@
 /** @{*/
 /* mbed Microcontroller Library
  * Copyright (c) 2006-2013 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +21,7 @@
 #define MBED_SERIAL_API_H
 
 #include "device.h"
+#include "pinmap.h"
 #include "hal/buffer.h"
 #include "hal/dma_api.h"
 
@@ -219,20 +221,41 @@ void serial_pinout_tx(PinName tx);
  */
 void serial_set_flow_control(serial_t *obj, FlowControl type, PinName rxflow, PinName txflow);
 
-#if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
-/** Get the remain size which has not been transferd in UDMA RX channel
+/** Get the pins that support Serial TX
  *
- * @param obj The serial object
- */
-int serial_read_remain_size(const serial_t *obj);
-
-
-/** Get the remain size which has not been transferd in UDMA TX channel
+ * Return a PinMap array of pins that support Serial TX. The
+ * array is terminated with {NC, NC, 0}.
  *
- * @param obj The serial object
+ * @return PinMap array
  */
-int serial_write_remain_size(const serial_t *obj);
-#endif
+const PinMap *serial_tx_pinmap(void);
+
+/** Get the pins that support Serial RX
+ *
+ * Return a PinMap array of pins that support Serial RX. The
+ * array is terminated with {NC, NC, 0}.
+ *
+ * @return PinMap array
+ */
+const PinMap *serial_rx_pinmap(void);
+
+/** Get the pins that support Serial CTS
+ *
+ * Return a PinMap array of pins that support Serial CTS. The
+ * array is terminated with {NC, NC, 0}.
+ *
+ * @return PinMap array
+ */
+const PinMap *serial_cts_pinmap(void);
+
+/** Get the pins that support Serial RTS
+ *
+ * Return a PinMap array of pins that support Serial RTS. The
+ * array is terminated with {NC, NC, 0}.
+ *
+ * @return PinMap array
+ */
+const PinMap *serial_rts_pinmap(void);
 
 #if DEVICE_SERIAL_ASYNCH
 

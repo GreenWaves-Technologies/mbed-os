@@ -106,7 +106,7 @@ uint32_t flags_wait_any(uint32_t flags, bool clear = true);
 
 /** Wait for all of the specified Thread Flags to become signaled for the current thread.
   @param   flags     specifies the flags to wait for
-  @param   millisec  timeout value or 0 in case of no time-out.
+  @param   millisec  timeout value.
   @param   clear     whether to clear the specified flags after waiting for them. (default: true)
   @return  actual thread flags before clearing, which may not satisfy the wait
   @note You cannot call this function from ISR context.
@@ -130,7 +130,7 @@ uint32_t flags_wait_all_until(uint32_t flags, uint64_t millisec, bool clear = tr
 
 /** Wait for any of the specified Thread Flags to become signaled for the current thread.
   @param   flags     specifies the flags to wait for
-  @param   millisec  timeout value or 0 in case of no time-out.
+  @param   millisec  timeout value.
   @param   clear     whether to clear the specified flags after waiting for them. (default: true)
   @return  actual thread flags before clearing, which may not satisfy the wait
   @note You cannot call this function from ISR context.
@@ -179,6 +179,12 @@ void yield();
   @note You may call this function from ISR context.
 */
 osThreadId_t get_id();
+
+/** Get the thread name of the current running thread.
+  @return  thread name pointer or NULL if thread has no name or in case of error.
+  @note You cannot call this function from ISR context.
+*/
+const char *get_name();
 
 };
 /** @}*/

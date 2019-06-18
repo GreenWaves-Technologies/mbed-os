@@ -3,6 +3,7 @@
 /** @{*/
 /* mbed Microcontroller Library
  * Copyright (c) 2006-2013 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +21,7 @@
 #define MBED_PWMOUT_API_H
 
 #include "device.h"
+#include "pinmap.h"
 
 #if DEVICE_PWMOUT
 
@@ -106,6 +108,15 @@ void pwmout_pulsewidth_ms(pwmout_t *obj, int ms);
  * @param us  The floating-point pulsewidth in microseconds
  */
 void pwmout_pulsewidth_us(pwmout_t *obj, int us);
+
+/** Get the pins that support PWM
+ *
+ * Return a PinMap array of pins that support PWM.
+ * The array is terminated with {NC, NC, 0}.
+ *
+ * @return PinMap array
+ */
+const PinMap *pwmout_pinmap(void);
 
 /**@}*/
 

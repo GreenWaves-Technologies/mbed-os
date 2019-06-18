@@ -3,6 +3,7 @@
 /** @{*/
 /* mbed Microcontroller Library
  * Copyright (c) 2006-2013 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +21,7 @@
 #define MBED_ANALOGOUT_API_H
 
 #include "device.h"
+#include "pinmap.h"
 
 #if DEVICE_ANALOGOUT
 
@@ -79,6 +81,15 @@ float analogout_read(dac_t *obj);
  * @return An unsigned 16-bit value representing the current voltage on the pin
  */
 uint16_t analogout_read_u16(dac_t *obj);
+
+/** Get the pins that support analogout
+ *
+ * Return a PinMap array of pins that support analogout. The
+ * array is terminated with {NC, NC, 0}.
+ *
+ * @return PinMap array
+ */
+const PinMap *analogout_pinmap(void);
 
 /**@}*/
 

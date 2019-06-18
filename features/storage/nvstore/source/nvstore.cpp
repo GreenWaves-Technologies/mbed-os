@@ -21,14 +21,18 @@
 #if NVSTORE_ENABLED
 
 #include "FlashIAP.h"
+#include "SystemStorage.h"
 #include "mbed_critical.h"
 #include "mbed_assert.h"
+#include "mbed_error.h"
 #include "mbed_wait_api.h"
 #include <algorithm>
 #include <string.h>
 #include <stdio.h>
 
 // --------------------------------------------------------- Definitions ----------------------------------------------------------
+
+namespace {
 
 static const uint16_t delete_item_flag = 0x8000;
 static const uint16_t set_once_flag    = 0x4000;
@@ -61,16 +65,25 @@ static const unsigned int owner_bit_pos = 12;
 
 typedef struct {
     uint16_t version;
-    uint16_t reserved1;
-    uint32_t reserved2;
+    uint16_t max_keys;
+    uint32_t reserved;
 } master_record_data_t;
 
 static const uint32_t min_area_size = 4096;
 static const uint32_t max_data_size = 4096;
 
-static const int num_write_retries = 16;
-
 static const uint8_t blank_flash_val = 0xFF;
+
+typedef enum {
+    NVSTORE_AREA_STATE_NONE = 0,
+    NVSTORE_AREA_STATE_EMPTY,
+    NVSTORE_AREA_STATE_VALID,
+} area_state_e;
+
+static const uint32_t initial_crc = 0xFFFFFFFF;
+
+} // anonymous namespace
+
 
 // See whether any of these defines are given (by config files)
 // If so, this means that that area configuration is given by the user
@@ -94,15 +107,6 @@ NVStore::nvstore_area_data_t NVStore::initial_area_params[] = {{0, 0},
     {0, 0}
 };
 #endif
-
-typedef enum {
-    NVSTORE_AREA_STATE_NONE = 0,
-    NVSTORE_AREA_STATE_EMPTY,
-    NVSTORE_AREA_STATE_VALID,
-} area_state_e;
-
-static const uint32_t initial_crc = 0xFFFFFFFF;
-
 
 // -------------------------------------------------- Local Functions Declaration ----------------------------------------------------
 
@@ -171,11 +175,54 @@ uint16_t NVStore::get_max_possible_keys()
 
 void NVStore::set_max_keys(uint16_t num_keys)
 {
+    uint16_t key = 0, old_max_keys = 0;
+
     MBED_ASSERT(num_keys < get_max_possible_keys());
+
+    if (num_keys < NVSTORE_NUM_PREDEFINED_KEYS) {
+        return;
+    }
+
+    if (!_init_done) {
+        int ret = init();
+        if (ret != NVSTORE_SUCCESS) {
+            return;
+        }
+    }
+
+    _mutex->lock();
+
+    //check if there are values that might be discarded
+    if (num_keys < _max_keys) {
+        for (key = num_keys; key < _max_keys; key++) {
+            if (_offset_by_key[key] != 0) {
+                return;
+            }
+        }
+    }
+
+    old_max_keys = _max_keys;
     _max_keys = num_keys;
-    // User is allowed to change number of keys. As this affects init, need to deinitialize now.
-    // Don't call init right away - it is lazily called by get/set functions if needed.
-    deinit();
+
+    // Invoke GC to write new max_keys to master record
+    garbage_collection(no_key, 0, 0, 0, NULL, std::min(_max_keys, old_max_keys));
+
+    // Reallocate _offset_by_key with new size
+    if (_max_keys != old_max_keys) {
+        // Reallocate _offset_by_key with new size
+        uint32_t *old_offset_by_key = (uint32_t *) _offset_by_key;
+        uint32_t *new_offset_by_key = new uint32_t[_max_keys];
+        MBED_ASSERT(new_offset_by_key);
+
+        // Copy old content to new table
+        memset(new_offset_by_key, 0, sizeof(uint32_t) * _max_keys);
+        memcpy(new_offset_by_key, old_offset_by_key, sizeof(uint32_t) * std::min(_max_keys, old_max_keys));
+
+        _offset_by_key = new_offset_by_key;
+        delete[] old_offset_by_key;
+    }
+
+    _mutex->unlock();
 }
 
 int NVStore::flash_read_area(uint8_t area, uint32_t offset, uint32_t size, void *buf)
@@ -185,62 +232,41 @@ int NVStore::flash_read_area(uint8_t area, uint32_t offset, uint32_t size, void 
 
 int NVStore::flash_write_area(uint8_t area, uint32_t offset, uint32_t size, const void *buf)
 {
-    int ret;
-    // On some boards, write action can fail due to HW limitations (like critical drivers
-    // that disable all other actions). Just retry a few times until success.
-    for (int i = 0; i < num_write_retries; i++) {
-        ret = _flash->program(buf, _flash_area_params[area].address + offset, size);
-        if (!ret) {
-            return ret;
-        }
-        wait_ms(1);
-    }
+    int ret = _flash->program(buf, _flash_area_params[area].address + offset, size);
     return ret;
 }
 
 int NVStore::flash_erase_area(uint8_t area)
 {
-    int ret;
-    // On some boards, write action can fail due to HW limitations (like critical drivers
-    // that disable all other actions). Just retry a few times until success.
-    for (int i = 0; i < num_write_retries; i++) {
-        ret = _flash->erase(_flash_area_params[area].address, _flash_area_params[area].size);
-        if (!ret) {
-            return ret;
-        }
-        wait_ms(1);
-    }
+    int ret = _flash->erase(_flash_area_params[area].address, _flash_area_params[area].size);
     return ret;
 }
 
 void NVStore::calc_validate_area_params()
 {
-    int num_sectors = 0;
-
-    size_t flash_addr = _flash->get_flash_start();
+    size_t flash_start_addr = _flash->get_flash_start();
     size_t flash_size = _flash->get_flash_size();
+    size_t flash_addr;
     size_t sector_size;
-    int max_sectors = flash_size / _flash->get_sector_size(flash_addr) + 1;
-    size_t *sector_map = new size_t[max_sectors];
 
     int area = 0;
     size_t left_size = flash_size;
 
     memcpy(_flash_area_params, initial_area_params, sizeof(_flash_area_params));
-    int user_config = (_flash_area_params[0].size != 0);
-    int in_area = 0;
+    bool user_config = (_flash_area_params[0].size != 0);
+    bool in_area = false;
     size_t area_size = 0;
 
-    while (left_size) {
-        sector_size = _flash->get_sector_size(flash_addr);
-        sector_map[num_sectors++] = flash_addr;
+    if (user_config) {
+        flash_addr = flash_start_addr;
+        while (left_size) {
+            sector_size = _flash->get_sector_size(flash_addr);
 
-        if (user_config) {
             // User configuration - here we validate it
             // Check that address is on a sector boundary, that size covers complete sector sizes,
             // and that areas don't overlap.
             if (_flash_area_params[area].address == flash_addr) {
-                in_area = 1;
+                in_area = true;
             }
             if (in_area) {
                 area_size += sector_size;
@@ -249,18 +275,13 @@ void NVStore::calc_validate_area_params()
                     if (area == NVSTORE_NUM_AREAS) {
                         break;
                     }
-                    in_area = 0;
+                    in_area = false;
                     area_size = 0;
                 }
             }
+            flash_addr += sector_size;
+            left_size -= sector_size;
         }
-
-        flash_addr += sector_size;
-        left_size -= sector_size;
-    }
-    sector_map[num_sectors] = flash_addr;
-
-    if (user_config) {
         // Valid areas were counted. Assert if not the expected number.
         MBED_ASSERT(area == NVSTORE_NUM_AREAS);
     } else {
@@ -268,23 +289,20 @@ void NVStore::calc_validate_area_params()
         // Take last two sectors by default. If their sizes aren't big enough, take
         // a few consecutive ones.
         area = 1;
-        _flash_area_params[area].size = 0;
-        int i;
-        for (i = num_sectors - 1; i >= 0; i--) {
-            sector_size = sector_map[i + 1] - sector_map[i];
+        flash_addr = flash_start_addr + flash_size;
+        _flash_area_params[0].size = 0;
+        _flash_area_params[1].size = 0;
+        while (area >= 0) {
+            MBED_ASSERT(flash_addr > flash_start_addr);
+            sector_size = _flash->get_sector_size(flash_addr - 1);
+            flash_addr -= sector_size;
             _flash_area_params[area].size += sector_size;
             if (_flash_area_params[area].size >= min_area_size) {
-                _flash_area_params[area].address = sector_map[i];
+                _flash_area_params[area].address = flash_addr;
                 area--;
-                if (area < 0) {
-                    break;
-                }
-                _flash_area_params[area].size = 0;
             }
         }
     }
-
-    delete[] sector_map;
 }
 
 
@@ -444,8 +462,8 @@ int NVStore::write_master_record(uint8_t area, uint16_t version, uint32_t &next_
     master_record_data_t master_rec;
 
     master_rec.version = version;
-    master_rec.reserved1 = 0;
-    master_rec.reserved2 = 0;
+    master_rec.max_keys = _max_keys;
+    master_rec.reserved = 0;
     return write_record(area, 0, master_record_key, 0, 0, sizeof(master_rec),
                         &master_rec, next_offset);
 }
@@ -518,7 +536,7 @@ int NVStore::copy_record(uint8_t from_area, uint32_t from_offset, uint32_t to_of
     return NVSTORE_SUCCESS;
 }
 
-int NVStore::garbage_collection(uint16_t key, uint16_t flags, uint8_t owner, uint16_t buf_size, const void *buf)
+int NVStore::garbage_collection(uint16_t key, uint16_t flags, uint8_t owner, uint16_t buf_size, const void *buf, uint16_t num_keys)
 {
     uint32_t curr_offset, new_area_offset, next_offset, curr_owner;
     int ret;
@@ -542,7 +560,7 @@ int NVStore::garbage_collection(uint16_t key, uint16_t flags, uint8_t owner, uin
 
     // Now iterate on all types, and copy the ones who have valid offsets (meaning that they exist)
     // to the other area.
-    for (key = 0; key < _max_keys; key++) {
+    for (key = 0; key < num_keys; key++) {
         curr_offset = _offset_by_key[key];
         uint16_t save_flags = curr_offset & offs_by_key_flag_mask & ~offs_by_key_area_mask;
         curr_area = (uint8_t)(curr_offset >> offs_by_key_area_bit_pos) & 1;
@@ -578,7 +596,6 @@ int NVStore::garbage_collection(uint16_t key, uint16_t flags, uint8_t owner, uin
 
     return ret;
 }
-
 
 int NVStore::do_get(uint16_t key, uint16_t buf_size, void *buf, uint16_t &actual_size,
                     int validate_only)
@@ -684,7 +701,7 @@ int NVStore::do_set(uint16_t key, uint16_t buf_size, const void *buf, uint16_t f
 
     // If we cross the area limit, we need to invoke GC.
     if (new_free_space >= _size) {
-        ret = garbage_collection(key, flags, owner, buf_size, buf);
+        ret = garbage_collection(key, flags, owner, buf_size, buf, _max_keys);
         _mutex->unlock();
         return ret;
     }
@@ -794,18 +811,24 @@ int NVStore::init()
     uint32_t free_space_offset_of_area[NVSTORE_NUM_AREAS];
     uint32_t init_attempts_val;
     uint32_t next_offset;
-    int os_ret;
     int ret = NVSTORE_SUCCESS;
     int valid;
     uint16_t key;
     uint16_t flags;
     uint16_t versions[NVSTORE_NUM_AREAS];
+    uint16_t keys[NVSTORE_NUM_AREAS];
     uint16_t actual_size;
     uint8_t owner;
 
     if (_init_done) {
         return NVSTORE_SUCCESS;
     }
+
+    //Check if we are on internal memory && try to set the internal memory for TDBStore use.
+    ret = avoid_conflict_nvstore_tdbstore(NVSTORE);
+    //NVstore in internal memory can not be initialize when TDBStore is in use
+    MBED_ASSERT(ret != MBED_ERROR_ALREADY_INITIALIZED);
+
 
     // This handles the case that init function is called by more than one thread concurrently.
     // Only the one who gets the value of 1 in _init_attempts_val will proceed, while others will
@@ -816,13 +839,6 @@ int NVStore::init()
             wait_ms(1);
         }
         return NVSTORE_SUCCESS;
-    }
-
-    _offset_by_key = new uint32_t[_max_keys];
-    MBED_ASSERT(_offset_by_key);
-
-    for (key = 0; key < _max_keys; key++) {
-        _offset_by_key[key] = 0;
     }
 
     _mutex = new PlatformMutex;
@@ -841,17 +857,19 @@ int NVStore::init()
 
     calc_validate_area_params();
 
+    //retrieve max keys from master record
     for (uint8_t area = 0; area < NVSTORE_NUM_AREAS; area++) {
         area_state[area] = NVSTORE_AREA_STATE_NONE;
         free_space_offset_of_area[area] =  0;
         versions[area] = 0;
+        keys[area] = 0;
 
         _size = std::min(_size, _flash_area_params[area].size);
 
         // Find start of empty space at the end of the area. This serves for both
         // knowing whether the area is empty and for the record traversal at the end.
-        os_ret = calc_empty_space(area, free_space_offset_of_area[area]);
-        MBED_ASSERT(!os_ret);
+        ret = calc_empty_space(area, free_space_offset_of_area[area]);
+        MBED_ASSERT(!ret);
 
         if (!free_space_offset_of_area[area]) {
             area_state[area] = NVSTORE_AREA_STATE_EMPTY;
@@ -872,12 +890,13 @@ int NVStore::init()
 
         // We have a non valid master record, in a non-empty area. Just erase the area.
         if ((!valid) || (key != master_record_key)) {
-            os_ret = flash_erase_area(area);
-            MBED_ASSERT(!os_ret);
+            ret = flash_erase_area(area);
+            MBED_ASSERT(!ret);
             area_state[area] = NVSTORE_AREA_STATE_EMPTY;
             continue;
         }
         versions[area] = master_rec.version;
+        keys[area] = master_rec.max_keys;
 
         // Place _free_space_offset after the master record (for the traversal,
         // which takes place after this loop).
@@ -888,6 +907,17 @@ int NVStore::init()
         // that we found our active area.
         _active_area = area;
         _active_area_version = versions[area];
+        if (!keys[area]) {
+            keys[area] = NVSTORE_NUM_PREDEFINED_KEYS;
+        }
+        _max_keys = keys[area];
+    }
+
+    _offset_by_key = new uint32_t[_max_keys];
+    MBED_ASSERT(_offset_by_key);
+
+    for (key = 0; key < _max_keys; key++) {
+        _offset_by_key[key] = 0;
     }
 
     // In case we have two empty areas, arbitrarily assign 0 to the active one.
@@ -908,8 +938,8 @@ int NVStore::init()
             _active_area = 1;
         }
         _active_area_version = versions[_active_area];
-        os_ret = flash_erase_area(1 - _active_area);
-        MBED_ASSERT(!os_ret);
+        ret = flash_erase_area(1 - _active_area);
+        MBED_ASSERT(!ret);
     }
 
     // Traverse area until reaching the empty space at the end or until reaching a faulty record
@@ -920,9 +950,9 @@ int NVStore::init()
         MBED_ASSERT(ret == NVSTORE_SUCCESS);
 
         // In case we have a faulty record, this probably means that the system crashed when written.
-        // Perform a garbage collection, to make the the other area valid.
+        // Perform a garbage collection, to make the other area valid.
         if (!valid) {
-            ret = garbage_collection(no_key, 0, 0, 0, NULL);
+            ret = garbage_collection(no_key, 0, 0, 0, NULL, _max_keys);
             break;
         }
         if (flags & delete_item_flag) {

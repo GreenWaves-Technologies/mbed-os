@@ -52,7 +52,11 @@ using namespace utest::v1;
 
 utest::v1::status_t test_setup(const size_t number_of_cases)
 {
-    GREENTEA_SETUP(240, "default_auto");
+#ifdef MBED_GREENTEA_TEST_WIFI_TIMEOUT_S
+    GREENTEA_SETUP(MBED_GREENTEA_TEST_WIFI_TIMEOUT_S, "default_auto");
+#else
+    GREENTEA_SETUP(360, "default_auto");
+#endif
     return verbose_test_setup_handler(number_of_cases);
 }
 
@@ -62,31 +66,23 @@ Case cases[] = {
     Case("WIFI-CONNECT-NOCREDENTIALS", wifi_connect_nocredentials),
     Case("WIFI-SET-CREDENTIAL", wifi_set_credential),
     Case("WIFI-SET-CHANNEL", wifi_set_channel),
+    Case("WIFI-CONNECT-PARAMS-NULL", wifi_connect_params_null),
+    Case("WIFI-SCAN-NULL", wifi_scan_null),
+#if defined(MBED_CONF_APP_WIFI_SECURE_SSID) || defined(MBED_CONF_APP_WIFI_UNSECURE_SSID)
+    Case("WIFI-SCAN", wifi_scan),
+#endif
 #if defined(MBED_CONF_APP_WIFI_UNSECURE_SSID)
     Case("WIFI-GET-RSSI", wifi_get_rssi),
-#endif
-    Case("WIFI-CONNECT-PARAMS-NULL", wifi_connect_params_null),
-#if defined(MBED_CONF_APP_WIFI_UNSECURE_SSID)
     Case("WIFI-CONNECT-PARAMS-VALID-UNSECURE", wifi_connect_params_valid_unsecure),
+    Case("WIFI-CONNECT", wifi_connect),
+    Case("WIFI-CONNECT-DISCONNECT-REPEAT", wifi_connect_disconnect_repeat),
 #endif
 #if defined(MBED_CONF_APP_WIFI_SECURE_SSID)
     Case("WIFI-CONNECT-PARAMS-VALID-SECURE", wifi_connect_params_valid_secure),
     Case("WIFI-CONNECT-PARAMS-CHANNEL", wifi_connect_params_channel),
     Case("WIFI-CONNECT-PARAMS-CHANNEL-FAIL", wifi_connect_params_channel_fail),
-#endif
-#if defined(MBED_CONF_APP_WIFI_UNSECURE_SSID)
-    Case("WIFI-CONNECT", wifi_connect),
-#endif
-#if defined(MBED_CONF_APP_WIFI_SECURE_SSID)
     Case("WIFI-CONNECT-SECURE", wifi_connect_secure),
     Case("WIFI-CONNECT-SECURE-FAIL", wifi_connect_secure_fail),
-#endif
-#if defined(MBED_CONF_APP_WIFI_UNSECURE_SSID)
-    Case("WIFI-CONNECT-DISCONNECT-REPEAT", wifi_connect_disconnect_repeat),
-#endif
-    Case("WIFI-SCAN-NULL", wifi_scan_null),
-#if defined(MBED_CONF_APP_WIFI_SECURE_SSID) && defined(MBED_CONF_APP_WIFI_UNSECURE_SSID)
-    Case("WIFI-SCAN", wifi_scan),
 #endif
 };
 

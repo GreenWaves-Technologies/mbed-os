@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-#if DEVICE_SERIAL && defined(MBED_CONF_EVENTS_PRESENT) && defined(MBED_CONF_NSAPI_PRESENT) && defined(MBED_CONF_RTOS_PRESENT)
+#if DEVICE_SERIAL && DEVICE_INTERRUPTIN && defined(MBED_CONF_EVENTS_PRESENT) && defined(MBED_CONF_NSAPI_PRESENT) && defined(MBED_CONF_RTOS_PRESENT)
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
+
 #include <string.h>
-#include <stdint.h>
 #include <stdlib.h>
 
 #include "ESP8266.h"
@@ -25,6 +29,7 @@
 #include "PinNames.h"
 #include "platform/Callback.h"
 #include "platform/mbed_error.h"
+#include "rtos/Kernel.h"
 
 #define TRACE_GROUP  "ESPA" // ESP8266 AT layer
 
@@ -51,6 +56,8 @@ ESP8266::ESP8266(PinName tx, PinName rx, bool debug, PinName rts, PinName cts)
       _sock_already(false),
       _closed(false),
       _busy(false),
+      _reset_check(_rmutex),
+      _reset_done(false),
       _conn_status(NSAPI_STATUS_DISCONNECTED)
 {
     _serial.set_baud(ESP8266_DEFAULT_BAUD_RATE);
@@ -71,6 +78,7 @@ ESP8266::ESP8266(PinName tx, PinName rx, bool debug, PinName rts, PinName cts)
     _parser.oob("UNLINK", callback(this, &ESP8266::_oob_socket_close_err));
     _parser.oob("ALREADY CONNECTED", callback(this, &ESP8266::_oob_conn_already));
     _parser.oob("ERROR", callback(this, &ESP8266::_oob_err));
+    _parser.oob("ready", callback(this, &ESP8266::_oob_ready));
     // Don't expect to find anything about the watchdog reset in official documentation
     //https://techtutorialsx.com/2017/01/21/esp8266-watchdog-functions/
     _parser.oob("wdt reset", callback(this, &ESP8266::_oob_watchdog_reset));
@@ -96,7 +104,7 @@ bool ESP8266::at_available()
 
     _smutex.lock();
     // Might take a while to respond after HW reset
-    for(int i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++) {
         ready = _parser.send("AT")
                 && _parser.recv("OK\n");
         if (ready) {
@@ -183,13 +191,16 @@ bool ESP8266::start_uart_hw_flow_ctrl(void)
     bool done = true;
 
 #if DEVICE_SERIAL_FC
+    _smutex.lock();
     if (_serial_rts != NC && _serial_cts != NC) {
-       // Start board's flow control
-        _serial.set_flow_control(SerialBase::RTSCTS, _serial_rts, _serial_cts);
-
         // Start ESP8266's flow control
         done = _parser.send("AT+UART_CUR=%u,8,1,0,3", ESP8266_DEFAULT_BAUD_RATE)
                && _parser.recv("OK\n");
+
+        if (done) {
+            // Start board's flow control
+            _serial.set_flow_control(SerialBase::RTSCTS, _serial_rts, _serial_cts);
+        }
 
     } else if (_serial_rts != NC) {
         _serial.set_flow_control(SerialBase::RTS, _serial_rts, NC);
@@ -203,7 +214,14 @@ bool ESP8266::start_uart_hw_flow_ctrl(void)
         done = _parser.send("AT+UART_CUR=%u,8,1,0,1", ESP8266_DEFAULT_BAUD_RATE)
                && _parser.recv("OK\n");
 
-        _serial.set_flow_control(SerialBase::CTS, NC, _serial_cts);
+        if (done) {
+            _serial.set_flow_control(SerialBase::CTS, NC, _serial_cts);
+        }
+    }
+    _smutex.unlock();
+
+    if (!done) {
+        tr_debug("Enable UART HW flow control: FAIL");
     }
 #else
     if (_serial_rts != NC || _serial_cts != NC) {
@@ -234,19 +252,34 @@ bool ESP8266::startup(int mode)
 
 bool ESP8266::reset(void)
 {
+    static const int ESP8266_BOOTTIME = 10000; // [ms]
     bool done = false;
 
     _smutex.lock();
-    set_timeout(ESP8266_CONNECT_TIMEOUT);
 
+    unsigned long int start_time = rtos::Kernel::get_ms_count();
+    _reset_done = false;
+    set_timeout(ESP8266_RECV_TIMEOUT);
     for (int i = 0; i < 2; i++) {
-        if (_parser.send("AT+RST")
-                && _parser.recv("OK\n")
-                && _parser.recv("ready")) {
-            done = true;
+        if (!_parser.send("AT+RST") || !_parser.recv("OK\n")) {
+            tr_debug("reset(): AT+RST failed or no response");
+            continue;
+        }
+
+        _rmutex.lock();
+        while ((rtos::Kernel::get_ms_count() - start_time < ESP8266_BOOTTIME) && !_reset_done) {
+            _process_oob(ESP8266_RECV_TIMEOUT, true); // UART mutex claimed -> need to check for OOBs ourselves
+            _reset_check.wait_for(100); // Arbitrary relatively short delay
+        }
+
+        done = _reset_done;
+        _rmutex.unlock();
+        if (done) {
             break;
         }
     }
+
+    tr_debug("reset(): done: %s", done ? "OK" : "FAIL");
 
     _clear_socket_packets(ESP8266_ALL_SOCKET_IDS);
     set_timeout();
@@ -472,8 +505,7 @@ nsapi_error_t ESP8266::open_udp(int id, const char *addr, int port, int local_po
                     _sock_already = false; // To be raised again by OOB msg
                     done = close(id);
                     if (!done) {
-                        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CLOSE_FAILED), \
-                                   "ESP8266::_open_udp: device refused to close socket");
+                        break;
                     }
                 }
                 if (_error) {
@@ -491,9 +523,7 @@ nsapi_error_t ESP8266::open_udp(int id, const char *addr, int port, int local_po
 
     _smutex.unlock();
 
-    if (done) {
-        tr_debug("UDP socket %d opened", id);
-    }
+    tr_debug("UDP socket %d opened: %s", id, (_sock_i[id].open ? "true" : "false"));
 
     return done ? NSAPI_ERROR_OK : NSAPI_ERROR_DEVICE_ERROR;
 }
@@ -526,8 +556,7 @@ nsapi_error_t ESP8266::open_tcp(int id, const char *addr, int port, int keepaliv
                     _sock_already = false; // To be raised again by OOB msg
                     done = close(id);
                     if (!done) {
-                        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CLOSE_FAILED), \
-                                   "ESP8266::_open_tcp: device refused to close socket");
+                        break;
                     }
                 }
                 if (_error) {
@@ -545,9 +574,7 @@ nsapi_error_t ESP8266::open_tcp(int id, const char *addr, int port, int keepaliv
 
     _smutex.unlock();
 
-    if (done) {
-        tr_debug("TCP socket %d opened", id);
-    }
+    tr_debug("TCP socket %d opened: %s", id, (_sock_i[id].open ? "true" : "false"));
 
     return done ? NSAPI_ERROR_OK : NSAPI_ERROR_DEVICE_ERROR;
 }
@@ -563,11 +590,12 @@ bool ESP8266::dns_lookup(const char *name, char *ip)
 
 nsapi_error_t ESP8266::send(int id, const void *data, uint32_t amount)
 {
+    nsapi_error_t ret = NSAPI_ERROR_DEVICE_ERROR;
     // +CIPSEND supports up to 2048 bytes at a time
     // Data stream can be truncated
     if (amount > 2048 && _sock_i[id].proto == NSAPI_TCP) {
         amount = 2048;
-    // Datagram must stay intact
+        // Datagram must stay intact
     } else if (amount > 2048 && _sock_i[id].proto == NSAPI_UDP) {
         tr_debug("UDP datagram maximum size is 2048");
         return NSAPI_ERROR_PARAMETER;
@@ -576,31 +604,50 @@ nsapi_error_t ESP8266::send(int id, const void *data, uint32_t amount)
     _smutex.lock();
     set_timeout(ESP8266_SEND_TIMEOUT);
     _busy = false;
-    if (_parser.send("AT+CIPSEND=%d,%lu", id, amount)
-            && _parser.recv(">")
-            && _parser.write((char *)data, (int)amount) >= 0
-            && _parser.recv("SEND OK")) {
-        // No flow control, data overrun is possible
-        if (_serial_rts == NC) {
-            while (_parser.process_oob()); // Drain USART receive register
-        }
-        _smutex.unlock();
-        return NSAPI_ERROR_OK;
+    _error = false;
+    if (!_parser.send("AT+CIPSEND=%d,%" PRIu32, id, amount)) {
+        tr_debug("ESP8266::send(): AT+CIPSEND failed");
+        goto END;
     }
-    if (_error) {
-        _error = false;
+
+    if (!_parser.recv(">")) {
+        tr_debug("ESP8266::send(): didn't get \">\"");
+        ret = NSAPI_ERROR_WOULD_BLOCK;
+        goto END;
     }
+
+    if (_parser.write((char *)data, (int)amount) >= 0 && _parser.recv("SEND OK")) {
+        ret = NSAPI_ERROR_OK;
+    }
+
+END:
+    _process_oob(ESP8266_RECV_TIMEOUT, true); // Drain USART receive register to avoid data overrun
+
+    // error hierarchy, from low to high
     if (_busy) {
-        set_timeout();
-        _smutex.unlock();
-        tr_debug("returning WOULD_BLOCK");
-        return NSAPI_ERROR_WOULD_BLOCK;
+        ret = NSAPI_ERROR_WOULD_BLOCK;
+        tr_debug("ESP8266::send(): modem busy");
+    }
+
+    if (ret == NSAPI_ERROR_DEVICE_ERROR) {
+        ret = NSAPI_ERROR_WOULD_BLOCK;
+        tr_debug("ESP8266::send(): send failed");
+    }
+
+    if (_error) {
+        ret = NSAPI_ERROR_CONNECTION_LOST;
+        tr_debug("ESP8266::send(): connection disrupted");
+    }
+
+    if (!_sock_i[id].open && ret != NSAPI_ERROR_OK) {
+        ret = NSAPI_ERROR_CONNECTION_LOST;
+        tr_debug("ESP8266::send(): socket closed abruptly");
     }
 
     set_timeout();
     _smutex.unlock();
 
-    return NSAPI_ERROR_DEVICE_ERROR;
+    return ret;
 }
 
 void ESP8266::_oob_packet_hdlr()
@@ -614,7 +661,7 @@ void ESP8266::_oob_packet_hdlr()
         return;
     }
 
-    if(_tcp_passive && _sock_i[id].open == true && _sock_i[id].proto == NSAPI_TCP) {
+    if (_tcp_passive && _sock_i[id].open == true && _sock_i[id].proto == NSAPI_TCP) {
         if (_parser.recv("%d\n", &amount)) {
             _sock_i[id].tcp_data_avbl = amount;
 
@@ -683,7 +730,7 @@ int32_t ESP8266::_recv_tcp_passive(int id, void *data, uint32_t amount, uint32_t
     _process_oob(timeout, true);
 
     if (_sock_i[id].tcp_data_avbl != 0) {
-        _sock_i[id].tcp_data = (char*)data;
+        _sock_i[id].tcp_data = (char *)data;
         _sock_i[id].tcp_data_rcvd = NSAPI_ERROR_WOULD_BLOCK;
         _sock_active_id = id;
 
@@ -691,16 +738,22 @@ int32_t ESP8266::_recv_tcp_passive(int id, void *data, uint32_t amount, uint32_t
         amount = amount > 2048 ? 2048 : amount;
 
         // NOTE: documentation v3.0 says '+CIPRECVDATA:<data_len>,' but it's not how the FW responds...
-        bool done = _parser.send("AT+CIPRECVDATA=%d,%lu", id, amount)
-                                && _parser.recv("OK\n");
-        if (!done) {
-            tr_debug("data request failed");
-        }
+        bool done = _parser.send("AT+CIPRECVDATA=%d,%" PRIu32, id, amount)
+                    && _parser.recv("OK\n");
+
         _sock_i[id].tcp_data = NULL;
         _sock_active_id = -1;
 
+        if (!done) {
+            goto BUSY;
+        }
+
         // update internal variable tcp_data_avbl to reflect the remaining data
         if (_sock_i[id].tcp_data_rcvd > 0) {
+            if (_sock_i[id].tcp_data_rcvd > (int32_t)amount) {
+                MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_EBADMSG), \
+                           "ESP8266::_recv_tcp_passive() too much data from modem\n");
+            }
             if (_sock_i[id].tcp_data_avbl > _sock_i[id].tcp_data_rcvd) {
                 _sock_i[id].tcp_data_avbl -= _sock_i[id].tcp_data_rcvd;
             } else {
@@ -715,6 +768,18 @@ int32_t ESP8266::_recv_tcp_passive(int id, void *data, uint32_t amount, uint32_t
         ret = 0;
     }
 
+    _smutex.unlock();
+    return ret;
+
+BUSY:
+    _process_oob(ESP8266_RECV_TIMEOUT, true);
+    if (_busy) {
+        tr_debug("_recv_tcp_passive(): modem busy");
+        ret = NSAPI_ERROR_WOULD_BLOCK;
+    } else {
+        tr_error("_recv_tcp_passive(): unknown state");
+        ret = NSAPI_ERROR_DEVICE_ERROR;
+    }
     _smutex.unlock();
     return ret;
 }
@@ -782,10 +847,9 @@ int32_t ESP8266::recv_udp(int id, void *data, uint32_t amount, uint32_t timeout)
     _smutex.lock();
     set_timeout(timeout);
 
-    // No flow control, drain the USART receive register ASAP to avoid data overrun
-    if (_serial_rts == NC) {
-        _process_oob(timeout, true);
-    }
+    // Process OOB data since this is
+    // how UDP packets are received
+    _process_oob(timeout, true);
 
     set_timeout();
 
@@ -912,26 +976,26 @@ bool ESP8266::_recv_ap(nsapi_wifi_ap_t *ap)
 
     if (FW_AT_LEAST_VERSION(_at_v.major, _at_v.minor, _at_v.patch, 0, ESP8266_AT_VERSION_WIFI_SCAN_CHANGE)) {
         ret = _parser.recv("+CWLAP:(%d,\"%32[^\"]\",%hhd,\"%hhx:%hhx:%hhx:%hhx:%hhx:%hhx\",%hhu,%d,%d,%d,%d,%d,%d)\n",
-                        &sec,
-                        ap->ssid,
-                        &ap->rssi,
-                        &ap->bssid[0], &ap->bssid[1], &ap->bssid[2], &ap->bssid[3], &ap->bssid[4], &ap->bssid[5],
-                        &ap->channel,
-                        &dummy,
-                        &dummy,
-                        &dummy,
-                        &dummy,
-                        &dummy,
-                        &dummy);
+                           &sec,
+                           ap->ssid,
+                           &ap->rssi,
+                           &ap->bssid[0], &ap->bssid[1], &ap->bssid[2], &ap->bssid[3], &ap->bssid[4], &ap->bssid[5],
+                           &ap->channel,
+                           &dummy,
+                           &dummy,
+                           &dummy,
+                           &dummy,
+                           &dummy,
+                           &dummy);
     } else {
         ret = _parser.recv("+CWLAP:(%d,\"%32[^\"]\",%hhd,\"%hhx:%hhx:%hhx:%hhx:%hhx:%hhx\",%hhu,%d,%d)\n",
-                        &sec,
-                        ap->ssid,
-                        &ap->rssi,
-                        &ap->bssid[0], &ap->bssid[1], &ap->bssid[2], &ap->bssid[3], &ap->bssid[4], &ap->bssid[5],
-                        &ap->channel,
-                        &dummy,
-                        &dummy);
+                           &sec,
+                           ap->ssid,
+                           &ap->rssi,
+                           &ap->bssid[0], &ap->bssid[1], &ap->bssid[2], &ap->bssid[3], &ap->bssid[4], &ap->bssid[5],
+                           &ap->channel,
+                           &dummy,
+                           &dummy);
 
     }
 
@@ -942,6 +1006,18 @@ bool ESP8266::_recv_ap(nsapi_wifi_ap_t *ap)
 
 void ESP8266::_oob_watchdog_reset()
 {
+    MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_ETIME), \
+               "_oob_watchdog_reset() modem watchdog reset triggered\n");
+}
+
+void ESP8266::_oob_ready()
+{
+
+    _rmutex.lock();
+    _reset_done = true;
+    _reset_check.notify_all();
+    _rmutex.unlock();
+
     for (int i = 0; i < SOCKET_COUNT; i++) {
         _sock_i[i].open = false;
     }
@@ -949,6 +1025,8 @@ void ESP8266::_oob_watchdog_reset()
     // Makes possible to reinitialize
     _conn_status = NSAPI_STATUS_ERROR_UNSUPPORTED;
     _conn_stat_cb();
+
+    tr_debug("_oob_reset(): reset detected");
 }
 
 void ESP8266::_oob_busy()
@@ -978,7 +1056,7 @@ void ESP8266::_oob_tcp_data_hdlr()
 
     MBED_ASSERT(_sock_active_id >= 0 && _sock_active_id < 5);
 
-    if (!_parser.recv("%ld:", &len)) {
+    if (!_parser.recv("%" SCNd32 ":", &len)) {
         return;
     }
 
@@ -1077,8 +1155,13 @@ void ESP8266::_oob_connection_status()
                        "ESP8266::_oob_connection_status: invalid AT cmd\n");
         }
     } else {
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_ENOMSG), \
-                   "ESP8266::_oob_connection_status: network status timed out\n");
+        tr_error("_oob_connection_status(): network status timeout, disconnecting");
+        if (!disconnect()) {
+            tr_warning("_oob_connection_status(): driver initiated disconnect failed");
+        } else {
+            tr_debug("_oob_connection_status(): disconnected");
+        }
+        _conn_status = NSAPI_STATUS_ERROR_UNSUPPORTED;
     }
 
     MBED_ASSERT(_conn_stat_cb);
@@ -1099,6 +1182,13 @@ int8_t ESP8266::default_wifi_mode()
     _smutex.unlock();
 
     return 0;
+}
+
+void ESP8266::flush()
+{
+    _smutex.lock();
+    _parser.flush();
+    _smutex.unlock();
 }
 
 bool ESP8266::set_default_wifi_mode(const int8_t mode)

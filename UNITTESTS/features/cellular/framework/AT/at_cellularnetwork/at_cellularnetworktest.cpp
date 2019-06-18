@@ -17,7 +17,7 @@
 #include "gtest/gtest.h"
 #include <string.h>
 #include "AT_CellularNetwork.h"
-#include "EventQueue.h"
+#include "events/EventQueue.h"
 #include "ATHandler.h"
 #include "AT_CellularDevice.h"
 #include "FileHandle_stub.h"
@@ -52,13 +52,6 @@ class my_AT_CN : public AT_CellularNetwork {
 public:
     my_AT_CN(ATHandler &atHandler) : AT_CellularNetwork(atHandler) {}
     virtual ~my_AT_CN() {}
-    virtual AT_CellularNetwork::RegistrationMode has_registration(RegistrationType reg_type)
-    {
-        if (reg_type == C_GREG) {
-            return RegistrationModeDisable;
-        }
-        return RegistrationModeEnable;
-    }
     virtual nsapi_error_t set_access_technology_impl(RadioAccessTechnology op_rat)
     {
         return NSAPI_ERROR_OK;
@@ -69,13 +62,6 @@ class my_AT_CNipv6 : public AT_CellularNetwork {
 public:
     my_AT_CNipv6(ATHandler &atHandler) : AT_CellularNetwork(atHandler) {}
     virtual ~my_AT_CNipv6() {}
-    virtual AT_CellularNetwork::RegistrationMode has_registration(RegistrationType reg_type)
-    {
-        if (reg_type == C_GREG) {
-            return RegistrationModeDisable;
-        }
-        return RegistrationModeEnable;
-    }
     virtual nsapi_error_t set_access_technology_impl(RadioAccessTechnology op_rat)
     {
         return NSAPI_ERROR_OK;
@@ -136,6 +122,7 @@ TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_registration_params)
     EXPECT_TRUE(reg_params._status == CellularNetwork::RegistrationDenied);
     EXPECT_TRUE(reg_params._act == CellularNetwork::RAT_EGPRS);
     EXPECT_TRUE(reg_params._cell_id == -1);
+    EXPECT_TRUE(reg_params._lac == -1);
 
     ATHandler_stub::read_string_index = 4;
     ATHandler_stub::read_string_table[3] = "00C3";
@@ -143,6 +130,7 @@ TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_registration_params)
     ATHandler_stub::read_string_table[1] = "00100100";
     ATHandler_stub::read_string_table[0] = "01000111";
     EXPECT_TRUE(NSAPI_ERROR_OK == cn.get_registration_params(CellularNetwork::C_EREG, reg_params));
+    EXPECT_TRUE(reg_params._lac == 0xc3);
     EXPECT_TRUE(reg_params._cell_id == 305463233);
     EXPECT_TRUE(reg_params._active_time == 240);
     EXPECT_TRUE(reg_params._periodic_tau == 70 * 60 * 60);
@@ -150,32 +138,32 @@ TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_registration_params)
     ATHandler_stub::read_string_value = NULL;
     ATHandler_stub::ssize_value = 0;
     // Check get_registration_params without specifying the registration type
-    EXPECT_TRUE(NSAPI_ERROR_OK == cn.get_registration_params(reg_params_check));
-    EXPECT_TRUE(reg_params_check._status == CellularNetwork::RegistrationDenied);
-    EXPECT_TRUE(reg_params_check._act == CellularNetwork::RAT_EGPRS);
-    EXPECT_TRUE(reg_params_check._cell_id == 305463233);
-    EXPECT_TRUE(reg_params_check._active_time == 240);
-    EXPECT_TRUE(reg_params_check._periodic_tau == 70 * 60 * 60);
+    ASSERT_EQ(NSAPI_ERROR_OK, cn.get_registration_params(reg_params_check));
+    ASSERT_EQ(reg_params_check._status, CellularNetwork::RegistrationDenied);
+    ASSERT_EQ(reg_params_check._act, CellularNetwork::RAT_EGPRS);
+    ASSERT_EQ(reg_params_check._cell_id, 305463233);
+    ASSERT_EQ(reg_params_check._active_time, 240);
+    ASSERT_EQ(reg_params_check._periodic_tau, 70 * 60 * 60);
 
     reg_params._status = CellularNetwork::NotRegistered;
     reg_params._act = CellularNetwork::RAT_GSM;
     reg_params._cell_id = 1;
-    EXPECT_TRUE(NSAPI_ERROR_OK == cn.get_registration_params(CellularNetwork::C_GREG, reg_params));
-    EXPECT_TRUE(reg_params._status == CellularNetwork::RegistrationDenied);
-    EXPECT_TRUE(reg_params._act == CellularNetwork::RAT_EGPRS);
-    EXPECT_TRUE(reg_params._cell_id == -1);
+    ASSERT_EQ(NSAPI_ERROR_OK, cn.get_registration_params(CellularNetwork::C_REG, reg_params));
+    ASSERT_EQ(reg_params._status, CellularNetwork::RegistrationDenied);
+    ASSERT_EQ(reg_params._act, CellularNetwork::RAT_EGPRS);
+    ASSERT_EQ(reg_params._cell_id, -1);
 
     my_AT_CN nw(at);
     reg_params._status = CellularNetwork::NotRegistered;
     reg_params._act = CellularNetwork::RAT_GSM;
 
-    EXPECT_TRUE(NSAPI_ERROR_UNSUPPORTED == nw.get_registration_params(CellularNetwork::C_GREG, reg_params));
-    EXPECT_TRUE(reg_params._status == CellularNetwork::NotRegistered);
-    EXPECT_TRUE(reg_params._act == CellularNetwork::RAT_GSM);
+    ASSERT_EQ(NSAPI_ERROR_UNSUPPORTED, nw.get_registration_params(CellularNetwork::C_GREG, reg_params));
+    ASSERT_EQ(reg_params._status, CellularNetwork::NotRegistered);
+    ASSERT_EQ(reg_params._act, CellularNetwork::RAT_GSM);
 
-    EXPECT_TRUE(NSAPI_ERROR_OK == nw.get_registration_params(CellularNetwork::C_EREG, reg_params));
-    EXPECT_TRUE(reg_params._status == CellularNetwork::RegistrationDenied);
-    EXPECT_TRUE(reg_params._act == CellularNetwork::RAT_EGPRS);
+    ASSERT_EQ(NSAPI_ERROR_OK, nw.get_registration_params(CellularNetwork::C_EREG, reg_params));
+    ASSERT_EQ(reg_params._status, CellularNetwork::RegistrationDenied);
+    ASSERT_EQ(reg_params._act, CellularNetwork::RAT_EGPRS);
 
     ATHandler_stub::nsapi_error_value = NSAPI_ERROR_DEVICE_ERROR;
     reg_params._status = CellularNetwork::NotRegistered;
@@ -184,15 +172,15 @@ TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_registration_params)
     reg_params._active_time = 2;
     reg_params._periodic_tau = 3;
 
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.get_registration_params(CellularNetwork::C_EREG, reg_params));
-    EXPECT_TRUE(reg_params._status == CellularNetwork::NotRegistered);
-    EXPECT_TRUE(reg_params._act == CellularNetwork::RAT_UNKNOWN);
+    ASSERT_EQ(NSAPI_ERROR_DEVICE_ERROR, cn.get_registration_params(CellularNetwork::C_EREG, reg_params));
+    ASSERT_EQ(reg_params._status, CellularNetwork::NotRegistered);
+    ASSERT_EQ(reg_params._act, CellularNetwork::RAT_UNKNOWN);
     EXPECT_TRUE(reg_params._cell_id == -1 && reg_params._active_time == -1 && reg_params._periodic_tau == -1);
 
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.get_registration_params(CellularNetwork::C_GREG, reg_params));
-    EXPECT_TRUE(reg_params._status == CellularNetwork::NotRegistered);
-    EXPECT_TRUE(reg_params._act == CellularNetwork::RAT_UNKNOWN);
-    EXPECT_TRUE(reg_params._cell_id == -1);
+    ASSERT_EQ(NSAPI_ERROR_DEVICE_ERROR, cn.get_registration_params(CellularNetwork::C_REG, reg_params));
+    ASSERT_EQ(reg_params._status, CellularNetwork::NotRegistered);
+    ASSERT_EQ(reg_params._act, CellularNetwork::RAT_UNKNOWN);
+    ASSERT_EQ(reg_params._cell_id, -1);
 
     reg_params._status = CellularNetwork::SearchingNetwork;
     reg_params._act = CellularNetwork::RAT_GSM;
@@ -209,6 +197,71 @@ TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_registration_params)
     EXPECT_TRUE(reg_params_check._status == CellularNetwork::NotRegistered);
     EXPECT_TRUE(reg_params_check._act == CellularNetwork::RAT_UNKNOWN);
     EXPECT_TRUE(reg_params_check._cell_id == -1 && reg_params_check._active_time == -1 && reg_params_check._periodic_tau == -1);
+}
+
+static int disconnect_cb_count = 0;
+static bool disconnect_cb_param_check = false;
+static void disconnect_cb(nsapi_event_t ev, intptr_t intptr)
+{
+    disconnect_cb_count++;
+
+    if (disconnect_cb_count == 3 && disconnect_cb_param_check) {
+        EXPECT_TRUE(ev == NSAPI_EVENT_CONNECTION_STATUS_CHANGE);
+        EXPECT_TRUE(intptr == NSAPI_STATUS_DISCONNECTED);
+    }
+}
+
+TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_registration_status_change)
+{
+    EventQueue que;
+    FileHandle_stub fh1;
+    ATHandler at(&fh1, que, 0, ",");
+
+    AT_CellularNetwork cn(at);
+
+
+    cn.attach(&disconnect_cb);
+
+    ATHandler_stub::nsapi_error_value = NSAPI_ERROR_OK;
+    ATHandler_stub::process_oob_urc = true;
+
+    ATHandler_stub::read_string_index = 2;
+    ATHandler_stub::read_string_table[2] = "+CREG:";
+    ATHandler_stub::read_string_table[1] = "00C3";
+    ATHandler_stub::read_string_table[0] = "A13F";
+    ATHandler_stub::int_count = 2;
+    //ATHandler_stub::int_valid_count_table[2] = 1; //URC status is skipped
+    ATHandler_stub::int_valid_count_table[1] = 0; //not registered
+    ATHandler_stub::int_valid_count_table[0] = 1;
+    at.process_oob();
+
+    disconnect_cb_count = 0;
+    disconnect_cb_param_check = true;
+    ATHandler_stub::read_string_index = 4;
+    ATHandler_stub::read_string_table[4] = "+CREG:";
+    ATHandler_stub::read_string_table[3] = "00C3";
+    ATHandler_stub::read_string_table[2] = "A13F";
+    ATHandler_stub::read_string_table[1] = "FF";
+    ATHandler_stub::read_string_table[0] = "FF";
+    ATHandler_stub::int_count = 2;
+    //ATHandler_stub::int_valid_count_table[2] = 1; //URC status is skipped
+    ATHandler_stub::int_valid_count_table[1] = 1; //registered, home network
+    ATHandler_stub::int_valid_count_table[0] = 1;
+    at.process_oob();
+
+    ATHandler_stub::read_string_index = 5;
+    ATHandler_stub::int_count = 3;
+    ATHandler_stub::read_string_index = 4;
+    ATHandler_stub::read_string_table[4] = "+CREG:";
+    ATHandler_stub::read_string_table[3] = "00C3";
+    ATHandler_stub::read_string_table[2] = "A13F";
+    ATHandler_stub::read_string_table[1] = "FF";
+    ATHandler_stub::read_string_table[0] = "FF";
+    ATHandler_stub::int_count = 2;
+    //ATHandler_stub::int_valid_count_table[2] = 1; //URC status is skipped
+    ATHandler_stub::int_valid_count_table[1] = 4; //unknown registration status
+    ATHandler_stub::int_valid_count_table[0] = 1;
+    at.process_oob();
 }
 
 TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_network_registering_mode)
@@ -239,63 +292,63 @@ TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_set_registration_urc)
     AT_CellularNetwork cn(at);
 
     CellularNetwork::RegistrationType type = CellularNetwork::C_EREG;
-    EXPECT_TRUE(NSAPI_ERROR_OK == cn.set_registration_urc(type, true));
+    ASSERT_EQ(NSAPI_ERROR_OK, cn.set_registration_urc(type, true));
     type = CellularNetwork::C_GREG;
-    EXPECT_TRUE(NSAPI_ERROR_OK == cn.set_registration_urc(type, true));
+    ASSERT_EQ(NSAPI_ERROR_UNSUPPORTED, cn.set_registration_urc(type, true));
     type = CellularNetwork::C_REG;
-    EXPECT_TRUE(NSAPI_ERROR_OK == cn.set_registration_urc(type, true));
+    ASSERT_EQ(NSAPI_ERROR_OK, cn.set_registration_urc(type, true));
 
     my_AT_CN nw(at);
     type = CellularNetwork::C_EREG;
-    EXPECT_TRUE(NSAPI_ERROR_OK == nw.set_registration_urc(type, true));
+    ASSERT_EQ(NSAPI_ERROR_OK, nw.set_registration_urc(type, true));
     type = CellularNetwork::C_GREG;
-    EXPECT_TRUE(NSAPI_ERROR_UNSUPPORTED == nw.set_registration_urc(type, true));
+    ASSERT_EQ(NSAPI_ERROR_UNSUPPORTED, nw.set_registration_urc(type, true));
     type = CellularNetwork::C_REG;
-    EXPECT_TRUE(NSAPI_ERROR_OK == nw.set_registration_urc(type, true));
+    ASSERT_EQ(NSAPI_ERROR_OK, nw.set_registration_urc(type, true));
 
     type = CellularNetwork::C_EREG;
-    EXPECT_TRUE(NSAPI_ERROR_OK == cn.set_registration_urc(type, false));
+    ASSERT_EQ(NSAPI_ERROR_OK, cn.set_registration_urc(type, false));
     type = CellularNetwork::C_GREG;
-    EXPECT_TRUE(NSAPI_ERROR_OK == cn.set_registration_urc(type, false));
+    ASSERT_EQ(NSAPI_ERROR_UNSUPPORTED, cn.set_registration_urc(type, false));
     type = CellularNetwork::C_REG;
-    EXPECT_TRUE(NSAPI_ERROR_OK == cn.set_registration_urc(type, false));
+    ASSERT_EQ(NSAPI_ERROR_OK, cn.set_registration_urc(type, false));
 
     type = CellularNetwork::C_EREG;
-    EXPECT_TRUE(NSAPI_ERROR_OK == nw.set_registration_urc(type, false));
+    ASSERT_EQ(NSAPI_ERROR_OK, nw.set_registration_urc(type, false));
     type = CellularNetwork::C_GREG;
-    EXPECT_TRUE(NSAPI_ERROR_UNSUPPORTED == nw.set_registration_urc(type, false));
+    ASSERT_EQ(NSAPI_ERROR_UNSUPPORTED, nw.set_registration_urc(type, false));
     type = CellularNetwork::C_REG;
-    EXPECT_TRUE(NSAPI_ERROR_OK == nw.set_registration_urc(type, false));
+    ASSERT_EQ(NSAPI_ERROR_OK, nw.set_registration_urc(type, false));
 
 
     ATHandler_stub::nsapi_error_value = NSAPI_ERROR_DEVICE_ERROR;
     type = CellularNetwork::C_EREG;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.set_registration_urc(type, true));
+    ASSERT_EQ(NSAPI_ERROR_DEVICE_ERROR, cn.set_registration_urc(type, true));
     type = CellularNetwork::C_GREG;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.set_registration_urc(type, true));
+    ASSERT_EQ(NSAPI_ERROR_UNSUPPORTED, cn.set_registration_urc(type, true));
     type = CellularNetwork::C_REG;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.set_registration_urc(type, true));
+    ASSERT_EQ(NSAPI_ERROR_DEVICE_ERROR, cn.set_registration_urc(type, true));
 
     type = CellularNetwork::C_EREG;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == nw.set_registration_urc(type, true));
+    ASSERT_EQ(NSAPI_ERROR_DEVICE_ERROR, nw.set_registration_urc(type, true));
     type = CellularNetwork::C_GREG;
-    EXPECT_TRUE(NSAPI_ERROR_UNSUPPORTED == nw.set_registration_urc(type, true));
+    ASSERT_EQ(NSAPI_ERROR_UNSUPPORTED, nw.set_registration_urc(type, true));
     type = CellularNetwork::C_REG;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == nw.set_registration_urc(type, true));
+    ASSERT_EQ(NSAPI_ERROR_DEVICE_ERROR, nw.set_registration_urc(type, true));
 
     type = CellularNetwork::C_EREG;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.set_registration_urc(type, false));
+    ASSERT_EQ(NSAPI_ERROR_DEVICE_ERROR, cn.set_registration_urc(type, false));
     type = CellularNetwork::C_GREG;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.set_registration_urc(type, false));
+    ASSERT_EQ(NSAPI_ERROR_UNSUPPORTED, cn.set_registration_urc(type, false));
     type = CellularNetwork::C_REG;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.set_registration_urc(type, false));
+    ASSERT_EQ(NSAPI_ERROR_DEVICE_ERROR, cn.set_registration_urc(type, false));
 
     type = CellularNetwork::C_EREG;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == nw.set_registration_urc(type, false));
+    ASSERT_EQ(NSAPI_ERROR_DEVICE_ERROR, nw.set_registration_urc(type, false));
     type = CellularNetwork::C_GREG;
-    EXPECT_TRUE(NSAPI_ERROR_UNSUPPORTED == nw.set_registration_urc(type, false));
+    ASSERT_EQ(NSAPI_ERROR_UNSUPPORTED, nw.set_registration_urc(type, false));
     type = CellularNetwork::C_REG;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == nw.set_registration_urc(type, false));
+    ASSERT_EQ(NSAPI_ERROR_DEVICE_ERROR, nw.set_registration_urc(type, false));
 }
 
 TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_set_attach)
@@ -421,8 +474,8 @@ TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_scan_plmn)
     ATHandler_stub::bool_value = false;
     EXPECT_TRUE(NSAPI_ERROR_UNSUPPORTED == cn.set_access_technology(CellularNetwork::RAT_UTRAN));
     EXPECT_TRUE(NSAPI_ERROR_OK == cn.scan_plmn(ops, c));
-    EXPECT_TRUE(c == 0);
-    EXPECT_TRUE(ops.get_head() == NULL);
+    EXPECT_TRUE(c == 1);
+    EXPECT_TRUE(ops.get_head() != NULL);
 }
 
 TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_set_ciot_optimization_config)
@@ -433,53 +486,49 @@ TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_set_ciot_optimization_con
 
     AT_CellularNetwork cn(at);
     ATHandler_stub::nsapi_error_value = NSAPI_ERROR_OK;
-    EXPECT_TRUE(NSAPI_ERROR_OK == cn.set_ciot_optimization_config(CellularNetwork::SUPPORTED_UE_OPT_NO_SUPPORT, CellularNetwork::PREFERRED_UE_OPT_NO_PREFERENCE));
+    EXPECT_TRUE(NSAPI_ERROR_OK == cn.set_ciot_optimization_config(CellularNetwork::CIOT_OPT_NO_SUPPORT, CellularNetwork::PREFERRED_UE_OPT_NO_PREFERENCE, NULL));
 
     ATHandler_stub::nsapi_error_value = NSAPI_ERROR_DEVICE_ERROR;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.set_ciot_optimization_config(CellularNetwork::SUPPORTED_UE_OPT_NO_SUPPORT, CellularNetwork::PREFERRED_UE_OPT_NO_PREFERENCE));
+    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.set_ciot_optimization_config(CellularNetwork::CIOT_OPT_NO_SUPPORT, CellularNetwork::PREFERRED_UE_OPT_NO_PREFERENCE, NULL));
 }
 
-TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_ciot_optimization_config)
+TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_ciot_ue_optimization_config)
 {
     EventQueue que;
     FileHandle_stub fh1;
     ATHandler at(&fh1, que, 0, ",");
 
     AT_CellularNetwork cn(at);
-    CellularNetwork::Supported_UE_Opt sup = CellularNetwork::SUPPORTED_UE_OPT_NO_SUPPORT;
-    CellularNetwork::Preferred_UE_Opt pref = CellularNetwork::PREFERRED_UE_OPT_NO_PREFERENCE;
+    CellularNetwork::CIoT_Supported_Opt sup = CellularNetwork::CIOT_OPT_NO_SUPPORT;
+    CellularNetwork::CIoT_Preferred_UE_Opt pref = CellularNetwork::PREFERRED_UE_OPT_NO_PREFERENCE;
     ATHandler_stub::int_value = 1;
     ATHandler_stub::nsapi_error_value = NSAPI_ERROR_OK;
-    EXPECT_TRUE(NSAPI_ERROR_OK == cn.get_ciot_optimization_config(sup, pref));
-    EXPECT_TRUE(sup == CellularNetwork::SUPPORTED_UE_OPT_CONTROL_PLANE);
+    EXPECT_TRUE(NSAPI_ERROR_OK == cn.get_ciot_ue_optimization_config(sup, pref));
+    EXPECT_TRUE(sup == CellularNetwork::CIOT_OPT_CONTROL_PLANE);
     EXPECT_TRUE(pref == CellularNetwork::PREFERRED_UE_OPT_CONTROL_PLANE);
 
-    sup = CellularNetwork::SUPPORTED_UE_OPT_NO_SUPPORT;
+    sup = CellularNetwork::CIOT_OPT_NO_SUPPORT;
     pref = CellularNetwork::PREFERRED_UE_OPT_NO_PREFERENCE;
     ATHandler_stub::int_value = 1;
     ATHandler_stub::nsapi_error_value = NSAPI_ERROR_DEVICE_ERROR;
     ATHandler_stub::nsapi_error_ok_counter = 0;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.get_ciot_optimization_config(sup, pref));
-    EXPECT_TRUE(sup == CellularNetwork::SUPPORTED_UE_OPT_NO_SUPPORT);
+    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.get_ciot_ue_optimization_config(sup, pref));
+    EXPECT_TRUE(sup == CellularNetwork::CIOT_OPT_NO_SUPPORT);
     EXPECT_TRUE(pref == CellularNetwork::PREFERRED_UE_OPT_NO_PREFERENCE);
 }
 
-TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_extended_signal_quality)
+TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_ciot_network_optimization_config)
 {
     EventQueue que;
     FileHandle_stub fh1;
     ATHandler at(&fh1, que, 0, ",");
 
     AT_CellularNetwork cn(at);
-    ATHandler_stub::nsapi_error_value = NSAPI_ERROR_DEVICE_ERROR;
-    int rx = -1, be = -1, rs = -1, ec = -1, rsrq = -1, rsrp = -1;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.get_extended_signal_quality(rx, be, rs, ec, rsrq, rsrp));
-    EXPECT_TRUE(rx == -1 && be == -1 && rs == -1 && ec == -1 && rsrq == -1 && rsrp == -1);
-
-    ATHandler_stub::int_value = 5;
+    CellularNetwork::CIoT_Supported_Opt sup = CellularNetwork::CIOT_OPT_NO_SUPPORT;
+    ATHandler_stub::int_value = 1;
     ATHandler_stub::nsapi_error_value = NSAPI_ERROR_OK;
-    EXPECT_TRUE(NSAPI_ERROR_OK == cn.get_extended_signal_quality(rx, be, rs, ec, rsrq, rsrp));
-    EXPECT_TRUE(rx == 5 && be == 5 && rs == 5 && ec == 5 && rsrq == 5 && rsrp == 5);
+    EXPECT_TRUE(NSAPI_ERROR_OK == cn.get_ciot_network_optimization_config(sup));
+    EXPECT_TRUE(sup == CellularNetwork::CIOT_OPT_MAX);
 }
 
 TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_signal_quality)
@@ -491,13 +540,14 @@ TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_signal_quality)
     AT_CellularNetwork cn(at);
     int rs = -1, ber = -1;
     ATHandler_stub::nsapi_error_value = NSAPI_ERROR_DEVICE_ERROR;
-    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.get_signal_quality(rs, ber));
+    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.get_signal_quality(rs, &ber));
     EXPECT_TRUE(rs == -1 && ber == -1);
 
     ATHandler_stub::int_value = 1;
     ATHandler_stub::nsapi_error_value = NSAPI_ERROR_OK;
-    EXPECT_TRUE(NSAPI_ERROR_OK == cn.get_signal_quality(rs, ber));
-    EXPECT_TRUE(rs == -111 && ber == 1);
+    EXPECT_TRUE(NSAPI_ERROR_OK == cn.get_signal_quality(rs, &ber));
+    EXPECT_EQ(rs, -111);
+    EXPECT_EQ(ber, 1);
 }
 
 TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_get_3gpp_error)
@@ -605,17 +655,32 @@ TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_attach)
     cn.attach(&network_cb);
 }
 
-TEST_F(TestAT_CellularNetwork, test_get_connection_status)
+TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_set_receive_period)
 {
     EventQueue que;
     FileHandle_stub fh1;
     ATHandler at(&fh1, que, 0, ",");
 
     AT_CellularNetwork cn(at);
-
     ATHandler_stub::nsapi_error_value = NSAPI_ERROR_OK;
-    network_cb_count = 0;
-    cn.attach(&network_cb);
-    EXPECT_TRUE(NSAPI_STATUS_DISCONNECTED == cn.get_connection_status());
+    EXPECT_TRUE(NSAPI_ERROR_OK == cn.set_receive_period(1, CellularNetwork::EDRXUTRAN_Iu_mode, 3));
+
+    ATHandler_stub::nsapi_error_value = NSAPI_ERROR_DEVICE_ERROR;
+    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.set_receive_period(1, CellularNetwork::EDRXUTRAN_Iu_mode, 3));
 }
 
+TEST_F(TestAT_CellularNetwork, test_AT_CellularNetwork_set_packet_domain_event_reporting)
+{
+    EventQueue que;
+    FileHandle_stub fh1;
+    ATHandler at(&fh1, que, 0, ",");
+
+    AT_CellularNetwork cn(at);
+    ATHandler_stub::nsapi_error_value = NSAPI_ERROR_OK;
+    EXPECT_TRUE(NSAPI_ERROR_OK == cn.set_packet_domain_event_reporting(true));
+    EXPECT_TRUE(NSAPI_ERROR_OK == cn.set_packet_domain_event_reporting(false));
+
+    ATHandler_stub::nsapi_error_value = NSAPI_ERROR_DEVICE_ERROR;
+    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.set_packet_domain_event_reporting(true));
+    EXPECT_TRUE(NSAPI_ERROR_DEVICE_ERROR == cn.set_packet_domain_event_reporting(false));
+}

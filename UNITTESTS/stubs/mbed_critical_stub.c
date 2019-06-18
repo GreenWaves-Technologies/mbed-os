@@ -49,6 +49,11 @@ void core_util_critical_section_exit(void)
 {
 }
 
+bool core_util_atomic_flag_test_and_set(volatile core_util_atomic_flag *flagPtr)
+{
+    return false;
+}
+
 bool core_util_atomic_cas_u8(volatile uint8_t *ptr, uint8_t *expectedCurrentValue, uint8_t desiredValue)
 {
     return false;
@@ -63,6 +68,22 @@ bool core_util_atomic_cas_u16(volatile uint16_t *ptr, uint16_t *expectedCurrentV
 bool core_util_atomic_cas_u32(volatile uint32_t *ptr, uint32_t *expectedCurrentValue, uint32_t desiredValue)
 {
     return false;
+}
+
+
+uint8_t core_util_atomic_exchange_u8(volatile uint8_t *ptr, uint8_t desiredValue)
+{
+    return 0;
+}
+
+uint16_t core_util_atomic_exchange_u16(volatile uint16_t *ptr, uint16_t desiredValue)
+{
+    return 0;
+}
+
+uint32_t core_util_atomic_exchange_u32(volatile uint32_t *ptr, uint32_t desiredValue)
+{
+    return 0;
 }
 
 
@@ -98,9 +119,44 @@ uint32_t core_util_atomic_decr_u32(volatile uint32_t *valuePtr, uint32_t delta)
 }
 
 
+uint64_t core_util_atomic_load_u64(const volatile uint64_t *valuePtr)
+{
+    return 0;
+}
+
+void core_util_atomic_store_u64(volatile uint64_t *valuePtr, uint64_t desiredValue)
+{
+}
+
+uint64_t core_util_atomic_exchange_u64(volatile uint64_t *valuePtr, uint64_t desiredValue)
+{
+    return 0;
+}
+
+bool core_util_atomic_cas_u64(volatile uint64_t *ptr, uint64_t *expectedCurrentValue, uint64_t desiredValue)
+{
+    return false;
+}
+
+uint64_t core_util_atomic_incr_u64(volatile uint64_t *valuePtr, uint64_t delta)
+{
+    return 0;
+}
+
+uint64_t core_util_atomic_decr_u64(volatile uint64_t *valuePtr, uint64_t delta)
+{
+    return 0;
+}
+
+
 bool core_util_atomic_cas_ptr(void *volatile *ptr, void **expectedCurrentValue, void *desiredValue)
 {
     return false;
+}
+
+void *core_util_atomic_exchange_ptr(void *volatile *valuePtr, void *desiredValue)
+{
+    return NULL;
 }
 
 void *core_util_atomic_incr_ptr(void *volatile *valuePtr, ptrdiff_t delta)

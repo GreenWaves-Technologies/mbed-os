@@ -1,5 +1,6 @@
 /* mbed Microcontroller Library
  * Copyright (c) 2006-2013 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +23,7 @@
  */
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "hal/gpio_api.h"
 #include "platform/mbed_wait_api.h"
 #include "platform/mbed_toolchain.h"
@@ -40,16 +42,16 @@ WEAK MBED_NORETURN void mbed_die(void)
     while (1) {
         for (int i = 0; i < 4; ++i) {
             gpio_write(&led_err, 1);
-            wait_ms(150);
+            wait_us(150000);
             gpio_write(&led_err, 0);
-            wait_ms(150);
+            wait_us(150000);
         }
 
         for (int i = 0; i < 4; ++i) {
             gpio_write(&led_err, 1);
-            wait_ms(400);
+            wait_us(400000);
             gpio_write(&led_err, 0);
-            wait_ms(400);
+            wait_us(400000);
         }
     }
 }
@@ -65,8 +67,8 @@ void mbed_error_printf(const char *format, ...)
 void mbed_error_vprintf(const char *format, va_list arg)
 {
     char buffer[132];
-    unsigned int size = vsnprintf(buffer, sizeof buffer, format, arg);
-    if (size >= sizeof buffer) {
+    int size = vsnprintf(buffer, sizeof buffer, format, arg);
+    if ((unsigned int)size >= sizeof buffer) {
         /* Output was truncated - indicate by overwriting tail of buffer
          * with ellipsis, newline and null terminator.
          */
@@ -80,6 +82,28 @@ void mbed_error_vprintf(const char *format, va_list arg)
 
 void mbed_error_puts(const char *str)
 {
+    // Writing the string to the console in a critical section is
+    // potentially beneficial - for example in UARTSerial it
+    // forces the "unbuffered" mode that makes sure all characters
+    // go out now. If we made the call not in a critical section,
+    // it would go to the software buffer and we would be reliant
+    // on platform.stdio-flush-at-exit forcing a fsync before
+    // entering mbed_die().
+    //
+    // But this may be the very first write to the console, and hence
+    // require it to be initialized - doing this in a critical
+    // section could be problematic. So we prime it outside the
+    // critical section with a zero-length write - this forces
+    // the initialization.
+    //
+    // It's still possible that we were in a critical section
+    // or interrupt on entry anyway (eg if this is an error coming
+    // from inside RTX), so in other areas of the system we suppress
+    // things like mutex creation asserts and RTX traps while
+    // an error is in progress, so that console initialization
+    // may work.
+    write(STDERR_FILENO, str, 0);
+
     core_util_critical_section_enter();
 #if (__RISCV_ARCH_GAP__ == 0U)
 #if MBED_CONF_PLATFORM_STDIO_CONVERT_NEWLINES || MBED_CONF_PLATFORM_STDIO_CONVERT_TTY_NEWLINES

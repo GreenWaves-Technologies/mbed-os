@@ -1,5 +1,6 @@
 /* events
  * Copyright (c) 2016 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,8 +181,11 @@ public:
      *
      *  @param target   Queue that will dispatch this queue's events as a
      *                  part of its dispatch loop
+     *
+     *  @return Zero on success and negative error code value if chaining fails
+     *
      */
-    void chain(EventQueue *target);
+    int chain(EventQueue *target);
 
 
 

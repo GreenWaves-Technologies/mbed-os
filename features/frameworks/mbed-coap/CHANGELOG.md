@@ -1,5 +1,24 @@
 # Change Log
 
+## [v4.7.4](https://github.com/ARMmbed/mbed-coap/releases/tag/v4.7.4) 
+
+- Remove dependency to yotta tool
+- Do not remove stored (GET) blockwise message when EMPTY ACK received
+    When non piggybacked response mode is used original GET request must not be removed from the stored message list.
+    Message is needed for building the next (GET) blockwise message.
+- Move definitions to sn_config.h
+
+-[Full Changelog](https://github.com/ARMmbed/mbed-coap/compare/v4.7.3...v4.7.4)
+
+## [v4.7.3](https://github.com/ARMmbed/mbed-coap/releases/tag/v4.7.3) 
+
+- Do not store EMPTY response to blockwise list
+    An Empty message only contains the 4-byte header so it does not require any blockwise operations.
+    This will fix unneseccary message sending timeouts which leads mbed cloud client to do unnecessary
+    reconnections which increases the network traffic.
+
+-[Full Changelog](https://github.com/ARMmbed/mbed-coap/compare/v4.7.2...v4.7.3)
+
 ## [v4.7.2](https://github.com/ARMmbed/mbed-coap/releases/tag/v4.7.2) 
 
 - Fix handling of duplicate blockwise ACK's

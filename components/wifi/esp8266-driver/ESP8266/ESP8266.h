@@ -17,7 +17,7 @@
 #ifndef ESP8266_H
 #define ESP8266_H
 
-#if DEVICE_SERIAL && defined(MBED_CONF_EVENTS_PRESENT) && defined(MBED_CONF_NSAPI_PRESENT) && defined(MBED_CONF_RTOS_PRESENT)
+#if DEVICE_SERIAL && DEVICE_INTERRUPTIN && defined(MBED_CONF_EVENTS_PRESENT) && defined(MBED_CONF_NSAPI_PRESENT) && defined(MBED_CONF_RTOS_PRESENT)
 #include <stdint.h>
 
 #include "drivers/UARTSerial.h"
@@ -27,6 +27,7 @@
 #include "platform/ATCmdParser.h"
 #include "platform/Callback.h"
 #include "platform/mbed_error.h"
+#include "rtos/ConditionVariable.h"
 #include "rtos/Mutex.h"
 
 // Various timeouts for different ESP8266 operations
@@ -367,6 +368,15 @@ public:
      */
     void bg_process_oob(uint32_t timeout, bool all);
 
+    /**
+     * Flush the serial port input buffers.
+     *
+     * If you do HW reset for ESP module, you should
+     * flush the input buffers from existing responses
+     * from the device.
+     */
+    void flush();
+
     static const int8_t WIFIMODE_STATION = 1;
     static const int8_t WIFIMODE_SOFTAP = 2;
     static const int8_t WIFIMODE_STATION_SOFTAP = 3;
@@ -387,6 +397,7 @@ private:
     PinName _serial_rts;
     PinName _serial_cts;
     rtos::Mutex _smutex; // Protect serial port access
+    rtos::Mutex _rmutex; // Reset protection
 
     // AT Command Parser
     mbed::ATCmdParser _parser;
@@ -426,6 +437,7 @@ private:
     void _oob_watchdog_reset();
     void _oob_busy();
     void _oob_tcp_data_hdlr();
+    void _oob_ready();
 
     // OOB state variables
     int _connect_error;
@@ -435,6 +447,8 @@ private:
     bool _closed;
     bool _error;
     bool _busy;
+    rtos::ConditionVariable _reset_check;
+    bool _reset_done;
 
     // Modem's address info
     char _ip_buffer[16];

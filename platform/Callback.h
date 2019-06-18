@@ -1,5 +1,6 @@
 /* mbed Microcontroller Library
  * Copyright (c) 2006-2015 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +94,7 @@ public:
      */
     Callback(const Callback<R()> &func)
     {
+        memset(this, 0, sizeof(Callback));
         if (func._ops) {
             func._ops->move(this, &func);
         }
@@ -717,6 +719,7 @@ public:
      */
     Callback(const Callback<R(A0)> &func)
     {
+        memset(this, 0, sizeof(Callback));
         if (func._ops) {
             func._ops->move(this, &func);
         }
@@ -1342,6 +1345,7 @@ public:
      */
     Callback(const Callback<R(A0, A1)> &func)
     {
+        memset(this, 0, sizeof(Callback));
         if (func._ops) {
             func._ops->move(this, &func);
         }
@@ -1968,6 +1972,7 @@ public:
      */
     Callback(const Callback<R(A0, A1, A2)> &func)
     {
+        memset(this, 0, sizeof(Callback));
         if (func._ops) {
             func._ops->move(this, &func);
         }
@@ -2595,6 +2600,7 @@ public:
      */
     Callback(const Callback<R(A0, A1, A2, A3)> &func)
     {
+        memset(this, 0, sizeof(Callback));
         if (func._ops) {
             func._ops->move(this, &func);
         }
@@ -3223,6 +3229,7 @@ public:
      */
     Callback(const Callback<R(A0, A1, A2, A3, A4)> &func)
     {
+        memset(this, 0, sizeof(Callback));
         if (func._ops) {
             func._ops->move(this, &func);
         }

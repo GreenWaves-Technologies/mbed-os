@@ -25,7 +25,12 @@ extern "C" {
 /*
  * Event type for connecting
  */
-#define APPL_EVENT_CONNECT 0x01
+enum {
+    APPL_EVENT_CONNECT = 0x01,
+    APPL_BACKHAUL_INTERFACE_PHY_DOWN,
+    APPL_BACKHAUL_LINK_DOWN,
+    APPL_BACKHAUL_LINK_UP
+};
 
 /*
  * \brief Send application connect event to receiver tasklet to

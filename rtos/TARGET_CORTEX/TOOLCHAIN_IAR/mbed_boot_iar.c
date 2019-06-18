@@ -1,5 +1,6 @@
 /* mbed Microcontroller Library
  * Copyright (c) 2018-2018 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +87,7 @@ void __iar_program_start(void)
 
 void mbed_toolchain_init(void)
 {
-#if defined(__IAR_SYSTEMS_ICC__ ) && (__VER__ >= 8000000)
+#if defined(__IAR_SYSTEMS_ICC__ ) && (__VER__ >= 8000000) && !defined(MBED_RTOS_SINGLE_THREAD)
     __iar_Initlocks();
 #endif
 

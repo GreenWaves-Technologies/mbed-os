@@ -3,6 +3,7 @@
 /** @{*/
 /* mbed Microcontroller Library
  * Copyright (c) 2006-2013 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +21,7 @@
 #define MBED_ANALOGIN_API_H
 
 #include "device.h"
+#include "pinmap.h"
 
 #if DEVICE_ANALOGIN
 
@@ -57,6 +59,15 @@ float analogin_read(analogin_t *obj);
  * @return An unsigned 16bit value representing the current input voltage
  */
 uint16_t analogin_read_u16(analogin_t *obj);
+
+/** Get the pins that support analogin
+ *
+ * Return a PinMap array of pins that support analogin. The
+ * array is terminated with {NC, NC, 0}.
+ *
+ * @return PinMap array
+ */
+const PinMap *analogin_pinmap(void);
 
 /**@}*/
 

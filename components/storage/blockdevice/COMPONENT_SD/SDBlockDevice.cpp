@@ -136,7 +136,7 @@
  */
 
 /* If the target has no SPI support then SDCard is not supported */
-#ifdef DEVICE_SPI
+#if DEVICE_SPI
 
 #include "SDBlockDevice.h"
 #include "platform/mbed_debug.h"
@@ -632,6 +632,11 @@ bd_size_t SDBlockDevice::size() const
     return _block_size * _sectors;
 }
 
+const char *SDBlockDevice::get_type() const
+{
+    return "SD";
+}
+
 void SDBlockDevice::debug(bool dbg)
 {
     _dbg = dbg;
@@ -791,7 +796,7 @@ int SDBlockDevice::_cmd(SDBlockDevice::cmdSupported cmd, uint32_t arg, bool isAc
     switch (cmd) {
         case CMD8_SEND_IF_COND:             // Response R7
             debug_if(_dbg, "V2-Version Card\n");
-            _card_type = SDCARD_V2;
+            _card_type = SDCARD_V2; // fallthrough
         // Note: No break here, need to read rest of the response
         case CMD58_READ_OCR:                // Response R3
             response  = (_spi.write(SPI_FILL_CHAR) << 24);

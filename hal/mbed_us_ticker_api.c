@@ -1,5 +1,6 @@
 /* mbed Microcontroller Library
  * Copyright (c) 2015 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <stddef.h>
 #include "hal/us_ticker_api.h"
+
+#if DEVICE_USTICKER
 
 static ticker_event_queue_t events = { 0 };
 
@@ -55,3 +60,12 @@ void us_ticker_irq_handler(void)
         irq_handler(&us_data);
     }
 }
+
+#else
+
+const ticker_data_t *get_us_ticker_data(void)
+{
+    return NULL;
+}
+
+#endif  // DEVICE_USTICKER

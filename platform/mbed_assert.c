@@ -1,5 +1,6 @@
 /* mbed Microcontroller Library
  * Copyright (c) 2006-2013 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +23,6 @@
 
 MBED_NORETURN void mbed_assert_internal(const char *expr, const char *file, int line)
 {
-    core_util_critical_section_enter();
     mbed_error(MBED_ERROR_ASSERTION_FAILED, expr, 0, file, line);
 }
 

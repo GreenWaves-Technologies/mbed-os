@@ -1,5 +1,6 @@
 /* mbed Microcontroller Library
  * Copyright (c) 2017 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +75,7 @@ void mbed_copy_nvic(void)
 
 /* Toolchain specific main code */
 
-#if defined (__CC_ARM) || (defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 5010060))
+#if defined (__ARMCC_VERSION)
 
 int $Super$$main(void);
 

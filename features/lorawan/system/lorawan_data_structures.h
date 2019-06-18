@@ -44,9 +44,6 @@
 typedef uint32_t lorawan_time_t;
 #endif
 
-// Radio wake-up time from sleep - unit ms.
-#define RADIO_WAKEUP_TIME                           1
-
 /*!
  * Sets the length of the LoRaMAC footer field.
  * Mainly indicates the MIC field length.
@@ -684,6 +681,14 @@ typedef struct {
      * The downlink counter value for the received frame.
      */
     uint32_t dl_frame_counter;
+    /*!
+     * The downlink channel
+     */
+    uint32_t channel;
+    /*!
+     * The time on air of the received frame.
+     */
+    lorawan_time_t rx_toa;
 } loramac_mcps_indication_t;
 
 /*!
@@ -990,6 +995,10 @@ typedef struct lorawan_session {
  */
 typedef struct {
     /*!
+     * Type of modulation used (LoRa or FSK)
+     */
+    uint8_t modem_type;
+    /*!
      * The RX channel.
      */
     uint8_t channel;
@@ -1010,9 +1019,13 @@ typedef struct {
      */
     uint32_t frequency;
     /*!
-     * The RX window timeout
+     * The RX window timeout - Symbols
      */
     uint32_t window_timeout;
+    /*!
+     * The RX window timeout - Milliseconds
+     */
+    uint32_t window_timeout_ms;
     /*!
      * The RX window offset
      */
@@ -1043,6 +1056,9 @@ typedef struct {
     int timer_id;
 } timer_event_t;
 
+/*!
+ * A composite structure containing device identifiers and security keys
+ */
 typedef struct {
     /*!
      * Device IEEE EUI
@@ -1073,6 +1089,9 @@ typedef struct {
 
 } loramac_keys;
 
+/*!
+ * A composite structure containing all the timers used in the LoRaWAN operation
+ */
 typedef struct {
     /*!
      * Aggregated duty cycle management
@@ -1110,6 +1129,9 @@ typedef struct {
 
 } lorawan_timers;
 
+/*!
+ * Global MAC layer configuration parameters
+ */
 typedef struct {
 
     /*!
@@ -1259,8 +1281,8 @@ typedef struct {
 
     /*!
      * LoRaMac reception windows delay
-     * \remark normal frame: RxWindowXDelay = ReceiveDelayX - RADIO_WAKEUP_TIME
-     *         join frame  : RxWindowXDelay = JoinAcceptDelayX - RADIO_WAKEUP_TIME
+     * \remark normal frame: RxWindowXDelay = ReceiveDelayX - Offset
+     *         join frame  : RxWindowXDelay = JoinAcceptDelayX - Offset
      */
     uint32_t rx_window1_delay;
     uint32_t rx_window2_delay;

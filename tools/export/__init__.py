@@ -24,6 +24,7 @@ from os import makedirs, walk
 import copy
 from shutil import rmtree, copyfile
 import zipfile
+from past.builtins import basestring
 
 from ..resources import Resources, FileType, FileRef
 from ..config import ALLOWED_FEATURES
@@ -69,7 +70,7 @@ To export this project please <a href='http://mbed.org/compiler/?import=http://m
 """
 
 def mcu_ide_list():
-    """Shows list of exportable ides 
+    """Shows list of exportable ides
 
     """
     supported_ides = sorted(EXPORTERS.keys())
@@ -84,10 +85,10 @@ def mcu_ide_matrix(verbose_html=False):
     """
     supported_ides = sorted(EXPORTERS.keys())
     # Only use it in this function so building works without extra modules
-    from prettytable import PrettyTable, ALL
+    from prettytable import PrettyTable, HEADER
 
     # All tests status table print
-    table_printer = PrettyTable(["Platform"] + supported_ides)
+    table_printer = PrettyTable(["Platform"] + supported_ides, junction_char="|", hrules=HEADER)
     # Align table
     for col in supported_ides:
         table_printer.align[col] = "c"
@@ -107,15 +108,12 @@ def mcu_ide_matrix(verbose_html=False):
             row.append(text)
         table_printer.add_row(row)
 
-    table_printer.border = True
-    table_printer.vrules = ALL
-    table_printer.hrules = ALL
     # creates a html page in a shorter format suitable for readme.md
     if verbose_html:
         result = table_printer.get_html_string()
     else:
         result = table_printer.get_string()
-    result += "\n"
+    result += "\n\n"
     result += "Total IDEs: %d\n"% (len(supported_ides))
     if verbose_html:
         result += "<br>"
@@ -166,13 +164,13 @@ def _inner_zip_export(resources, prj_files, inc_repos):
     to_zip = sum((resources.get_file_refs(ftype) for ftype
                   in Resources.ALL_FILE_TYPES),
                  [])
-    to_zip.extend(FileRef(basename(pfile), pfile) for pfile in prj_files)
+    to_zip.extend(prj_files)
     for dest, source in resources.get_file_refs(FileType.BLD_REF):
         target_dir, _ = splitext(dest)
         dest = join(target_dir, ".bld", "bldrc")
         to_zip.append(FileRef(dest, source))
     if inc_repos:
-        for dest, source in resources.get_file_refs(FileType.REPO_DIRS):
+        for dest, source in resources.get_file_refs(FileType.REPO_DIR):
             for root, _, files in walk(source):
                 for repo_file in files:
                     file_source = join(root, repo_file)
@@ -209,7 +207,7 @@ def export_project(src_paths, export_path, target, ide, libraries_paths=None,
                    linker_script=None, notify=None, name=None, inc_dirs=None,
                    jobs=1, config=None, macros=None, zip_proj=None,
                    inc_repos=False, build_profile=None, app_config=None,
-                   ignore=None):
+                   ignore=None, resource_filter=None):
     """Generates a project file and creates a zip archive if specified
 
     Positional Arguments:
@@ -231,6 +229,7 @@ def export_project(src_paths, export_path, target, ide, libraries_paths=None,
     zip_proj - string name of the zip archive you wish to creat (exclude arg
      if you do not wish to create an archive
     ignore - list of paths to add to mbedignore
+    resource_filter - can be used for filtering out resources after scan
     """
 
     # Convert src_path to a list if needed
@@ -244,10 +243,8 @@ def export_project(src_paths, export_path, target, ide, libraries_paths=None,
     # Extend src_paths wit libraries_paths
     if libraries_paths is not None:
         paths.extend(libraries_paths)
-
     if not isinstance(src_paths, dict):
         src_paths = {"": paths}
-
     # Export Directory
     if not exists(export_path):
         makedirs(export_path)
@@ -279,6 +276,11 @@ def export_project(src_paths, export_path, target, ide, libraries_paths=None,
     if linker_script is not None:
         resources.linker_script = linker_script
 
+    if toolchain.config.name:
+        name = toolchain.config.name
+
+    resources.filter(resource_filter)
+
     files, exporter = generate_project_files(resources, export_path,
                                              target, name, toolchain, ide,
                                              macros=macros)
@@ -292,7 +294,7 @@ def export_project(src_paths, export_path, target, ide, libraries_paths=None,
                        files + list(exporter.static_files), inc_repos, notify)
     else:
         for static_file in exporter.static_files:
-            if not exists(join(export_path, basename(static_file))):
-                copyfile(static_file, join(export_path, basename(static_file)))
+            if not exists(join(export_path, basename(static_file.name))):
+                copyfile(static_file.path, join(export_path, static_file.name))
 
     return exporter
