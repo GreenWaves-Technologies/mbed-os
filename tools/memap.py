@@ -49,7 +49,7 @@ from tools.utils import (
 class _Parser(object):
     """Internal interface for parsing"""
     __metaclass__ = ABCMeta
-    SECTIONS = ('.text', '.data', '.bss', '.heap', '.stack')
+    SECTIONS = ('.text', '.data', '.bss', '.heap', '.stack', '.fcbss', '.fcdata')
     MISC_FLASH_SECTIONS = ('.interrupts', '.flash_config')
     OTHER_SECTIONS = ('.interrupts_ram', '.init', '.ARM.extab',
                       '.ARM.exidx', '.ARM.attributes', '.eh_frame',
@@ -516,7 +516,7 @@ class MemapParser(object):
     and writes out different file types of memory results
     """
 
-    print_sections = ('.text', '.data', '.bss')
+    print_sections = ('.text', '.data', '.bss', '.fcdata', '.fcbss')
     delta_sections = ('.text-delta', '.data-delta', '.bss-delta')
 
     # sections to print info (generic for all toolchains)
@@ -795,7 +795,6 @@ class MemapParser(object):
 
         for i in sorted(self.short_modules):
             row = [i]
-
             for k in self.print_sections:
                 row.append("{}({:+})".format(
                     self.short_modules[i][k],
@@ -842,10 +841,10 @@ class MemapParser(object):
                     self.subtotal[k + '-delta'] -= mod[k]
 
         self.mem_summary = {
-            'static_ram': self.subtotal['.data'] + self.subtotal['.bss'],
+            'static_ram': self.subtotal['.data'] + self.subtotal['.bss'] + self.subtotal['.fcdata'] + self.subtotal['.fcbss'],
             'static_ram_delta':
             self.subtotal['.data-delta'] + self.subtotal['.bss-delta'],
-            'total_flash': (self.subtotal['.text'] + self.subtotal['.data']),
+            'total_flash': (self.subtotal['.text'] + self.subtotal['.data'] + self.subtotal['.fcdata']),
             'total_flash_delta':
             self.subtotal['.text-delta'] + self.subtotal['.data-delta'],
         }

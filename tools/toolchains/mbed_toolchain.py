@@ -48,7 +48,7 @@ from ..memap import MemapParser
 from ..config import (ConfigException, RAM_ALL_MEMORIES, ROM_ALL_MEMORIES)
 from ..regions import (UPDATE_WHITELIST, merge_region_list)
 from ..settings import COMPARE_FIXED
-from ..settings import ARM_PATH, ARMC6_PATH, GCC_ARM_PATH, IAR_PATH
+from ..settings import ARM_PATH, ARMC6_PATH, GCC_ARM_PATH, GCC_RISCV_PATH, IAR_PATH
 
 
 TOOLCHAIN_PATHS = {
@@ -56,6 +56,7 @@ TOOLCHAIN_PATHS = {
     'uARM': ARM_PATH,
     'ARMC6': ARMC6_PATH,
     'GCC_ARM': GCC_ARM_PATH,
+    'GCC_RISCV': GCC_RISCV_PATH,
     'IAR': IAR_PATH
 }
 

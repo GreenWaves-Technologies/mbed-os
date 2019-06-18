@@ -252,6 +252,9 @@ SECTIONS
       PROVIDE(fcStack = __fcStack);
     } > FC_tcdm
 
+    __StackTop = ORIGIN(FC_tcdm) + LENGTH(FC_tcdm);
+    __StackLimit = __StackTop - __FC_STACK_SIZE;
+
     ASSERT(__fcStack_limit >= __heapfcram_start, "Region FC overflowed with stack and heap")
 
     .l1cluster_g (ORIGIN(L1_sram)) : AT(__l1_preload_start_inL2)
@@ -294,6 +297,8 @@ SECTIONS
         /* Due to limitations on FPGA loader, loadable sections must have base and size aligned on 4 bytes */
 
         . = ALIGN(4);
+        __end__ = .;
+        PROVIDE(end = .);
         *(.heapl2ram)
 
         . = ALIGN(4);
@@ -302,6 +307,7 @@ SECTIONS
 
     __heapl2ram_size = LENGTH(L2) + ORIGIN(L2) - __heapl2ram_start;
     __heapl2ram_limit = __heapl2ram_size + __heapl2ram_start;
+    __HeapLimit = __heapl2ram_limit;
 
     .stab  0 (NOLOAD) :
     {

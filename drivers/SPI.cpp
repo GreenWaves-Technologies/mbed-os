@@ -181,7 +181,7 @@ int SPI::write(int value)
 int SPI::udma_cs(int status)
 {
     select();
-    int ret = spi_master_cs(&_spi, status);
+    int ret = spi_master_cs(&_peripheral->spi, status);
     deselect();
     return ret;
 }
@@ -189,14 +189,14 @@ int SPI::udma_cs(int status)
 void SPI::udma_qspi(int status)
 {
     select();
-    spi_master_qspi(&_spi, ((status == 0) ? uSPI_Single : uSPI_Quad));
+    spi_master_qspi(&_peripheral->spi, ((status == 0) ? uSPI_Single : uSPI_Quad));
     deselect();
 }
 
 int SPI::transfer_command_sequence(spi_command_sequence_t *s_command)
 {
     select();
-    int ret = spi_master_transfer_command_sequence(&_spi, s_command);
+    int ret = spi_master_transfer_command_sequence(&_peripheral->spi, s_command);
     deselect();
     return ret;
 }

@@ -257,6 +257,21 @@ const PinMap *serial_cts_pinmap(void);
  */
 const PinMap *serial_rts_pinmap(void);
 
+#if ((defined (__RISCV_ARCH_GAP__ ) && (__RISCV_ARCH_GAP__ == 1)))
+/** Get the remain size which has not been transferd in UDMA RX channel
+ *
+ * @param obj The serial object
+ */
+int serial_read_remain_size(const serial_t *obj);
+
+
+/** Get the remain size which has not been transferd in UDMA TX channel
+ *
+ * @param obj The serial object
+ */
+int serial_write_remain_size(const serial_t *obj);
+#endif
+
 #if DEVICE_SERIAL_ASYNCH
 
 /**@}*/

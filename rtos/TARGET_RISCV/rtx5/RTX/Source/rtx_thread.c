@@ -170,7 +170,7 @@ void osRtxThreadListPut (os_object_t *object, os_thread_t *thread) {
 
 /// Get a Thread with Highest Priority from specified Object list and remove it.
 /// \param[in]  object          generic object.
-/// \return thread object.
+/// \return thread object. 
 os_thread_t *osRtxThreadListGet (os_object_t *object) {
   os_thread_t *thread;
 
@@ -841,7 +841,7 @@ static osThreadId_t svcRtxThreadNew (osThreadFunc_t func, void *argument, const 
   } else {
     EvrRtxThreadError(NULL, (int32_t)osErrorNoMemory);
   }
-
+  
   if (thread != NULL) {
     osRtxThreadDispatch(thread);
   }

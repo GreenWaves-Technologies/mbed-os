@@ -37,9 +37,7 @@
 #include "platform/mbed_critical.h"
 #include "platform/mbed_poll.h"
 #include "platform/PlatformMutex.h"
-#  if MBED_CONF_PLATFORM_STDIO_BUFFERED_SERIAL
 #include "drivers/UARTSerial.h"
-#  endif
 #include "us_ticker_api.h"
 #include "lp_ticker_api.h"
 #include <stdlib.h>
