@@ -49,8 +49,7 @@ MEMORY
 }
 
 __L1_STACK_SIZE      = 0x400;
-
-__FC_STACK_SIZE      = 0x1000;
+__L2_STACK_SIZE      = 0x1000;
 
 /* We have to align each sector to word boundaries as our current s19->slm
  * conversion scripts are not able to handle non-word aligned sections. */
@@ -242,19 +241,7 @@ SECTIONS
         __heapfcram_start = .;
     } > FC_tcdm
 
-    __heapfcram_size = LENGTH(FC_tcdm) + ORIGIN(FC_tcdm) - __heapfcram_start - __FC_STACK_SIZE;
-
-    .fcStack :
-    {
-      __fcStack_limit = ORIGIN(FC_tcdm) + LENGTH(FC_tcdm) - __FC_STACK_SIZE;
-      __fc_stack_start__ =  ORIGIN(FC_tcdm) + LENGTH(FC_tcdm);
-      PROVIDE(fcStack = __fcStack);
-    } > FC_tcdm
-
-    __StackTop = ORIGIN(FC_tcdm) + LENGTH(FC_tcdm);
-    __StackLimit = __StackTop - __FC_STACK_SIZE;
-
-    ASSERT(__fcStack_limit >= __heapfcram_start, "Region FC overflowed with stack and heap")
+    __heapfcram_size = LENGTH(FC_tcdm) + ORIGIN(FC_tcdm) - __heapfcram_start;
 
     .libgomp (ORIGIN(L1_sram) ): AT(__l1_preload_start_inL2)
     {
@@ -314,9 +301,17 @@ SECTIONS
         __heapl2ram_start = .;
     } > L2
 
-    __heapl2ram_size = LENGTH(L2) + ORIGIN(L2) - __heapl2ram_start;
+    __heapl2ram_size = LENGTH(L2) + ORIGIN(L2) - __heapl2ram_start - __L2_STACK_SIZE;
     __heapl2ram_limit = __heapl2ram_size + __heapl2ram_start;
     __HeapLimit = __heapl2ram_limit;
+
+    .l2Stack :
+    {
+      __StackTop = ORIGIN(L2) + LENGTH(L2);
+      __StackLimit = __StackTop - __L2_STACK_SIZE;
+    } > L2
+
+    ASSERT(__StackLimit >= __heapl2ram_start, "Region L2 overflowed with stack and heap")
 
     .stab  0 (NOLOAD) :
     {
