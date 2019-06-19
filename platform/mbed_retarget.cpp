@@ -1316,7 +1316,6 @@ extern "C" WEAK caddr_t _sbrk(int incr)
     return (caddr_t) prev_heap;
 }
 #endif
-#endif
 
 #if defined(TOOLCHAIN_GCC_ARM)
 extern "C" void _exit(int return_code)
@@ -1350,6 +1349,7 @@ extern "C" void exit(int return_code)
 
 #if !defined(TOOLCHAIN_GCC_ARM)
 } //namespace std
+#endif
 #endif
 
 #if defined(TOOLCHAIN_ARM) || defined(TOOLCHAIN_GCC)
