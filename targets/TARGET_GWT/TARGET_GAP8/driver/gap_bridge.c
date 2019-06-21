@@ -218,7 +218,8 @@ void BRIDGE_Delay()
 
 void BRIDGE_BlockWait() {
     /* Disable UDMA IRQ */
-    int irq = EU_DisableUDMAIRQ();
+    int irq_en = NVIC_GetEnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
+    NVIC_DisableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
 
     int event = 0;
     do {
@@ -228,7 +229,8 @@ void BRIDGE_BlockWait() {
     EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SW_NOTIFY_BRIDGE_EVENT);
 
     /* Restore IRQ */
-    EU_RestoreUDMAIRQ(irq);
+    if (irq_en)
+        NVIC_EnableIRQ(FC_SW_NOTIFY_BRIDGE_EVENT);
 }
 
 void BRIDGE_Init()
