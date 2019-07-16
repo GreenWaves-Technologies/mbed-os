@@ -21,13 +21,23 @@ const PinMap PinMap_RTC[] = {
     {NC, OSC32KCLK, 0},
 };
 
-/************SPIQ***************/
-const PinMap PinMap_SPIQ_SDIO2[] = {
+/************QSPI***************/
+const PinMap PinMap_QSPI_SDIO0[] = {
+    {D2 , SPI_0, 0},
+    {NC   , NC   , 0}
+};
+
+const PinMap PinMap_QSPI_SDIO1[] = {
+    {A11 , SPI_0, 0},
+    {NC   , NC   , 0}
+};
+
+const PinMap PinMap_QSPI_SDIO2[] = {
     {B10 , SPI_0, 0},
     {NC   , NC   , 0}
 };
 
-const PinMap PinMap_SPIQ_SDIO3[] = {
+const PinMap PinMap_QSPI_SDIO3[] = {
     {A10 , SPI_0, 0},
     {NC   , NC   , 0}
 };

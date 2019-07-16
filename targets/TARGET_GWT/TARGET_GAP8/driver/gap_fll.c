@@ -148,12 +148,14 @@ int FLL_SetFrequency(fll_type_t which_fll, uint32_t frequency, int check)
         FLL_CTRL->SOC_CONF2 = val2;
     }
 
-    if (which_fll == uFLL_SOC)
-        SystemCoreClockUpdate();
-
     __restore_irq(irq);
 
-    return FLL_GetFrequency(which_fll);
+    if (which_fll == uFLL_SOC) {
+        SystemCoreClockUpdate();
+        return SystemCoreClock;
+    } else {
+        return FLL_GetFrequency(which_fll);
+    }
 }
 
 void FLL_Init(fll_type_t which_fll, uint32_t ret_state)

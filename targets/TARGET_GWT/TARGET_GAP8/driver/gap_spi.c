@@ -139,18 +139,36 @@ int SPI_MasterTransferCommandSequence(SPIM_Type *base, spi_command_sequence_t* s
     }
 
     if (seq->tx_bits > 32) {
-        s_command_sequence[index++] = SPIM_CMD_TX_DATA(seq->tx_bits, seq->data_mode, 0);
+
+        if (seq->full_duplex) {
+            s_command_sequence[index++] = SPIM_CMD_DUPLEX(seq->tx_bits, 0);
+        } else {
+            s_command_sequence[index++] = SPIM_CMD_TX_DATA(seq->tx_bits, seq->data_mode, 0);
+        }
 
         /* Transfer TX part of the command */
         SPI_MasterTransferBlocking(base,
                                    (const char*)s_command_sequence,
                                    (index * sizeof(uint32_t)),
                                    0, 0, 32);
-        /* Transfer TX buffer */
-        SPI_MasterTransferBlocking(base,
-                                   (const uint8_t*)seq->tx_buffer,
-                                   (seq->tx_bits >> 3),
-                                   0, 0, 32);
+
+
+        if (seq->full_duplex) {
+            SPI_MasterTransferBlocking(base,
+                                       (const uint8_t*)seq->tx_buffer,
+                                       (seq->tx_bits >> 3),
+                                       (uint8_t*) seq->rx_buffer,
+                                       (seq->rx_bits >> 3),
+                                       32);
+            seq->rx_bits = 0;
+        } else {
+            /* Transfer TX buffer */
+            SPI_MasterTransferBlocking(base,
+                                       (const uint8_t*)seq->tx_buffer,
+                                       (seq->tx_bits >> 3),
+                                       0, 0, 32);
+        }
+
         index = 0;
         seq->rx_buffer = (void *)0;
     } else {

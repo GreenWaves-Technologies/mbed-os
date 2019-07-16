@@ -24,11 +24,23 @@ static malloc_t __fc_malloc; /*!< FC memory allocator. */
 
 void *FC_Malloc(int32_t size)
 {
-    return __malloc(&__fc_malloc, size);
+    void * ptr = __malloc(&__fc_malloc, size + 0x4U);
+
+    if ((uint32_t) ptr == 0x0)
+        return (void *) 0x0;
+
+    *(uint32_t *)(ptr) = size + 0x4U;
+
+    void *user_ptr = (void *)(((uint32_t *)ptr)+1);
+
+    return user_ptr;
 }
 
-void FC_MallocFree(void *_chunk, int32_t size)
+void FC_MallocFree(void *_chunk)
 {
+    void *alloc_ptr = (void *)(((uint32_t *)_chunk)-1);
+    uint32_t size = *((uint32_t *)alloc_ptr);
+
     __malloc_free(&__fc_malloc, _chunk, size);
 }
 

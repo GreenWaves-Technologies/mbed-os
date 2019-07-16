@@ -33,8 +33,8 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-/*! @brief Typedef for master interrupt handler. */
-typedef void (*hyperbus_master_isr_t)(HYPERBUS_Type *base, hyperbus_master_handle_t *handle);
+/*! @brief Typedef for interrupt handler. */
+typedef void (*hyperbus_isr_t)(HYPERBUS_Type *base, hyperbus_handle_t *handle);
 
 /*******************************************************************************
  * Prototypes
@@ -54,8 +54,8 @@ uint32_t HYPERBUS_GetInstance(HYPERBUS_Type *base);
 /*! @brief Pointers to hyperbus handles for each instance. */
 static void *g_hyperbusHandle[ARRAY_SIZE(s_hyperbusBases)];
 
-/*! @brief Pointer to master IRQ handler for each instance. */
-static hyperbus_master_isr_t s_hyperbusMasterIsr;
+/*! @brief Pointer to IRQ handler for each instance. */
+static hyperbus_isr_t s_hyperbusIsr;
 
 /* Indicate whether hyperbus is initialed */
 uint8_t hyperbus_is_init = 0;
@@ -81,26 +81,26 @@ uint32_t HYPERBUS_GetInstance(HYPERBUS_Type *base)
     return instance;
 }
 
-void HYPERBUS_MasterInit(HYPERBUS_Type *base, hyperbus_master_config_t *masterConfig, uint32_t srcClock_Hz)
+void HYPERBUS_Init(HYPERBUS_Type *base, hyperbus_config_t *config, uint32_t srcClock_Hz)
 {
-    assert(masterConfig);
+    assert(config);
 
     /* Clock Gating */
     UDMA_Init((UDMA_Type *)base);
 
     /* Set memory base address, RAM has volume of 8 Mbytes / 2 = 4M*/
-    HYPERBUS_SetMBR0(masterConfig->mbr0);
+    HYPERBUS_SetMBR0(config->mbr0);
     /* Flash address. start at 0x01000000 = 16M*/
-    HYPERBUS_SetMBR1(masterConfig->mbr1);
+    HYPERBUS_SetMBR1(config->mbr1);
 
     /* Device type of connected memory */
     /* Device 0 connecte to HyperbusRAM */
-    HYPERBUS_SetDT0(masterConfig->dt0);
+    HYPERBUS_SetDT0(config->dt0);
     /* Device 0 connecte to HyperbusFlash */
-    HYPERBUS_SetDT1(masterConfig->dt1);
+    HYPERBUS_SetDT1(config->dt1);
 
     /* When using flash, this bit should set to 0, always memory access */
-    if(masterConfig->dt0 == uHYPERBUS_Flash)
+    if(config->dt0 == uHYPERBUS_Flash)
         HYPERBUS_SetCRT0(uHYPERBUS_Mem_Access);
     else
         HYPERBUS_SetCRT1(uHYPERBUS_Mem_Access);
@@ -108,31 +108,31 @@ void HYPERBUS_MasterInit(HYPERBUS_Type *base, hyperbus_master_config_t *masterCo
     hyperbus_is_init = 1;
 }
 
-void HYPERBUS_MasterGetDefaultConfig(hyperbus_master_config_t *masterConfig)
+void HYPERBUS_GetDefaultConfig(hyperbus_config_t *config)
 {
-    assert(masterConfig);
+    assert(config);
 
-    masterConfig->baudRate = 50000000U;
+    config->baudRate = 50000000U;
 #if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
-    masterConfig->mbr0     = uHYPERBUS_Ram_Address;
-    masterConfig->mbr1     = uHYPERBUS_Flash_Address >> 24;
-    masterConfig->dt0      = uHYPERBUS_Ram;
-    masterConfig->dt1      = uHYPERBUS_Flash;
+    config->mbr0     = uHYPERBUS_Ram_Address;
+    config->mbr1     = uHYPERBUS_Flash_Address >> 24;
+    config->dt0      = uHYPERBUS_Ram;
+    config->dt1      = uHYPERBUS_Flash;
 #else
-    masterConfig->mbr0     = uHYPERBUS_Flash_Address;
-    masterConfig->mbr1     = uHYPERBUS_Ram_Address >> 24;
-    masterConfig->dt0      = uHYPERBUS_Flash;
-    masterConfig->dt1      = uHYPERBUS_Ram;
+    config->mbr0     = uHYPERBUS_Flash_Address;
+    config->mbr1     = uHYPERBUS_Ram_Address >> 24;
+    config->dt0      = uHYPERBUS_Flash;
+    config->dt1      = uHYPERBUS_Ram;
 #endif
 }
 
-void HYPERBUS_MasterDeInit(HYPERBUS_Type *base)
+void HYPERBUS_DeInit(HYPERBUS_Type *base)
 {
     UDMA_Deinit((UDMA_Type *)base);
     hyperbus_is_init = 0;
 }
 
-static int HYPERBUS_MasterTransferTX(HYPERBUS_Type *base, int addr, const uint16_t *tx, size_t tx_length, char reg_access, char device)
+static int HYPERBUS_TransferTX(HYPERBUS_Type *base, int addr, const uint16_t *tx, size_t tx_length, char reg_access, char device)
 {
     int32_t status;
 
@@ -166,7 +166,7 @@ static int HYPERBUS_MasterTransferTX(HYPERBUS_Type *base, int addr, const uint16
     return status;
 }
 
-static int HYPERBUS_MasterTransferRX(HYPERBUS_Type *base, int addr, uint16_t *rx, size_t rx_length, char reg_access, char device)
+static int HYPERBUS_TransferRX(HYPERBUS_Type *base, int addr, uint16_t *rx, size_t rx_length, char reg_access, char device)
 {
     int32_t status;
 
@@ -200,7 +200,7 @@ static int HYPERBUS_MasterTransferRX(HYPERBUS_Type *base, int addr, uint16_t *rx
     return status;
 }
 
-status_t HYPERBUS_MasterTransferBlocking(HYPERBUS_Type *base, hyperbus_transfer_t *transfer)
+status_t HYPERBUS_TransferBlocking(HYPERBUS_Type *base, hyperbus_transfer_t *transfer)
 {
     #define MAXIMUM_TRANSFER_LENGTH 1024
 
@@ -240,6 +240,23 @@ status_t HYPERBUS_MasterTransferBlocking(HYPERBUS_Type *base, hyperbus_transfer_
             info.u.hyperbus.ext_addr = (uHYPERBUS_Flash_Address | addr);
         }
 
+        uint32_t ext_addr = info.u.hyperbus.ext_addr;
+        uint32_t reg_mem_access = info.u.hyperbus.reg_mem_access;
+
+        base->EXT_ADDR = ext_addr;
+
+        #if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
+        if (ext_addr < uHYPERBUS_Flash_Address) {
+            /* hyperbus_crt0_set */
+            HYPERBUS_SetCRT0(reg_mem_access);
+        }
+        #else
+        if (ext_addr >= uHYPERBUS_Ram_Address) {
+            /* hyperbus_crt1_set */
+            HYPERBUS_SetCRT1(reg_mem_access);
+        }
+        #endif
+
         status = UDMA_BlockTransfer((UDMA_Type *)base, &info, UDMA_WAIT);
 
         len  -= MAXIMUM_TRANSFER_LENGTH;
@@ -250,7 +267,7 @@ status_t HYPERBUS_MasterTransferBlocking(HYPERBUS_Type *base, hyperbus_transfer_
     return ((status == uStatus_Success) ? length : -1);
 }
 
-status_t HYPERBUS_MasterTransferNonBlocking(HYPERBUS_Type *base, hyperbus_master_handle_t *handle, hyperbus_transfer_t *transfer)
+status_t HYPERBUS_TransferNonBlocking(HYPERBUS_Type *base, hyperbus_handle_t *handle, hyperbus_transfer_t *transfer)
 {
     assert(handle);
 
@@ -262,23 +279,23 @@ status_t HYPERBUS_MasterTransferNonBlocking(HYPERBUS_Type *base, hyperbus_master
 
     handle->state = uHYPERBUS_Busy;
 
-    s_hyperbusMasterIsr = HYPERBUS_MasterTransferHandleIRQ;
+    s_hyperbusIsr = HYPERBUS_TransferHandleIRQ;
 
-    /*Start master transfer*/
+    /*Start transfer*/
     if(transfer->txDataSize) {
-        HYPERBUS_MasterTransferTX(base, transfer->addr, transfer->txData, transfer->txDataSize, transfer->reg_access, transfer->device);
+        HYPERBUS_TransferTX(base, transfer->addr, transfer->txData, transfer->txDataSize, transfer->reg_access, transfer->device);
     } else if(transfer->rxDataSize) {
-        HYPERBUS_MasterTransferRX(base, transfer->addr, transfer->rxData, transfer->rxDataSize, transfer->reg_access, transfer->device);
+        HYPERBUS_TransferRX(base, transfer->addr, transfer->rxData, transfer->rxDataSize, transfer->reg_access, transfer->device);
     }
 
     return uStatus_Success;
 }
 
-/*Transactional APIs -- Master*/
+/*Transactional APIs*/
 
-void HYPERBUS_MasterTransferCreateHandle(HYPERBUS_Type *base,
-                                     hyperbus_master_handle_t *handle,
-                                     hyperbus_master_transfer_callback_t callback,
+void HYPERBUS_TransferCreateHandle(HYPERBUS_Type *base,
+                                     hyperbus_handle_t *handle,
+                                     hyperbus_transfer_callback_t callback,
                                      void *userData)
 {
     assert(handle);
@@ -292,7 +309,7 @@ void HYPERBUS_MasterTransferCreateHandle(HYPERBUS_Type *base,
     handle->userData = userData;
 }
 
-void HYPERBUS_MasterTransferHandleIRQ(HYPERBUS_Type *base, hyperbus_master_handle_t *handle)
+void HYPERBUS_TransferHandleIRQ(HYPERBUS_Type *base, hyperbus_handle_t *handle)
 {
     assert(handle);
 
@@ -316,7 +333,7 @@ void HYPERBUS_MasterTransferHandleIRQ(HYPERBUS_Type *base, hyperbus_master_handl
 
 static void HYPERBUS_CommonIRQHandler(HYPERBUS_Type *base, void *param)
 {
-    s_hyperbusMasterIsr(base, (hyperbus_master_handle_t *)param);
+    s_hyperbusIsr(base, (hyperbus_handle_t *)param);
 }
 
 #if defined(HYPERBUS0)

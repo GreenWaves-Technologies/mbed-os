@@ -19,12 +19,24 @@ malloc_t __l1_malloc_cluster;
 
 void *L1_Malloc(int size)
 {
-    return __malloc(&__l1_malloc_cluster, size);
+    void * ptr = __malloc(&__l1_malloc_cluster, size + 0x4U);
+
+    if ((uint32_t) ptr == 0x0)
+        return (void *) 0x0;
+
+    *(uint32_t *)(ptr) = size + 0x4U;
+
+    void *user_ptr = (void *)(((uint32_t *)ptr)+1);
+
+    return user_ptr;
 }
 
-void L1_MallocFree(void *_chunk, int size)
+void L1_MallocFree(void *_chunk)
 {
-    __malloc_free(&__l1_malloc_cluster, _chunk, size);
+    void *alloc_ptr = (void *)(((uint32_t *)_chunk)-1);
+    uint32_t size = *((uint32_t *)alloc_ptr);
+
+    __malloc_free(&__l1_malloc_cluster, alloc_ptr, size);
 }
 
 void *L1_MallocAlign(int size, int align)

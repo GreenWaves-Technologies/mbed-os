@@ -37,7 +37,11 @@ extern "C" {
 
 /** QSPI HAL object
  */
-typedef struct qspi_s qspi_t;
+#ifdef __RISCV_ARCH_GAP__
+    #define qspi_t spi_t
+#else
+    typedef struct qspi_s qspi_t;
+#endif
 
 /** QSPI Bus width
  *

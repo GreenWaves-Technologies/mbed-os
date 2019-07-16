@@ -189,12 +189,6 @@ static inline void SOC_EU_Configure(int cluster, int event, int active) {
 #endif
 }
 
-/* static inline int SOC_EU_ReserveConfig(int cluster, int event) { */
-/*   if (_bitfield_reserve(&soc_events_mask, event)) return -1; */
-/*   SOC_EU_Configure(cluster, event, 1); */
-/*   return 0; */
-/* } */
-
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */

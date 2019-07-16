@@ -58,7 +58,7 @@ static cmdSeq WP_Seq[3]    = {{0xAA, 0x555}, {0x55, 0x2AA}, {0xA0, 0x555}};
 static uint32_t read_val = 0, write_val = 0;
 
 /* Structure holding information about HyperFlash transfers. */
-static hyperbus_transfer_t masterXfer;
+static hyperbus_transfer_t xfer;
 
 /*******************************************************************************
  * Function definition
@@ -82,10 +82,10 @@ static void HYPERBUS_IO_Pin_Init( uint32_t nbArgs, ... )
         PORT_SetPinConfig( xPort_addrs[port], pin_nb, &config );
     }
     va_end( list );
-    hyperbus_master_config_t  masterConfig;
+    hyperbus_config_t  hyper_config;
 
-    HYPERBUS_MasterGetDefaultConfig( &masterConfig );
-    HYPERBUS_MasterInit( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &masterConfig, SystemCoreClock );
+    HYPERBUS_GetDefaultConfig( &hyper_config );
+    HYPERBUS_Init( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &hyper_config, SystemCoreClock );
 }
 
 static void HYPERBUS_IO_Flash_Config( void )
@@ -93,16 +93,16 @@ static void HYPERBUS_IO_Flash_Config( void )
     /* Set VCR to 5 delay cycles */
     for ( uint32_t i = 0; i < 4; i++ )
     {
-        masterXfer.txData = &VCR_Seq[i].data;
-        masterXfer.txDataSize = 2;
-        masterXfer.rxData = 0;
-        masterXfer.rxDataSize = 0;
-        masterXfer.configFlags = 32;
-        masterXfer.addr = ( VCR_Seq[i].addr << 1 );
-        masterXfer.device = uHYPERBUS_Flash;
-        masterXfer.reg_access = uHYPERBUS_Mem_Access;
+        xfer.txData = &VCR_Seq[i].data;
+        xfer.txDataSize = 2;
+        xfer.rxData = 0;
+        xfer.rxDataSize = 0;
+        xfer.configFlags = 32;
+        xfer.addr = ( VCR_Seq[i].addr << 1 );
+        xfer.device = uHYPERBUS_Flash;
+        xfer.reg_access = uHYPERBUS_Mem_Access;
 
-        HYPERBUS_MasterTransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &masterXfer );
+        HYPERBUS_TransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &xfer );
     }
 }
 
@@ -137,35 +137,35 @@ int32_t HYPERBUS_IO_Init( uint8_t device )
 
 void HYPERBUS_IO_Deinit( void )
 {
-    HYPERBUS_MasterDeInit( (HYPERBUS_Type *) HYPERBUS_BASE_PTRS );
+    HYPERBUS_DeInit( (HYPERBUS_Type *) HYPERBUS_BASE_PTRS );
 }
 
 int32_t HYPERBUS_IO_Erase( uint32_t addr )
 {
     for ( uint32_t i = 0; i < 5; i++ )
     {
-        masterXfer.txData = &Erase_Seq[i].data;
-        masterXfer.txDataSize = 2;
-        masterXfer.rxData = 0;
-        masterXfer.rxDataSize = 0;
-        masterXfer.configFlags = 32;
-        masterXfer.addr = Erase_Seq[i].addr << 1;
-        masterXfer.device = uHYPERBUS_Flash;
-        masterXfer.reg_access = uHYPERBUS_Mem_Access;
+        xfer.txData = &Erase_Seq[i].data;
+        xfer.txDataSize = 2;
+        xfer.rxData = 0;
+        xfer.rxDataSize = 0;
+        xfer.configFlags = 32;
+        xfer.addr = Erase_Seq[i].addr << 1;
+        xfer.device = uHYPERBUS_Flash;
+        xfer.reg_access = uHYPERBUS_Mem_Access;
 
-        HYPERBUS_MasterTransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &masterXfer );
+        HYPERBUS_TransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &xfer );
     }
 
-    masterXfer.txData = &Erase_Seq[5].data;
-    masterXfer.txDataSize = sizeof( uint16_t );
-    masterXfer.rxData = 0;
-    masterXfer.rxDataSize = 0;
-    masterXfer.configFlags = 32;
-    masterXfer.addr = addr;
-    masterXfer.device = uHYPERBUS_Flash;
-    masterXfer.reg_access = uHYPERBUS_Mem_Access;
+    xfer.txData = &Erase_Seq[5].data;
+    xfer.txDataSize = sizeof( uint16_t );
+    xfer.rxData = 0;
+    xfer.rxDataSize = 0;
+    xfer.configFlags = 32;
+    xfer.addr = addr;
+    xfer.device = uHYPERBUS_Flash;
+    xfer.reg_access = uHYPERBUS_Mem_Access;
 
-    HYPERBUS_MasterTransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &masterXfer );
+    HYPERBUS_TransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &xfer );
 
     return 0;
 }
@@ -177,44 +177,44 @@ int32_t HYPERBUS_IO_Write( uint32_t addr, uint32_t size, void *buf, uint8_t devi
         /* Write to Buffer command sequence */
         for( uint32_t i = 0; i < 3; i++ )
         {
-            masterXfer.txData = &WP_Seq[i].data;
-            masterXfer.txDataSize = 2;
-            masterXfer.rxData = 0;
-            masterXfer.rxDataSize = 0;
-            masterXfer.configFlags = 32;
-            masterXfer.addr = WP_Seq[i].addr << 1;
-            masterXfer.device = uHYPERBUS_Flash;
-            masterXfer.reg_access = uHYPERBUS_Mem_Access;
+            xfer.txData = &WP_Seq[i].data;
+            xfer.txDataSize = 2;
+            xfer.rxData = 0;
+            xfer.rxDataSize = 0;
+            xfer.configFlags = 32;
+            xfer.addr = WP_Seq[i].addr << 1;
+            xfer.device = uHYPERBUS_Flash;
+            xfer.reg_access = uHYPERBUS_Mem_Access;
 
-            HYPERBUS_MasterTransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &masterXfer );
+            HYPERBUS_TransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &xfer );
         }
     }
     /* Word Program */
-    masterXfer.txData = buf;
-    masterXfer.txDataSize = size;
-    masterXfer.rxData = 0;
-    masterXfer.rxDataSize = 0;
-    masterXfer.configFlags = 32;
-    masterXfer.addr = addr;
-    masterXfer.device = device;
-    masterXfer.reg_access = device_access;
+    xfer.txData = buf;
+    xfer.txDataSize = size;
+    xfer.rxData = 0;
+    xfer.rxDataSize = 0;
+    xfer.configFlags = 32;
+    xfer.addr = addr;
+    xfer.device = device;
+    xfer.reg_access = device_access;
 
-    HYPERBUS_MasterTransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &masterXfer );
+    HYPERBUS_TransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &xfer );
     return 0;
 }
 
 int32_t HYPERBUS_IO_Read( uint32_t addr, uint32_t size, void *buf, uint8_t device, uint8_t device_access )
 {
-    masterXfer.txData = 0;
-    masterXfer.txDataSize = 0;
-    masterXfer.rxData = buf;
-    masterXfer.rxDataSize = size;
-    masterXfer.configFlags = 32;
-    masterXfer.addr = addr;
-    masterXfer.device = device;
-    masterXfer.reg_access = device_access;
+    xfer.txData = 0;
+    xfer.txDataSize = 0;
+    xfer.rxData = buf;
+    xfer.rxDataSize = size;
+    xfer.configFlags = 32;
+    xfer.addr = addr;
+    xfer.device = device;
+    xfer.reg_access = device_access;
 
-    HYPERBUS_MasterTransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &masterXfer );
+    HYPERBUS_TransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &xfer );
 
     return 0;
 }
@@ -222,26 +222,26 @@ int32_t HYPERBUS_IO_Read( uint32_t addr, uint32_t size, void *buf, uint8_t devic
 int32_t HYPERBUS_IO_Sync( void )
 {
     uint16_t reg;
-    hyperbus_transfer_t masterXferWrite, masterXferRead;
+    hyperbus_transfer_t xferWrite, xferRead;
 
     write_val = Reg_Seq.data;
-    masterXferWrite.txData = ( uint16_t * ) &write_val;
-    masterXferWrite.txDataSize = 2;
-    masterXferWrite.rxData = 0;
-    masterXferWrite.rxDataSize = 0;
-    masterXferWrite.configFlags = 32;
-    masterXferWrite.addr = Reg_Seq.addr << 1;
-    masterXferWrite.device = uHYPERBUS_Flash;
-    masterXferWrite.reg_access = uHYPERBUS_Mem_Access;
+    xferWrite.txData = ( uint16_t * ) &write_val;
+    xferWrite.txDataSize = 2;
+    xferWrite.rxData = 0;
+    xferWrite.rxDataSize = 0;
+    xferWrite.configFlags = 32;
+    xferWrite.addr = Reg_Seq.addr << 1;
+    xferWrite.device = uHYPERBUS_Flash;
+    xferWrite.reg_access = uHYPERBUS_Mem_Access;
 
-    masterXferRead.txData = 0;
-    masterXferRead.txDataSize = 0;
-    masterXferRead.rxData = ( uint16_t * ) &read_val;
-    masterXferRead.rxDataSize = 2;
-    masterXferRead.configFlags = 32;
-    masterXferRead.addr = 0;
-    masterXferRead.device = uHYPERBUS_Flash;
-    masterXferRead.reg_access = uHYPERBUS_Mem_Access;
+    xferRead.txData = 0;
+    xferRead.txDataSize = 0;
+    xferRead.rxData = ( uint16_t * ) &read_val;
+    xferRead.rxDataSize = 2;
+    xferRead.configFlags = 32;
+    xferRead.addr = 0;
+    xferRead.device = uHYPERBUS_Flash;
+    xferRead.reg_access = uHYPERBUS_Mem_Access;
     /* Wait the end of process
      * Status Register (SR)
      * bit 4 -> program status bit, 0-success ; 1-failure
@@ -250,8 +250,8 @@ int32_t HYPERBUS_IO_Sync( void )
      */
     do
     {
-        HYPERBUS_MasterTransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &masterXferWrite );
-        HYPERBUS_MasterTransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &masterXferRead );
+        HYPERBUS_TransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &xferWrite );
+        HYPERBUS_TransferBlocking( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, &xferRead );
         reg = ( ( read_val >> 16 ) & 0xffff );
     } while( !( reg & ( 1 << DEVICE_READY_OFFSET ) ) );
 

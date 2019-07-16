@@ -207,28 +207,11 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
         assert(!UDMA_RXBusy(base));
     }
 
-    /* Hyperbus ctrl */
-    if(info->ctrl == UDMA_CTRL_HYPERBUS) {
-        HYPERBUS_Type *hyperbus_ptr = (HYPERBUS_Type *) base;
-
-        uint32_t ext_addr = info->u.hyperbus.ext_addr;
-        uint32_t reg_mem_access = info->u.hyperbus.reg_mem_access;
-
-        hyperbus_ptr->EXT_ADDR = ext_addr;
-
-        /* If RAM register access */
-        #if (__HYPERBUS_CSN0_FOR_RAM__ == 1)
-        if (ext_addr < uHYPERBUS_Flash_Address) {
-            /* hyperbus_crt0_set */
-            HYPERBUS_SetCRT0(reg_mem_access);
-        }
-        #else
-        if (ext_addr >= uHYPERBUS_Ram_Address) {
-            /* hyperbus_crt1_set */
-            HYPERBUS_SetCRT1(reg_mem_access);
-        }
-        #endif
-    }
+    /*
+     * Could not use FC TCDM momery (0x1B000000) as the buffer address for uDMA, please see the detail :
+     * https://greenwaves-technologies.com/manuals/BUILD/MBED-OS/html/index.html
+     */
+    assert(info->dataAddr >= L2_BASE);
 
     if (info->isTx) {
         base->TX_SADDR = info->dataAddr;
@@ -286,6 +269,12 @@ static void UDMA_StartTransfer(UDMA_Type *base, udma_req_info_t *info) {
     else if(info->ctrl == 3) {
         /* For other special IP */
     }
+
+    /*
+     * Could not use FC TCDM momery (0x1B000000) as the buffer address for uDMA, please see the detail :
+     * https://greenwaves-technologies.com/manuals/BUILD/MBED-OS/html/index.html
+     */
+    assert(info->dataAddr >= L2_BASE);
 
     if (info->isTx) {
         base->TX_SADDR = info->dataAddr;

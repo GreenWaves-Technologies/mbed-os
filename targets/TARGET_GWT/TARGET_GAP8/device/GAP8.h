@@ -1695,7 +1695,15 @@ typedef struct {
  * @addtogroup SOC_CTRL_Register_Masks SOC_CTRL Register Masks
  * @{
  */
-/*! @name CLUSTER_BYPASS - SOC_CTRL information register */
+/*! @name INFO - SOC_CTRL information register */
+#define SOC_CTRL_INFO_CLUSTER_NB_MASK          (0xFFFFU)
+#define SOC_CTRL_INFO_CLUSTER_NB_SHIFT         (0U)
+#define SOC_CTRL_INFO_CLUSTER_NB(x)            (((uint32_t)(((uint32_t)(x)) /* << SOC_CTRL_INFO_CLUSTER_NB_SHIFT*/)) & SOC_CTRL_INFO_CLUSTER_NB_MASK)
+#define SOC_CTRL_INFO_CORE_NB_MASK             (0xFFFF0000U)
+#define SOC_CTRL_INFO_CORE_NB_SHIFT            (16U)
+#define SOC_CTRL_INFO_CORE_NB(x)               (((uint32_t)(((uint32_t)(x)) << SOC_CTRL_INFO_CORE_NB_SHIFT)) & SOC_CTRL_INFO_CORE_NB_MASK)
+
+/*! @name CLUSTER_BYPASS - SOC_CTRL bypass register */
 #define SOC_CTRL_CLUSTER_BYPASS_BYP_POW_MASK          (0x1U)
 #define SOC_CTRL_CLUSTER_BYPASS_BYP_POW_SHIFT         (0U)
 #define SOC_CTRL_CLUSTER_BYPASS_BYP_POW(x)            (((uint32_t)(((uint32_t)(x)) /* << SOC_CTRL_CLUSTER_BYPASS_BYP_POW_SHIFT*/)) & SOC_CTRL_CLUSTER_BYPASS_BYP_POW_MASK)

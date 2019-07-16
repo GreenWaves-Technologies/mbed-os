@@ -75,7 +75,7 @@ uint32_t __malloc_extern_init(malloc_t *a, void *_chunk, int32_t size)
 
 void __malloc_extern_deinit(malloc_t *a)
 {
-    FC_MallocFree(a->first_free, sizeof(malloc_chunk_t));
+    FC_MallocFree(a->first_free);
 }
 
 void *__malloc_extern(malloc_t *a, int32_t size)
@@ -108,7 +108,7 @@ void *__malloc_extern(malloc_t *a, int32_t size)
                 a->first_free = pt->next;
             }
             void *addr = (void *) pt->addr;
-            FC_MallocFree(pt, sizeof(malloc_chunk_t));
+            FC_MallocFree(pt);
             return addr;
         }
         else
@@ -166,7 +166,7 @@ uint32_t __attribute__((noinline)) __malloc_extern_free(malloc_t *a, void *_chun
             /* Coalesce with previous */
             prev->size += chunk->size;
             prev->next = chunk->next;
-            FC_MallocFree(chunk, sizeof(malloc_chunk_t));
+            FC_MallocFree(chunk);
         }
         else
         {

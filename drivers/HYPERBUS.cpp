@@ -52,10 +52,10 @@ HYPERBUS::HYPERBUS(PinName dq0, PinName dq1, PinName dq2, PinName dq3,
         _usage(DMA_USAGE_NEVER),
         _deep_sleep_locked(false),
 #endif
+        _device(0),
         _max_length_enable(0),
         _max_length(1024),
         _latency(0),
-        _device(0),
         _hz(50000000) {
     // No lock needed in the constructor
 
@@ -135,7 +135,7 @@ void HYPERBUS::aquire() {
          hyperbus_set_timing(&_hyperbus, _cshi, _css, _csh, _latency, 0, _device);
          hyperbus_set_timing(&_hyperbus, _cshi, _css, _csh, _latency, 1, _device);
          hyperbus_frequency(&_hyperbus, _hz);
-        _owner = this;
+         _owner = this;
     }
     unlock();
 }
@@ -272,7 +272,7 @@ void HYPERBUS::start_transfer(const int addr, const void *tx_buffer, int tx_leng
     _acquire();
     _callback = callback;
     _irq.callback(&HYPERBUS::irq_handler_asynch);
-    hyperbus_master_transfer(&_hyperbus, addr, tx_buffer, tx_length, rx_buffer, rx_length, bit_width, device, _irq.entry(), event , _usage);
+    hyperbus_transfer(&_hyperbus, addr, tx_buffer, tx_length, rx_buffer, rx_length, bit_width, device, _irq.entry(), event , _usage);
 }
 
 void HYPERBUS::lock_deep_sleep()

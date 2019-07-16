@@ -138,15 +138,15 @@ int spi_master_qspi(spi_t *obj, spi_qpi_t qpi)
         if (spi_obj->instance)
             return -1;
 
-        uint32_t spi_sdio2 = pinmap_peripheral(SPI0_SDIO2, PinMap_SPIQ_SDIO2);
-        uint32_t spi_sdio3 = pinmap_peripheral(SPI0_SDIO3, PinMap_SPIQ_SDIO3);
+        uint32_t spi_sdio2 = pinmap_peripheral(SPI0_SDIO2, PinMap_QSPI_SDIO2);
+        uint32_t spi_sdio3 = pinmap_peripheral(SPI0_SDIO3, PinMap_QSPI_SDIO3);
         uint32_t spi_data  = pinmap_merge(spi_sdio2, spi_sdio3);
 
         MBED_ASSERT(spi_obj->instance == spi_data);
 
         /* SPI pin binding */
-        pinmap_pinout(SPI0_SDIO2, PinMap_SPIQ_SDIO2);
-        pinmap_pinout(SPI0_SDIO3, PinMap_SPIQ_SDIO3);
+        pinmap_pinout(SPI0_SDIO2, PinMap_QSPI_SDIO2);
+        pinmap_pinout(SPI0_SDIO3, PinMap_QSPI_SDIO3);
     }
     return 0;
 }

@@ -110,94 +110,13 @@ extern "C" {
  * @{
  */
 
-/*!
- * @brief Copy mask to target variable.
- *
- * @param bitfield Destination
- * @param mask     Source
- */
-static inline void _bitfield_mask_copy(uint32_t *bitfield, uint32_t mask)
-{
-  *bitfield = mask;
+static inline uint16_t __core_NUMBERS() {
+    return (SOC_CTRL->INFO & SOC_CTRL_INFO_CORE_NB_MASK) >> SOC_CTRL_INFO_CORE_NB_SHIFT;
 }
 
-/*!
- * @brief Initial target mask according to number of bits.
- *
- * @param bitfield Destination
- * @param nbBits   Number of bits
- */
-static inline void _bitfield_mask_init(uint32_t *bitfield, int nbBits)
-{
-  if (nbBits == 32) *bitfield = 0xffffffff;
-  else *bitfield = (1 << nbBits) - 1;
+static inline uint16_t __cluster_NUMBERS() {
+    return (SOC_CTRL->INFO & SOC_CTRL_INFO_CLUSTER_NB_MASK) >> SOC_CTRL_INFO_CLUSTER_NB_SHIFT;
 }
-
-/*!
- * @brief Clean all mask bits of target.
- *
- * @param bitfield Destination
- */
-static inline void _bitfield_clear(uint32_t *bitfield)
-{
-  *bitfield = 0;
-}
-
-/*!
- * @brief Get the number of bit 1 of target.
- *
- * @param bitfield Destination
- */
-static inline int _bitfield_get(uint32_t bitfield)
-{
-  int result = __builtin_pulp_ff1(bitfield);
-  if (result == 32) return -1;
-  else return result;
-}
-
-/*!
- * @brief TODO
- *
- * @param bitfield Destination
- */
-static inline int _bitfield_alloc(uint32_t *bitfield)
-{
-  int bit = _bitfield_get(*bitfield);
-  if (bit == -1) return -1;
-  *bitfield ^= 1<<bit;
-  return bit;
-}
-
-/*!
- * @brief Reserve a bit (set to 0) in target.
- *
- * If this bit mask is already allocated to a event,
- * return error.
- *
- * @param bitfield Destination
- * @param id       event number
- */
-static inline int _bitfield_reserve(uint32_t *bitfield, int id)
-{
-  if (!(*bitfield & (1<<id))) {
-    return -1;
-  }
-  *bitfield &= ~(1<<id);
-  return 0;
-}
-
-/*!
- * @brief Free the mask (set to 1) according to event number
- *
- *
- * @param bitfield Destination
- * @param id       event number
- */
-static inline void _bitfield_free(uint32_t *bitfield, int id)
-{
-  *bitfield |= 1 << id;
-}
-
 
 #if defined(__cplusplus)
 }

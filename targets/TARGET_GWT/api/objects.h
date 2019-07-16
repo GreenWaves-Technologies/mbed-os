@@ -87,7 +87,7 @@ struct hyperbus_s {
     uint32_t instance;
     status_t status;
 #if DEVICE_HYPERBUS_ASYNCH
-    hyperbus_master_handle_t hyperbus_master_handle;
+    hyperbus_handle_t hyperbus_handle;
     uint32_t hyperbusDmaMasterRx;
     uint32_t hyperbusDmaMasterTx;
 #endif

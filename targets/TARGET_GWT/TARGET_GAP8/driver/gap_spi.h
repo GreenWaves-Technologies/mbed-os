@@ -240,6 +240,7 @@ typedef struct _spi_command_sequence {
     uint32_t tx_data;       /*!< If tx_bits is not 0, the data written to device*/
     uint8_t *tx_buffer;     /*!< If tx_bits is more than a word, the data buffer pointer written to device*/
     uint32_t rx_bits;       /*!< The bits of data read from device*/
+    uint8_t  full_duplex;   /*!< Single SPI full duplex enable */
     uint8_t  alter_data;       /*!< Specifies the alternative data Mode (used for dummy cycles and data phases)*/
     uint8_t  alter_data_bits;  /*!< Specifies the alternative data bits */
     uint8_t  alter_data_mode;  /*!< Specifies the alternative data Mode 1 or 4 */

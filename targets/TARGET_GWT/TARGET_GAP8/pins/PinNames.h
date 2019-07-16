@@ -306,7 +306,7 @@ typedef enum {
     PWM3_CH3 = B34,
 
     // Dummy LED
-    LED1 = GPIO_A31,
+    LED1 = GPIO_A3_B1,
     LED2 = GPIO_A30,
 
     // Not connected

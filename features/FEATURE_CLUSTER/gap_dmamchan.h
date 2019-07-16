@@ -222,7 +222,7 @@ static inline void DMAMCHAN_SetL2Address(DMAMCHAN_Type *base, uint32_t addr)
  * @param stride 2D STRIDE.
  * @param count  2D count.
  */
-static inline void DMAMCHAN_Set2D(DMAMCHAN_Type *base, uint16_t stride, uint16_t count)
+static inline void DMAMCHAN_Set2D(DMAMCHAN_Type *base, uint32_t stride, uint32_t count)
 {
     base->CMD = (stride << DMAMCHAN_CMD_2D_STRIDE_Pos | count << DMAMCHAN_CMD_2D_COUNT_Pos);
 }
@@ -238,9 +238,8 @@ static inline void DMAMCHAN_Set2D(DMAMCHAN_Type *base, uint16_t stride, uint16_t
  *
  * This function transfer the data in bytes between TCDM(L1) and L2, non-bloking
  *
- * @param base      DMAMCHAN peripheral base address.
- * @param tcdm_addr DMAMCHAN TCDM (L1) address.
  * @param l2_addr   DMAMCHAN L2 address.
+ * @param tcdm_addr DMAMCHAN TCDM (L1) address.
  * @param length    DMAMCHAN transfer length bytes.
  * @param type      DMAMCHAN transfer direction (0 : TCDM(L1)->L2). (1 : L2->TCDM(L1)).
  * @param req       DMAMCHAN user request.
@@ -253,9 +252,8 @@ void DMAMCHAN_Memcpy_1D(uint32_t l2_addr, uint32_t tcdm_addr, uint16_t length, u
  *
  * This function transfer the data in bytes between TCDM(L1) and L2, non-bloking
  *
- * @param base      DMAMCHAN peripheral base address.
- * @param tcdm_addr DMAMCHAN TCDM (L1) address.
  * @param l2_addr   DMAMCHAN L2 address.
+ * @param tcdm_addr DMAMCHAN TCDM (L1) address.
  * @param length    DMAMCHAN transfer length bytes.
  * @param stride    DMAMCHAN stride value for 2D transfer.
  * @param count     DMAMCHAN count value for 2D transfer.

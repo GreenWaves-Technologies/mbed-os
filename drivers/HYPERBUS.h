@@ -337,13 +337,13 @@ protected:
     void aquire(void);
     static HYPERBUS *_owner;
     static SingletonPtr<PlatformMutex> _mutex;
+    int _device;
     int _max_length_enable;
     int _max_length;
     int _cshi;
     int _css;
     int _csh;
     char _latency;
-    int _device;
     int _hz;
 
 private:

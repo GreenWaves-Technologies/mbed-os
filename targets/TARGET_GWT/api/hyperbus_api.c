@@ -102,16 +102,16 @@ void hyperbus_init(hyperbus_t *obj, PinName dq0, PinName dq1, PinName dq2, PinNa
     /* Set the transfer status to idle */
     obj->hyperbus.status = uHYPERBUS_Idle;
 
-    hyperbus_master_config_t  masterConfig;
+    hyperbus_config_t  config;
 
-    HYPERBUS_MasterGetDefaultConfig(&masterConfig);
+    HYPERBUS_GetDefaultConfig(&config);
 
-    HYPERBUS_MasterInit(hyperbus_address[obj->hyperbus.instance], &masterConfig, SystemCoreClock);
+    HYPERBUS_Init(hyperbus_address[obj->hyperbus.instance], &config, SystemCoreClock);
 }
 
 void hyperbus_free(hyperbus_t *obj)
 {
-    HYPERBUS_MasterDeInit(hyperbus_address[obj->hyperbus.instance]);
+    HYPERBUS_DeInit(hyperbus_address[obj->hyperbus.instance]);
 }
 
 void hyperbus_set_max_length(hyperbus_t *obj, int max_length_en, int max_length, int rd_wr, char device)
@@ -122,7 +122,7 @@ void hyperbus_set_max_length(hyperbus_t *obj, int max_length_en, int max_length,
 void hyperbus_frequency(hyperbus_t *obj, int hz)
 {
     #if !defined(__GAP8__)
-    HYPERBUS_MasterFrequencyConfig(hyperbus_address[obj->hyperbus.instance], hz, SystemCoreClock);
+    HYPERBUS_FrequencyConfig(hyperbus_address[obj->hyperbus.instance], hz, SystemCoreClock);
     #endif
 }
 
@@ -154,44 +154,44 @@ int hyperbus_read(hyperbus_t *obj, const int addr, char reg_access, char device)
 }
 
 int hyperbus_block_write(hyperbus_t *obj, const int addr, const void *tx, size_t tx_length, char reg_access, char device) {
-    hyperbus_transfer_t masterXfer;
+    hyperbus_transfer_t xfer;
 
-    /*Start master transfer*/
-    masterXfer.txData = (uint16_t *)tx;
-    masterXfer.txDataSize = tx_length;
-    masterXfer.rxData = 0;
-    masterXfer.rxDataSize = 0;
-    masterXfer.configFlags = 32;
-    masterXfer.addr = addr;
-    masterXfer.device = device;
-    masterXfer.reg_access = reg_access;
+    /*Start transfer*/
+    xfer.txData = (uint16_t *)tx;
+    xfer.txDataSize = tx_length;
+    xfer.rxData = 0;
+    xfer.rxDataSize = 0;
+    xfer.configFlags = 32;
+    xfer.addr = addr;
+    xfer.device = device;
+    xfer.reg_access = reg_access;
 
-    HYPERBUS_MasterTransferBlocking(hyperbus_address[obj->hyperbus.instance], &masterXfer);
+    HYPERBUS_TransferBlocking(hyperbus_address[obj->hyperbus.instance], &xfer);
 
     return tx_length;
 }
 
 int hyperbus_block_read(hyperbus_t *obj, const int addr, void *rx, size_t rx_length, char reg_access, char device) {
-    hyperbus_transfer_t masterXfer;
+    hyperbus_transfer_t xfer;
 
-    /*Start master transfer*/
-    masterXfer.txData = 0;
-    masterXfer.txDataSize = 0;
-    masterXfer.rxData = (uint16_t *)rx;
-    masterXfer.rxDataSize = rx_length;
-    masterXfer.configFlags = 32;
-    masterXfer.addr = addr;
-    masterXfer.device = device;
-    masterXfer.reg_access = reg_access;
+    /*Start transfer*/
+    xfer.txData = 0;
+    xfer.txDataSize = 0;
+    xfer.rxData = (uint16_t *)rx;
+    xfer.rxDataSize = rx_length;
+    xfer.configFlags = 32;
+    xfer.addr = addr;
+    xfer.device = device;
+    xfer.reg_access = reg_access;
 
-    HYPERBUS_MasterTransferBlocking(hyperbus_address[obj->hyperbus.instance], &masterXfer);
+    HYPERBUS_TransferBlocking(hyperbus_address[obj->hyperbus.instance], &xfer);
 
     return rx_length;
 }
 
 
 #if DEVICE_HYPERBUS_ASYNCH
-void hyperbus_master_transfer(hyperbus_t *obj, const int addr, const void *tx, size_t tx_length, void *rx, size_t rx_length, uint8_t bit_width, uint8_t device, uint32_t handler, uint32_t event, DMAUsage hint) {
+void hyperbus_transfer(hyperbus_t *obj, const int addr, const void *tx, size_t tx_length, void *rx, size_t rx_length, uint8_t bit_width, uint8_t device, uint32_t handler, uint32_t event, DMAUsage hint) {
     /* Asynchronious UDMA transfer */
     if(hyperbus_active(obj)) {
         return;
@@ -207,21 +207,21 @@ void hyperbus_master_transfer(hyperbus_t *obj, const int addr, const void *tx, s
     }
 
     /* Save handler */
-    HYPERBUS_MasterTransferCreateHandle(hyperbus_address[obj->hyperbus.instance],
-                                        &obj->hyperbus.hyperbus_master_handle,
-                                        (hyperbus_master_transfer_callback_t)handler, NULL);
+    HYPERBUS_TransferCreateHandle(hyperbus_address[obj->hyperbus.instance],
+                                        &obj->hyperbus.hyperbus_handle,
+                                        (hyperbus_transfer_callback_t)handler, NULL);
 
-    hyperbus_transfer_t masterXfer;
+    hyperbus_transfer_t xfer;
 
-    /*Start master transfer*/
-    masterXfer.txData      = (uint16_t *)tx;
-    masterXfer.txDataSize  = tx_length;
-    masterXfer.rxData      = (uint16_t *)rx;
-    masterXfer.rxDataSize  = rx_length;
-    masterXfer.configFlags = 32;
-    masterXfer.addr        = addr;
-    masterXfer.device      = device;
-    masterXfer.reg_access  = uHYPERBUS_Mem_Access;
+    /*Start transfer*/
+    xfer.txData      = (uint16_t *)tx;
+    xfer.txDataSize  = tx_length;
+    xfer.rxData      = (uint16_t *)rx;
+    xfer.rxDataSize  = rx_length;
+    xfer.configFlags = 32;
+    xfer.addr        = addr;
+    xfer.device      = device;
+    xfer.reg_access  = uHYPERBUS_Mem_Access;
 
     /* Busy transferring */
     if(tx_length && !(HYPERBUS_TXPending(hyperbus_address[obj->hyperbus.instance])))
@@ -231,9 +231,9 @@ void hyperbus_master_transfer(hyperbus_t *obj, const int addr, const void *tx, s
     else
         obj->hyperbus.status = uHYPERBUS_Busy;
 
-    if(HYPERBUS_MasterTransferNonBlocking(hyperbus_address[obj->hyperbus.instance],
-                                          &obj->hyperbus.hyperbus_master_handle,
-                                          &masterXfer) != uStatus_Success)
+    if(HYPERBUS_TransferNonBlocking(hyperbus_address[obj->hyperbus.instance],
+                                          &obj->hyperbus.hyperbus_handle,
+                                          &xfer) != uStatus_Success)
     {
         obj->hyperbus.status = uHYPERBUS_Idle;
     }

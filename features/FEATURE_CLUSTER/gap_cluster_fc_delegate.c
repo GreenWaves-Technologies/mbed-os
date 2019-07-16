@@ -57,7 +57,7 @@ void CLUSTER_FC_Delegate_Init(){
 }
 
 static void hyperbus_block_transfer(const int addr, const void *tx, size_t tx_length, void *rx, size_t rx_length) {
-    hyperbus_transfer_t masterXfer;
+    hyperbus_transfer_t xfer;
 
     if (!hyperbus_is_init) {
 
@@ -76,11 +76,11 @@ static void hyperbus_block_transfer(const int addr, const void *tx, size_t tx_le
         PORT_SetPinMux(PORTA, HYPERBUS_DQ6  - GAP_PIN_OFFSET, uPORT_MuxAlt3);
         PORT_SetPinMux(PORTA, HYPERBUS_DQ7  - GAP_PIN_OFFSET, uPORT_MuxAlt3);
 
-        hyperbus_master_config_t  masterConfig;
+        hyperbus_config_t  config;
 
-        HYPERBUS_MasterGetDefaultConfig(&masterConfig);
+        HYPERBUS_GetDefaultConfig(&config);
 
-        HYPERBUS_MasterInit(HYPERBUS0, &masterConfig, SystemCoreClock);
+        HYPERBUS_Init(HYPERBUS0, &config, SystemCoreClock);
 
         /* Config memory maximum transfer data length for TX and RX*/
         HYPERBUS_SetMaxLength(HYPERBUS0, 1, 0x1ff, 0, uHYPERBUS_Ram);
@@ -92,17 +92,17 @@ static void hyperbus_block_transfer(const int addr, const void *tx, size_t tx_le
 
     }
 
-    /*Start master transfer*/
-    masterXfer.txData = (uint16_t *)tx;
-    masterXfer.txDataSize = tx_length;
-    masterXfer.rxData = (uint16_t *)rx;
-    masterXfer.rxDataSize = rx_length;
-    masterXfer.configFlags = 32;
-    masterXfer.addr = addr;
-    masterXfer.device = uHYPERBUS_Ram;
-    masterXfer.reg_access = uHYPERBUS_Mem_Access;
+    /*Start transfer*/
+    xfer.txData = (uint16_t *)tx;
+    xfer.txDataSize = tx_length;
+    xfer.rxData = (uint16_t *)rx;
+    xfer.rxDataSize = rx_length;
+    xfer.configFlags = 32;
+    xfer.addr = addr;
+    xfer.device = uHYPERBUS_Ram;
+    xfer.reg_access = uHYPERBUS_Mem_Access;
 
-    HYPERBUS_MasterTransferBlocking(HYPERBUS0, &masterXfer);
+    HYPERBUS_TransferBlocking(HYPERBUS0, &xfer);
 }
 
 void CLUSTER_FC_Delegate(){

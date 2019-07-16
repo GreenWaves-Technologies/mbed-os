@@ -1024,10 +1024,10 @@ typedef struct
 #define DMAMCHAN_CMD_LEN_Msk                    (0xFFFFUL /*<< DMAMCHAN_EOC_Pos*/) /*!< DMAMCHAN CMD Length Mask */
 
 #define DMAMCHAN_CMD_2D_STRIDE_Pos              16U                               /*!< DMAMCHAN CMD 2D STRIDE Position */
-#define DMAMCHAN_CMD_2D_STRIDE_Msk              (0xFFUL << DMAMCHAN_CMD_2D_STRIDE_Pos) /*!< DMAMCHAN CMD 2D STRIDE Mask */
+#define DMAMCHAN_CMD_2D_STRIDE_Msk              (0xFFFFUL << DMAMCHAN_CMD_2D_STRIDE_Pos) /*!< DMAMCHAN CMD 2D STRIDE Mask */
 
 #define DMAMCHAN_CMD_2D_COUNT_Pos               0U                               /*!< DMAMCHAN CMD 2D COUNT Position */
-#define DMAMCHAN_CMD_2D_COUNT_Msk               (0xFFUL /* << DMAMCHAN_CMD_2D_COUNT_Pos*/)  /*!< DMAMCHAN CMD 2D COUNT Mask */
+#define DMAMCHAN_CMD_2D_COUNT_Msk               (0xFFFFUL /* << DMAMCHAN_CMD_2D_COUNT_Pos*/)  /*!< DMAMCHAN CMD 2D COUNT Mask */
 
 /*@} end of group CMSIS_DMAMCHAN */
 
@@ -1039,6 +1039,9 @@ typedef struct
   \brief      Definitions for base addresses, unions, and structures.
   @{
  */
+
+/* Memory mapping of Core Hardware */
+#define L2_BASE             (0x1C000000UL)                             /*!< L2 Memory Base Address */
 
 /* Memory mapping of Core Hardware */
 #define FC_BASE             (0x1B000000UL)                             /*!< FC Base Address */
@@ -1306,7 +1309,7 @@ __STATIC_INLINE void __NVIC_SetVector(IRQn_Type IRQn, uint32_t vector)
   if((__get_CPRIV() & CPRIV_PRIV_Msk) != 0U) {
     vectors = (uint32_t *)(__builtin_pulp_spr_read(0x305) & ~MTVEC_MODE_Msk);
   } else {
-    vectors = (uint32_t *)(0x1C000000 & ~MTVEC_MODE_Msk);
+    vectors = (uint32_t *)(L2_BASE & ~MTVEC_MODE_Msk);
   }
   vectors[IRQn] = __NVIC_ForgeItVect((uint32_t)vectors, IRQn, vector);
 }
@@ -1325,7 +1328,7 @@ __STATIC_INLINE uint32_t __NVIC_GetVector(IRQn_Type IRQn)
   if((__get_CPRIV() & CPRIV_PRIV_Msk) != 0U) {
     vectors = (uint32_t *)(__builtin_pulp_spr_read(0x305));
   } else {
-    vectors = (uint32_t *)(0x1C000000);
+    vectors = (uint32_t *)(L2_BASE);
   }
   return vectors[IRQn];
 }

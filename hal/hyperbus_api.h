@@ -230,7 +230,7 @@ uint8_t hyperbus_get_module(hyperbus_t *obj);
  * @param[in] handler   HYPERBUS interrupt handler
  * @param[in] hint      A suggestion for how to use DMA with this transfer
  */
-void hyperbus_master_transfer(hyperbus_t *obj, const int addr, const void *tx, size_t tx_length, void *rx, size_t rx_length, uint8_t bit_width, uint8_t device, uint32_t handler, uint32_t event, DMAUsage hint);
+void hyperbus_transfer(hyperbus_t *obj, const int addr, const void *tx, size_t tx_length, void *rx, size_t rx_length, uint8_t bit_width, uint8_t device, uint32_t handler, uint32_t event, DMAUsage hint);
 
 /** The asynchronous IRQ handler
  *

@@ -95,10 +95,9 @@ void *FC_MallocAlign(int32_t size, int32_t align);
  * @note Free the memory pointed by the _chunk
  *
  * @param _chunk Address of memory need to free.
- * @param size  Size of memory need to free.
  *
  */
-void FC_MallocFree(void *_chunk, int32_t size);
+void FC_MallocFree(void *_chunk);
 
 
 #if defined(__cplusplus)

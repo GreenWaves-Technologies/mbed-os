@@ -49,6 +49,11 @@ uint32_t cluster_is_on = 0;
 /*! @brief Cluster stack is initilized */
 uint32_t cluster_is_init = 0;
 
+#ifdef _OPENMP
+/*! @brief Cluster ret value in OPENMP */
+uint32_t cluster_ret_value = 0;
+#endif
+
 /*! @brief Cluster Stack Variables */
 uint32_t cluster_stacks_start;
 uint32_t cluster_core_stack_size;
@@ -232,26 +237,38 @@ void CLUSTER_SleepWait() {
                    | (1 << EU_HW_BARRIER_EVENT)
                    | (1 << EU_LOOP_EVENT));
 
-    asm volatile ("add    s1,  x0,  %0" :: "r" (CORE_EU_DISPATCH_DEMUX_BASE));
-    asm volatile ("add    s2,  x0,  %0" :: "r" (CORE_EU_BARRIER_DEMUX_BASE));
-    asm volatile ("add    s3,  x0,  %0" :: "r" (CORE_EU_CORE_DEMUX_BASE));
+    /* s1 : CORE_EU_DISPATCH_DEMUX_BASE  0x204080 */
+    /* s2 : CORE_EU_BARRIER_DEMUX_BASE   0x204200 */
+    /* s3 : CORE_EU_CORE_DEMUX_BASE      0x204000 */
+    /* asm volatile ("add    s1,  x0,  %0" :: "r" (CORE_EU_DISPATCH_DEMUX_BASE)); */
+    /* asm volatile ("add    s2,  x0,  %0" :: "r" (CORE_EU_BARRIER_DEMUX_BASE)); */
+    /* asm volatile ("add    s3,  x0,  %0" :: "r" (CORE_EU_CORE_DEMUX_BASE)); */
 
     if(__core_ID())
     {
         while(1) {
             asm volatile (
                 "1:\n\t"
+#ifdef _OPENMP
+                    "lw     t0,  cluster_is_init \n\t"
+                    "beqz   t0,  2f              \n\t"
+                    "jal    x1,  omp_init        \n\t"
+#endif
+
+                "2:\n\t"
+                    "li     s1,  0x204080      \n\t"
+                    "li     s2,  0x204200      \n\t"
                     "p.elw  t0,  0(s1)         \n\t"
                     "p.elw  a0,  0(s1)         \n\t"
                     "andi   t1,  t0,   1       \n\t"
-                    "bne    t1,  zero, 2f      \n\t"
+                    "bne    t1,  zero, 3f      \n\t"
                     "jalr   t0                 \n\t"
-                    "p.elw  t0,  0x1c(s2)         \n\t"
-                    "j      3f                 \n"
-                "2:\n\t"
+                    "p.elw  t0,  0x1c(s2)      \n\t"
+                    "j      4f                 \n"
+                "3:\n\t"
                     "p.bclr t0, t0, 0,0        \n\t"
                     "jalr   t0                 \n"
-                "3:"
+                "4:"
                 );
         } // slaveloop
     } else {
@@ -265,14 +282,16 @@ void CLUSTER_SleepWait() {
             // MasterLoop
             asm volatile (
             "1:\n\t"
+                "li      s2,  0x204200 \n\t"
+                "li      s3,  0x204000 \n\t"
                 // EU_EVT_MaskWaitAndClr(1 << FC_NOTIFY_CLUSTER_EVENT);
                 "p.bset  t1, x0, 0, %0 \n\t"
                 "sw      t1, 0x8(s3)   \n\t"
                 "p.elw   t0, 0x3C(s3)  \n\t"
                 "sw      t1, 0x4(s3)   \n\t"
 
-                "lw      t0, cluster_is_init    \n\t"
-                "beqz    t0, 2f                 \n\t"
+                "lw      t0, cluster_is_init               \n\t"
+                "beqz    t0, 2f                            \n\t"
 
                 "lw      t0, (cluster_core_stack_size)     \n\t"
                 "bne     t0, zero, 3f                      \n\t"
@@ -283,6 +302,17 @@ void CLUSTER_SleepWait() {
                 "lw      a1, (cluster_core_stack_size)     \n\t"
                 "add     sp, a0, a1                        \n\t"
                 "jal     CLUSTER_StackInit                 \n\t"
+#ifdef _OPENMP
+                "jal    x1,  omp_init                      \n\t"
+                "la     t1,  cluster_ret_value             \n\t"
+                "sw     a0, 0(t1)                          \n\t"
+                // Notify FC to exit
+                // EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_EVENT, 0);
+                "li     a0, 0x1B200e04                     \n\t"
+                "sw     x0, 0(a0)                          \n\t"
+                "li     s2,  0x204200      \n\t"
+                "p.elw  t0,  0x1c(s2)                      \n\t"
+#endif
             "3:\n\t"
                 "lw      t0, (master_task)                 \n\t"
                 "beqz    t0, 4f                            \n\t"

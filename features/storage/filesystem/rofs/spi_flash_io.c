@@ -134,8 +134,8 @@ static void SPI_FLASH_Conf( uint8_t qspi )
         /* Exit if not SPI0. */
         if( master_config.whichCsn )
             exit(-1);
-        pinmap_pinout(SPI0_SDIO2, PinMap_SPIQ_SDIO2);
-        pinmap_pinout(SPI0_SDIO3, PinMap_SPIQ_SDIO3);
+        pinmap_pinout(SPI0_SDIO2, PinMap_QSPI_SDIO2);
+        pinmap_pinout(SPI0_SDIO3, PinMap_QSPI_SDIO3);
 
         s_command_sequence[0] = SPIM_CMD_SOT( master_config.whichCsn );
         SPI_MasterTransferBlocking( spi_address[master_config.whichCsn],

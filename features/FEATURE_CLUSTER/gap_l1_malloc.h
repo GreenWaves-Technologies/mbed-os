@@ -72,7 +72,6 @@ extern "C" {
  */
 void L1_MallocInit();
 
-
 /*!
  * @brief Initializes the L1 malloc.
  *
@@ -102,11 +101,9 @@ void *L1_MallocAlign(int size, int align);
  * @note Free the memory pointed by the _chunk
  *
  * @param _chunk Address of memory need to free.
- * @param size  Size of memory need to free.
  *
  */
-void L1_MallocFree(void *_chunk, int size);
-
+void L1_MallocFree(void *_chunk);
 
 /* @} */
 

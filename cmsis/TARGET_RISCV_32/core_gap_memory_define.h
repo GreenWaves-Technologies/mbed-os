@@ -48,8 +48,9 @@
 
 #ifdef FEATURE_CLUSTER
 /*! @brief Data will be put inside cluster L1 memory through global address. */
-#define GAP_L1_GLOBAL_DATA  __attribute__((section(".l1cluster_g")))
-#define GAP_L1_TINY_DATA    GAP_L1_GLOBAL_DATA
+#define GAP_L1_DATA         __attribute__((section(".l1cluster_g")))
+#define GAP_L1_GLOBAL_DATA  GAP_L1_DATA
+#define GAP_L1_TINY_DATA    GAP_L1_DATA
 #define GAP_L1_FC_DATA      __attribute__((section(".l1FcTiny")))
 #endif
 

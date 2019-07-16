@@ -59,12 +59,16 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
 #include "system_GAP8.h"
 #include "gap_device_registers.h"
 #include "../driver/gap_common.h"
 #include "../driver/gap_debug.h"
 
-
+#ifdef _OPENMP
+extern void CLUSTER_Start(int cid, int nbCores, int control_icache_seperation);
+extern uint32_t cluster_ret_value;
+#endif
 
 /* ----------------------------------------------------------------------------
    -- Core clock
@@ -102,6 +106,15 @@ void SystemInit (void) {
     FC_MallocInit();
 
     __enable_irq();
+
+    #ifdef _OPENMP
+    CLUSTER_Start(0, CLUSTER_CORES_NUM, 0);
+    /* Cluster Stack Init wait */
+    EU_EVT_MaskWaitAndClr(1 << CLUSTER_NOTIFY_FC_EVENT);
+    /* Cluster End wait */
+    EU_EVT_MaskWaitAndClr(1 << CLUSTER_NOTIFY_FC_EVENT);
+    exit(cluster_ret_value);
+    #endif
 }
 
 void SystemCoreClockUpdate () {

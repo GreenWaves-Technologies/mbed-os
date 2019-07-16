@@ -191,7 +191,6 @@ SECTIONS
         __data_end__ = .;        /* define a global symbol at data end */
     } > L2
 
-
     .bss :
     {
         /* Due to limitations on FPGA loader, loadable sections must have base and size aligned on 4 bytes */
@@ -257,11 +256,21 @@ SECTIONS
 
     ASSERT(__fcStack_limit >= __heapfcram_start, "Region FC overflowed with stack and heap")
 
-    .l1cluster_g (ORIGIN(L1_sram)) : AT(__l1_preload_start_inL2)
+    .libgomp (ORIGIN(L1_sram) ): AT(__l1_preload_start_inL2)
     {
         /* Due to limitations on FPGA loader, loadable sections must have base and size aligned on 4 bytes */
         . = ALIGN(4);
         __l1_preload_start = .;
+        _libgomp_start = .;
+         *(.libgomp)
+        *(.libgomp.*)
+        . = ALIGN(4);
+    } > L1_sram
+
+    .l1cluster_g (ORIGIN(L1_sram) + SIZEOF(.libgomp)) : AT(__l1_preload_start_inL2 + SIZEOF(.libgomp))
+    {
+        /* Due to limitations on FPGA loader, loadable sections must have base and size aligned on 4 bytes */
+        . = ALIGN(4);
         *(.l1clusterTiny)
         *(.l1clusterTiny.*)
         *(.l1cluster_g)
@@ -274,7 +283,7 @@ SECTIONS
 
      __l1_preload_size = __l1_preload_end - ORIGIN(L1_sram);
 
-    .heapsram (ORIGIN(L1_sram)  + SIZEOF(.l1cluster_g)) : AT(__l1_preload_start_inL2 + SIZEOF(l1cluster_g))
+    .heapsram (ORIGIN(L1_sram)  + SIZEOF(.l1cluster_g) + SIZEOF(.libgomp)) : AT(__l1_preload_start_inL2 + SIZEOF(l1cluster_g) + SIZEOF(.libgomp))
     {
         /* Due to limitations on FPGA loader, loadable sections must have base and size aligned on 4 bytes */
         . = ALIGN(4);

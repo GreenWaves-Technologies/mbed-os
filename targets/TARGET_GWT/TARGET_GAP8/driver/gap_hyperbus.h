@@ -68,9 +68,9 @@ enum _hyperbus_device_address
 enum _hyperbus_ram_register_address
 {
     uHYPERBUS_ID_REG0_Addr  = 0x0000U,  /*!< RAM Identification Register 0 address */
-    uHYPERBUS_ID_REG1_Addr  = 0x0001U,  /*!< RAM Identification Register 1 address */
+    uHYPERBUS_ID_REG1_Addr  = 0x0002U,  /*!< RAM Identification Register 1 address */
     uHYPERBUS_CFG_REG0_Addr = 0x1000U,  /*!< RAM Configuration register 0 address */
-    uHYPERBUS_CFG_REG1_Addr = 0x1001U   /*!< RAM Configuration register 1 address */
+    uHYPERBUS_CFG_REG1_Addr = 0x1002U   /*!< RAM Configuration register 1 address */
 };
 
 /*! @brief Hyperbus bus access type - Memory or Register.*/
@@ -102,17 +102,17 @@ enum _hyperbus_transfer_state
     uHYPERBUS_Error        /*!< Transfer error. */
 };
 
-/*! @brief HYPERBUS master configuration structure.*/
-typedef struct _hyperbus_master_config
+/*! @brief HYPERBUS configuration structure.*/
+typedef struct _hyperbus_config
 {
     uint32_t  baudRate;/*!< The baud rate of Tx and Rx. */
     uint32_t  mbr0;    /*!< Memory base address 0. */
     uint32_t  mbr1;    /*!< Memory base address 1. */
     uint8_t   dt0;     /*!< Device type 0. */
     uint8_t   dt1;     /*!< Device type 1. */
-} hyperbus_master_config_t;
+} hyperbus_config_t;
 
-/*! @brief HYPERBUS master/slave transfer structure.*/
+/*! @brief HYPERBUS transfer structure.*/
 typedef struct _hyperbus_transfer
 {
     uint16_t *txData;            /*!< Send buffer. */
@@ -126,27 +126,27 @@ typedef struct _hyperbus_transfer
 } hyperbus_transfer_t;
 
 /*!
-* @brief Forward declaration of the _hyperbus_master_handle typedefs.
+* @brief Forward declaration of the _hyperbus_handle typedefs.
 */
-typedef struct _hyperbus_master_handle hyperbus_master_handle_t;
+typedef struct _hyperbus_handle hyperbus_handle_t;
 
 /*!
  * @brief Completion callback function pointer type.
  *
  * @param base HYPERBUS peripheral address.
- * @param handle Pointer to the handle for the HYPERBUS master.
+ * @param handle Pointer to the handle for the HYPERBUS.
  * @param status Success or error code describing whether the transfer completed.
  * @param userData Arbitrary pointer-dataSized value passed from the application.
  */
-typedef void (*hyperbus_master_transfer_callback_t)(HYPERBUS_Type *base,
-                                                hyperbus_master_handle_t *handle,
+typedef void (*hyperbus_transfer_callback_t)(HYPERBUS_Type *base,
+                                                hyperbus_handle_t *handle,
                                                 status_t status,
                                                 void *userData);
 
 
 
-/*! @brief HYPERBUS master transfer handle structure used for transactional API. */
-struct _hyperbus_master_handle
+/*! @brief HYPERBUS transfer handle structure used for transactional API. */
+struct _hyperbus_handle
 {
     uint8_t *volatile txData;                  /*!< Send buffer. */
     uint8_t *volatile rxData;                  /*!< Receive buffer. */
@@ -154,7 +154,7 @@ struct _hyperbus_master_handle
 
     volatile uint8_t state; /*!< HYPERBUS transfer state, see _hyperbus_transfer_state.*/
 
-    hyperbus_master_transfer_callback_t callback; /*!< Completion callback. */
+    hyperbus_transfer_callback_t callback; /*!< Completion callback. */
     void *userData;                           /*!< Callback user data. */
 };
 
@@ -882,45 +882,45 @@ static inline void HYPERBUS_SetWrMaxLengthEN1(uint8_t value)
  * @{
  */
 /*!
- * @brief Initializes the HYPERBUS master.
+ * @brief Initializes the HYPERBUS.
  *
- * This function initializes the HYPERBUS master configuration. This is an example use case.
+ * This function initializes the HYPERBUS configuration. This is an example use case.
  *  @code
- *   hyperbus_master_config_t  masterConfig;
- *   masterConfig.baudRate                 = 50000000U;
- *   masterConfig.mbr0                     = uHYPERBUS_Ram_Address;
- *   masterConfig.mbr1                     = uHYPERBUS_Flash_Address >> 24;
- *   masterConfig.dt0                      = uHYPERBUS_Ram;
- *   masterConfig.dt1                      = uHYPERBUS_Flash;
- *   HYPERBUS_MasterInit(base, &masterConfig, srcClock_Hz);
+ *   hyperbus_config_t  config;
+ *   config.baudRate                 = 50000000U;
+ *   config.mbr0                     = uHYPERBUS_Ram_Address;
+ *   config.mbr1                     = uHYPERBUS_Flash_Address >> 24;
+ *   config.dt0                      = uHYPERBUS_Ram;
+ *   config.dt1                      = uHYPERBUS_Flash;
+ *   HYPERBUS_Init(base, &config, srcClock_Hz);
  *  @endcode
  *
  * @param base HYPERBUS peripheral address.
- * @param masterConfig Pointer to the structure hyperbus_master_config_t.
+ * @param config Pointer to the structure hyperbus_config_t.
  * @param srcClock_Hz Module source input clock in Hertz.
  */
-void HYPERBUS_MasterInit(HYPERBUS_Type *base, hyperbus_master_config_t *masterConfig, uint32_t srcClock_Hz);
+void HYPERBUS_Init(HYPERBUS_Type *base, hyperbus_config_t *config, uint32_t srcClock_Hz);
 
 /*!
- * @brief Sets the hyperbus_master_config_t structure to default values.
+ * @brief Sets the hyperbus_config_t structure to default values.
  *
- * The purpose of this API is to get the configuration structure initialized for the HYPERBUS_MasterInit().
- * Users may use the initialized structure unchanged in the HYPERBUS_MasterInit() or modify the structure
- * before calling the HYPERBUS_MasterInit().
+ * The purpose of this API is to get the configuration structure initialized for the HYPERBUS_Init().
+ * Users may use the initialized structure unchanged in the HYPERBUS_Init() or modify the structure
+ * before calling the HYPERBUS_Init().
  * Example:
  * @code
- *  hyperbus_master_config_t  masterConfig;
- *  HYPERBUS_MasterGetDefaultConfig(&masterConfig);
+ *  hyperbus_config_t  config;
+ *  HYPERBUS_GetDefaultConfig(&config);
  * @endcode
- * @param masterConfig pointer to hyperbus_master_config_t structure
+ * @param config pointer to hyperbus_config_t structure
  */
-void HYPERBUS_MasterGetDefaultConfig(hyperbus_master_config_t *masterConfig);
+void HYPERBUS_GetDefaultConfig(hyperbus_config_t *config);
 
 /*!
  * @brief De-initializes the HYPERBUS peripheral, Clock Gating. Call this API to disable the HYPERBUS clock.
  * @param base HYPERBUS peripheral address.
  */
-void HYPERBUS_MasterDeInit(HYPERBUS_Type *base);
+void HYPERBUS_DeInit(HYPERBUS_Type *base);
 
 /*!
  * @brief Configure the HYPERBUS memrory configuraton
@@ -1021,54 +1021,54 @@ static inline void HYPERBUS_ClearAndStop(HYPERBUS_Type *base)
 /*Transactional APIs*/
 
 /*!
- * @brief Write or Read data into/from the data buffer in master mode and waits till complete to return.
+ * @brief Write or Read data into/from the data buffer and waits till complete to return.
  *
  * @param base HYPERBUS peripheral address.
  * @param transfer The pointer to hyperbus_transfer_t structure.
  * @return status of status_t.
  */
-status_t HYPERBUS_MasterTransferBlocking(HYPERBUS_Type *base, hyperbus_transfer_t *transfer);
+status_t HYPERBUS_TransferBlocking(HYPERBUS_Type *base, hyperbus_transfer_t *transfer);
 
 
 /*!
- * @brief HYPERBUS master transfer data using interrupts.
+ * @brief HYPERBUS transfer data using interrupts.
  *
  * This function transfers data using interrupts. This is a non-blocking function, which returns right away. When all
  * data is transferred, the callback function is called.
 
  * @param base HYPERBUS peripheral base address.
- * @param handle Pointer to the hyperbus_master_handle_t structure which stores the transfer state.
+ * @param handle Pointer to the hyperbus_handle_t structure which stores the transfer state.
  * @param transfer Pointer to the hyperbus_transfer_t structure.
  * @return status of status_t.
  */
-status_t HYPERBUS_MasterTransferNonBlocking(HYPERBUS_Type *base, hyperbus_master_handle_t *handle, hyperbus_transfer_t *transfer);
+status_t HYPERBUS_TransferNonBlocking(HYPERBUS_Type *base, hyperbus_handle_t *handle, hyperbus_transfer_t *transfer);
 
 /*!
- * @brief HYPERBUS Master IRQ handler function.
+ * @brief HYPERBUS IRQ handler function.
  *
  * This function processes the HYPERBUS transmit and receive IRQ.
 
  * @param base HYPERBUS peripheral base address.
- * @param handle Pointer to the hyperbus_master_handle_t structure which stores the transfer state.
+ * @param handle Pointer to the hyperbus_handle_t structure which stores the transfer state.
  */
-void HYPERBUS_MasterTransferHandleIRQ(HYPERBUS_Type *base, hyperbus_master_handle_t *handle);
+void HYPERBUS_TransferHandleIRQ(HYPERBUS_Type *base, hyperbus_handle_t *handle);
 
 
 /*!
- * @brief Initializes the HYPERBUS master handle.
+ * @brief Initializes the HYPERBUS handle.
  *
  * This function initializes the HYPERBUS handle, which can be used for other HYPERBUS transactional APIs.  Usually, for a
  * specified HYPERBUS instance,  call this API once to get the initialized handle.
  *
  * @param base HYPERBUS peripheral base address.
- * @param handle HYPERBUS handle pointer to hyperbus_master_handle_t.
+ * @param handle HYPERBUS handle pointer to hyperbus_handle_t.
  * @param callback HYPERBUS callback.
  * @param userData Callback function parameter.
  */
-void HYPERBUS_MasterTransferCreateHandle(HYPERBUS_Type *base,
-                                     hyperbus_master_handle_t *handle,
-                                     hyperbus_master_transfer_callback_t callback,
-                                     void *userData);
+void HYPERBUS_TransferCreateHandle(HYPERBUS_Type *base,
+                                   hyperbus_handle_t *handle,
+                                   hyperbus_transfer_callback_t callback,
+                                   void *userData);
 
 /*!
  *@}

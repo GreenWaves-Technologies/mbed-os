@@ -235,7 +235,7 @@ static inline void EU_FC_EVT_TrigSet(int event_num, uint32_t value)
   FC_EU_SW_EVENTS->TRIGGER_SET[event_num] = value;
 }
 
-static inline void EU_FC_EVT_DemuxTrigSet(int event_num, uint32_t value)
+static inline void EU_EVT_DemuxTrigSet(int event_num, uint32_t value)
 {
   EU_SW_EVENTS_DEMUX->TRIGGER_SET[event_num] = value;
 }

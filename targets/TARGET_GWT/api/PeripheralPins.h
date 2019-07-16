@@ -45,8 +45,10 @@ extern const PinMap PinMap_I2C_SCL[];
 extern const PinMap PinMap_UART_TX[];
 extern const PinMap PinMap_UART_RX[];
 /************SPIM0-QPI***************/
-extern const PinMap PinMap_SPIQ_SDIO2[];
-extern const PinMap PinMap_SPIQ_SDIO3[];
+extern const PinMap PinMap_QSPI_SDIO0[];
+extern const PinMap PinMap_QSPI_SDIO1[];
+extern const PinMap PinMap_QSPI_SDIO2[];
+extern const PinMap PinMap_QSPI_SDIO3[];
 /************SPIM1***************/
 extern const PinMap PinMap_SPI_SCLK[];
 extern const PinMap PinMap_SPI_MOSI[];
