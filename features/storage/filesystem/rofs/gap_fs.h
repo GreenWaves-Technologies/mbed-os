@@ -69,8 +69,8 @@ typedef struct _fs_config_s
 
 typedef enum
 {
-    fs_SPI   = 0,
-    fs_HYPER = 1
+    FS_SPI   = 0,
+    FS_HYPER = 1
 } fs_device_e;
 
 /* File descriptor structure. */
@@ -82,17 +82,23 @@ typedef struct _fs_desc_s
     char name[];
 } fs_desc_t;
 
-/* Filesystem handler type. */
-typedef struct _fs_handle_s
-{
+typedef struct _fs_l2_s {
+    uint32_t fs_offset;
+    uint32_t reserved0;
     uint32_t fs_size;
-    uint32_t fs_l2_offset;
-    uint32_t fs_l2_size;
+    uint32_t reserved1;
+} fs_l2_t;
+
+/* Filesystem handler type. */
+typedef struct _fs_handle_s {
+    int fs_size;
+    fs_l2_t *fs_l2;
     uint32_t *fs_info;
     uint32_t nb_comps;
     uint8_t *fs_cache;
     uint32_t fs_cache_addr;
     fs_device_e fs_device;
+    int error;
 } fs_handle_t;
 
 /* File type structure. */
@@ -140,23 +146,23 @@ void fs_config_default( fs_config_t *fs_config );
  *
  * @return A pointer to the mounted filesystem.
  */
-uint32_t fs_mount( fs_handle_t *fs, uint8_t device, fs_config_t *fs_config );
+fs_handle_t* fs_mount( uint8_t device, fs_config_t *fs_config );
 
 /*!
  * @brief Unmount a filesystem.
  *
- * @param fs_handle Pointer to a handler of a mounted filesystem.
+ * @param fs Pointer to a handler of a mounted filesystem.
  */
-void fs_unmount( fs_handle_t *fs_handle );
+void fs_unmount( fs_handle_t *fs );
 
 /*!
  * @brief Open a file.
  *
- * @param fs_handle Pointer to a handler of a mounted filesystem.
+ * @param fs        Pointer to a handler of a mounted filesystem.
  * @param file      Path to the file.
  * @param mode      File opening mode.
  */
-fs_file_t *fs_open( fs_handle_t *fs_handle, const char *file, uint8_t mode );
+fs_file_t *fs_open( fs_handle_t *fs, const char *file, uint8_t mode );
 
 /*!
  * @brief Close a file.
